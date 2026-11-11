@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AUTH_SECRET: ci-only-secret-not-for-deployment
+      MONGODB_URI: mongodb://127.0.0.1:27017/seo_automation_ci
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      TRUSTED_CLIENT_IP_HEADER: x-real-ip
+      RESEND_API_KEY: re_ci_placeholder
+      AUTH_EMAIL_FROM: SEO Studio <ci@example.test>
+      AUTH_GOOGLE_ID: ci-placeholder.apps.googleusercontent.com
+      AUTH_GOOGLE_SECRET: ci-placeholder
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Check TypeScript
+        run: npx tsc --noEmit --incremental false
+
+      - name: Check lint
+        run: npm run lint
+
+      - name: Audit all dependencies
+        run: npm audit --audit-level=moderate
+
+      - name: Build production app
+        run: npm run build

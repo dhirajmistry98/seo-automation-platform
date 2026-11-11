@@ -1,0 +1,402 @@
+{
+  "version": 1,
+  "project": {
+    "name": "SEO STUDIO",
+    "productType": "SEO automation platform",
+    "stack": [
+      "nextjs",
+      "react",
+      "shadcn",
+      "tailwind-v4"
+    ]
+  },
+  "sources": {
+    "tokens": [
+      "src/app/globals.css"
+    ],
+    "components": [
+      "src/components/ui"
+    ],
+    "assets": [
+      "public/seo-hero-glow.jpg",
+      "public/seo-studio-mark.png",
+      "public/seo-studio-hero.mp4"
+    ],
+    "instructions": [
+      "AGENTS.md"
+    ]
+  },
+  "design": {
+    "colorMode": "light-and-dark",
+    "colors": {
+      "--color-background": {
+        "value": "var(--background)",
+        "source": "src/app/globals.css"
+      },
+      "--color-foreground": {
+        "value": "var(--foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-ring": {
+        "value": "var(--sidebar-ring)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-border": {
+        "value": "var(--sidebar-border)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-accent-foreground": {
+        "value": "var(--sidebar-accent-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-accent": {
+        "value": "var(--sidebar-accent)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-primary-foreground": {
+        "value": "var(--sidebar-primary-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-primary": {
+        "value": "var(--sidebar-primary)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar-foreground": {
+        "value": "var(--sidebar-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-sidebar": {
+        "value": "var(--sidebar)",
+        "source": "src/app/globals.css"
+      },
+      "--color-chart-5": {
+        "value": "var(--chart-5)",
+        "source": "src/app/globals.css"
+      },
+      "--color-chart-4": {
+        "value": "var(--chart-4)",
+        "source": "src/app/globals.css"
+      },
+      "--color-chart-3": {
+        "value": "var(--chart-3)",
+        "source": "src/app/globals.css"
+      },
+      "--color-chart-2": {
+        "value": "var(--chart-2)",
+        "source": "src/app/globals.css"
+      },
+      "--color-chart-1": {
+        "value": "var(--chart-1)",
+        "source": "src/app/globals.css"
+      },
+      "--color-ring": {
+        "value": "var(--ring)",
+        "source": "src/app/globals.css"
+      },
+      "--color-input": {
+        "value": "var(--input)",
+        "source": "src/app/globals.css"
+      },
+      "--color-border": {
+        "value": "var(--border)",
+        "source": "src/app/globals.css"
+      },
+      "--color-destructive": {
+        "value": "var(--destructive)",
+        "source": "src/app/globals.css"
+      },
+      "--color-accent-foreground": {
+        "value": "var(--accent-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-accent": {
+        "value": "var(--accent)",
+        "source": "src/app/globals.css"
+      },
+      "--color-muted-foreground": {
+        "value": "var(--muted-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-muted": {
+        "value": "var(--muted)",
+        "source": "src/app/globals.css"
+      },
+      "--color-secondary-foreground": {
+        "value": "var(--secondary-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-secondary": {
+        "value": "var(--secondary)",
+        "source": "src/app/globals.css"
+      },
+      "--color-primary-foreground": {
+        "value": "var(--primary-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-primary": {
+        "value": "var(--primary)",
+        "source": "src/app/globals.css"
+      },
+      "--color-popover-foreground": {
+        "value": "var(--popover-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-popover": {
+        "value": "var(--popover)",
+        "source": "src/app/globals.css"
+      },
+      "--color-card-foreground": {
+        "value": "var(--card-foreground)",
+        "source": "src/app/globals.css"
+      },
+      "--color-card": {
+        "value": "var(--card)",
+        "source": "src/app/globals.css"
+      },
+      "--background": {
+        "value": "oklch(0.145 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--card-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--popover-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--primary": {
+        "value": "oklch(0.922 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--primary-foreground": {
+        "value": "oklch(0.205 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--secondary": {
+        "value": "oklch(0.269 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--secondary-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--muted": {
+        "value": "oklch(0.269 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--muted-foreground": {
+        "value": "oklch(0.708 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--accent": {
+        "value": "oklch(0.269 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--accent-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--destructive": {
+        "value": "oklch(0.704 0.191 22.216)",
+        "source": "src/app/globals.css"
+      },
+      "--border": {
+        "value": "oklch(1 0 0 / 10%)",
+        "source": "src/app/globals.css"
+      },
+      "--ring": {
+        "value": "oklch(0.556 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--chart-1": {
+        "value": "oklch(0.87 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--chart-2": {
+        "value": "oklch(0.556 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--chart-3": {
+        "value": "oklch(0.439 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--chart-4": {
+        "value": "oklch(0.371 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--chart-5": {
+        "value": "oklch(0.269 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-primary": {
+        "value": "oklch(0.488 0.243 264.376)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-primary-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-accent": {
+        "value": "oklch(0.269 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-accent-foreground": {
+        "value": "oklch(0.985 0 0)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-border": {
+        "value": "oklch(1 0 0 / 10%)",
+        "source": "src/app/globals.css"
+      },
+      "--sidebar-ring": {
+        "value": "oklch(0.556 0 0)",
+        "source": "src/app/globals.css"
+      }
+    },
+    "typography": {
+      "--font-sans": {
+        "value": "var(--font-sans)",
+        "source": "src/app/globals.css"
+      },
+      "--font-mono": {
+        "value": "var(--font-geist-mono)",
+        "source": "src/app/globals.css"
+      },
+      "--font-heading": {
+        "value": "var(--font-sans)",
+        "source": "src/app/globals.css"
+      }
+    },
+    "spacing": {},
+    "radius": {
+      "--radius-sm": {
+        "value": "calc(var(--radius) * 0.6)",
+        "source": "src/app/globals.css"
+      },
+      "--radius-md": {
+        "value": "calc(var(--radius) * 0.8)",
+        "source": "src/app/globals.css"
+      },
+      "--radius-lg": {
+        "value": "var(--radius)",
+        "source": "src/app/globals.css"
+      },
+      "--radius-xl": {
+        "value": "calc(var(--radius) * 1.4)",
+        "source": "src/app/globals.css"
+      },
+      "--radius-2xl": {
+        "value": "calc(var(--radius) * 1.8)",
+        "source": "src/app/globals.css"
+      },
+      "--radius-3xl": {
+        "value": "calc(var(--radius) * 2.2)",
+        "source": "src/app/globals.css"
+      },
+      "--radius-4xl": {
+        "value": "calc(var(--radius) * 2.6)",
+        "source": "src/app/globals.css"
+      },
+      "--radius": {
+        "value": "0.625rem",
+        "source": "src/app/globals.css"
+      }
+    },
+    "shadows": {},
+    "motion": {},
+    "density": "unknown"
+  },
+  "components": {
+    "installed": [
+      "button"
+    ],
+    "preferredPrimitives": [],
+    "patterns": []
+  },
+  "constraints": {
+    "must": [],
+    "avoid": []
+  },
+  "decisions": [
+    {
+      "decision": "Keep brand, navigation, and account actions on one horizontal row on desktop and tablet. On mobile, replace the crowded inline links with an accessible hamburger disclosure that opens a stacked navigation panel.",
+      "source": "User screenshot feedback and 21st.dev horizontal navigation reference"
+    },
+    {
+      "decision": "Show empty states until an authorized website and SEO data source are connected; do not display invented metrics.",
+      "source": "User request to show real data"
+    },
+    {
+      "decision": "Use an ink-black (#080706), warm-white (#F3EFEA), and signal-orange (#FF6A00) palette throughout the marketing site, sign-in flow, and dashboard. Keep black as the main canvas, warm white for readable content, and orange for actions and status accents.",
+      "source": "User-provided black and orange website references"
+    },
+    {
+      "decision": "Use the supplied orange-glow image as the full-bleed home hero banner. Layer dark gradients over the image for readable headline text; keep orange accents restrained in lower sections.",
+      "source": "User-provided home hero banner reference"
+    },
+    {
+      "decision": "Use the supplied white geometric wave mark with the SEO STUDIO name across the marketing site, login flow, product previews, dashboard, and sign-in messages. Center the homepage hero copy and keep the black/orange vertical glow, minimal capsule navigation, and lightweight type from the supplied reference.",
+      "source": "User-provided logo and reference video screenshots"
+    },
+    {
+      "decision": "Use one continuous near-black page canvas with warm orange glow accents and warm-white typography across all marketing sections. Follow the second supplied video reference for centered, lightweight editorial composition, and keep the supplied SEO STUDIO wave logo. Do not show the Search, Understood tagline in the header.",
+      "source": "User clarification: first video is the background color reference; second video is the layout reference"
+    },
+    {
+      "decision": "Use the supplied weekend-getaway MP4 as a muted, looping home-hero background. Keep a dark contrast overlay, retain the static orange-glow poster as fallback, and stop motion for reduced-motion preferences.",
+      "source": "User request to add the supplied clip in the background"
+    },
+    {
+      "decision": "Use a restrained animated amber glow with slow drifting light and subtle vertical bands over the home hero video. Keep copy above the effect and disable the motion for reduced-motion preferences.",
+      "source": "User-selected animated glowing background effect from supplied reference video"
+    },
+    {
+      "decision": "Use a persistent left workspace sidebar on desktop with separate Overview, Websites, SEO tools, Integrations, and Account pages instead of anchor links that scroll through one long dashboard. Keep the active item warm gray, icons orange, and the website count in a black pill; let the navigation scroll horizontally on small screens.",
+      "source": "User screenshot and request to make proper pages instead of scrolling down"
+    }
+  ],
+  "evidence": [
+    {
+      "fact": "components.installed",
+      "source": "src/components/ui"
+    },
+    {
+      "fact": "design.colorMode:light-and-dark",
+      "source": "src/app/globals.css"
+    },
+    {
+      "fact": "design.tokens",
+      "source": "src/app/globals.css"
+    },
+    {
+      "fact": "project.instructions",
+      "source": "AGENTS.md"
+    },
+    {
+      "fact": "project.stack:nextjs",
+      "source": "package.json"
+    },
+    {
+      "fact": "project.stack:react",
+      "source": "package.json"
+    },
+    {
+      "fact": "project.stack:shadcn",
+      "source": "components.json"
+    },
+    {
+      "fact": "project.stack:tailwind-v4",
+      "source": "package.json"
+    }
+  ],
+  "generatedAt": "2026-11-02T17:17:34.523Z"
+}

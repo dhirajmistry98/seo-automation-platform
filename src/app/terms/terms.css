@@ -1,0 +1,24 @@
+.terms-page { min-height:70vh; background:#f3efea; padding:clamp(112px,13vw,158px) 22px 82px; }
+.terms-document { width:min(100%,880px); margin-inline:auto; border:1px solid #ded8d1; background:#faf8f5; padding:clamp(24px,5.2vw,64px); }
+.terms-back-link { display:inline-flex; gap:8px; margin-bottom:36px; color:#75675b; font-size:12px; text-decoration:none; }
+.terms-back-link span { color:#e96306; }
+.terms-document > .landing-eyebrow { color:#c14f0b; }
+.terms-document h1 { margin-top:12px; color:#100e0c; font-size:clamp(38px,7vw,64px); font-weight:650; letter-spacing:-.065em; line-height:1; }
+.terms-updated { margin-top:12px; color:#766d64; font-size:12px; }
+.terms-lead { max-width:68ch; margin-top:26px; color:#524a43; font-size:15px; line-height:1.75; }
+.terms-document > section { border-top:1px solid #e2dcd5; padding:21px 0 4px; }
+.terms-document > section:first-of-type { margin-top:27px; }
+.terms-document > section h2 { color:#171310; font-size:17px; font-weight:700; letter-spacing:-.025em; }
+.terms-document > section p { max-width:76ch; margin-top:8px; color:#625a53; font-size:13px; line-height:1.75; }
+.terms-operator { margin:28px 0 30px; border:1px solid #e7c9b4!important; background:#fff8f2; padding:18px!important; }
+.terms-operator dl { display:grid; gap:0; margin-top:10px; }
+.terms-operator dl > div { display:grid; grid-template-columns:minmax(130px,.32fr) minmax(0,1fr); gap:14px; border-top:1px solid #f0dfd3; padding:8px 0; font-size:12px; }
+.terms-operator dt { color:#766d64; }
+.terms-operator dd { overflow-wrap:anywhere; color:#171310; }
+.terms-operator dd a { color:#a84616; }
+.terms-operator > p { border-top:1px solid #f0dfd3; padding-top:10px; color:#8a3f17!important; font-size:11px!important; }
+.terms-operator code { font-size:.95em; }
+.terms-document-footer { display:flex; flex-wrap:wrap; gap:12px 22px; margin-top:28px; border-top:1px solid #ded8d1; padding-top:18px; }
+.terms-document-footer a { display:inline-flex; align-items:center; gap:6px; color:#a84616; font-size:12px; font-weight:650; text-decoration:none; }
+.terms-document-footer a:hover { color:#e96306; }
+@media (max-width:560px) { .terms-page { padding-inline:12px; }.terms-document { padding:20px 16px; }.terms-back-link { margin-bottom:27px; }.terms-operator dl > div { grid-template-columns:1fr; gap:3px; }.terms-document > section h2 { font-size:15px; } }

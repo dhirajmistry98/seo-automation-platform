@@ -26,6 +26,8 @@ jobs:
       AUTH_EMAIL_FROM: SEO Studio <ci@example.test>
       AUTH_GOOGLE_ID: ci-placeholder.apps.googleusercontent.com
       AUTH_GOOGLE_SECRET: ci-placeholder
+      # CI-only placeholder (32 zero bytes, base64). Required by the production env check when Google sign-in is configured.
+      GOOGLE_TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -41,6 +43,9 @@ jobs:
 
       - name: Run unit tests
         run: npm test
+
+      - name: Generate Next.js route types
+        run: npx next typegen
 
       - name: Check TypeScript
         run: npx tsc --noEmit --incremental false

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Menu, UserRound, UsersRound, X } from "lucide-react";
+import { Menu, UserRound, UsersRound, X } from "lucide-react";
 import { BRAND, NAV_ITEMS, ROUTES } from "@/lib/marketing";
 import { BrandLogo } from "./brand-logo";
 
@@ -83,7 +83,7 @@ export function SiteHeader({ currentUser = null }: { currentUser?: HeaderUser | 
 
         <div className="site-header-actions">
           {currentUser ? <>
-            <Link href="/influencer-marketing" className="site-header-influencer" aria-label="Open Influencer Marketing"><UsersRound size={15} aria-hidden="true" /><span className="site-header-influencer-long">Influencer Marketing</span><span className="site-header-influencer-short">Influencer</span><ArrowUpRight size={13} aria-hidden="true" /></Link>
+            <Link href="/influencer-marketing" className="site-header-influencer" aria-label="Open Influencer Marketing"><UsersRound size={15} aria-hidden="true" /><span className="site-header-influencer-long">Influencer Marketing</span><span className="site-header-influencer-short">Influencer</span></Link>
             <Link href="/dashboard" className="site-header-profile" aria-label={`Open the workspace for ${currentUser.name || currentUser.email || "your account"}`}>
               <span className="site-header-profile-avatar" aria-hidden="true">{(currentUser.name?.trim() || currentUser.email || "").charAt(0).toUpperCase() || <UserRound size={15} strokeWidth={2} />}</span>
               <span className="site-header-profile-name">{currentUser.name?.trim() || currentUser.email?.split("@")[0] || "Your profile"}</span>
@@ -91,7 +91,7 @@ export function SiteHeader({ currentUser = null }: { currentUser?: HeaderUser | 
           </> : <>
             <Link href={ROUTES.signIn} className="nav-link site-sign-in">Sign in</Link>
             <Link href={ROUTES.signIn} className="button-primary site-header-cta !px-4 !py-2.5 text-[13px]">
-              <span className="site-cta-full">Get started</span><span className="site-cta-short">Start</span><ArrowUpRight size={15} aria-hidden="true" />
+              <span className="site-cta-full">Get started</span><span className="site-cta-short">Start</span>
             </Link>
           </>}
           <button type="button" className="site-header-menu-toggle" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"} aria-controls="primary-navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((open) => !open)}>

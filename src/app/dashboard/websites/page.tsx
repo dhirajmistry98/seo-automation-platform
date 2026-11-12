@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, Download, Globe2, Settings2 } from "lucide-react";
+import { Download, Globe2, Settings2 } from "lucide-react";
 import { addWebsiteAction } from "@/app/dashboard/actions";
 import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
@@ -27,7 +27,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
         <label htmlFor="website-domain">Website domain</label>
         <label htmlFor="website-organization">Add to workspace</label>
         <select id="website-organization" name="organizationId" defaultValue="">{organizations.filter((item) => hasOrganizationPermission(item.role, "websites.manage")).map((item) => <option value={item.id} key={item.id}>{item.name} · {item.role.replaceAll("_", " ")}</option>)}</select>
-        <div><Globe2 size={17} aria-hidden="true" /><input id="website-domain" name="domain" type="text" placeholder="example.com" autoComplete="url" required maxLength={2048} /><button type="submit">Add website <ArrowUpRight size={14} /></button></div>
+        <div><Globe2 size={17} aria-hidden="true" /><input id="website-domain" name="domain" type="text" placeholder="example.com" autoComplete="url" required maxLength={2048} /><button type="submit">Add website</button></div>
         {message && <p className={`workspace-form-message${["invalid", "unavailable"].includes(query.site || "") ? " is-error" : ""}`} role="status">{message}</p>}
       </form> : <p className="workspace-alert">Website setup is unavailable until MongoDB is running and reachable.</p>}
     </section>
@@ -41,7 +41,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
         const canManageIssues = hasOrganizationPermission(role, "issues.manage");
         return <article className="workspace-site-card workspace-site-card-page" key={site.domain}>
           <span className="workspace-site-mark"><Globe2 size={17} /></span>
-          <div className="workspace-site-identity"><a href={site.url} target="_blank" rel="noreferrer">{site.name || site.domain} <ArrowUpRight size={12} /></a><small>{site.domain} · {site.verifiedAt ? "Ownership verified" : "Verify ownership to begin"}{site.detectedCms ? ` · ${site.detectedCms.name} detected` : ""}</small></div>
+          <div className="workspace-site-identity"><a href={site.url} target="_blank" rel="noreferrer">{site.name || site.domain}</a><small>{site.domain} · {site.verifiedAt ? "Ownership verified" : "Verify ownership to begin"}{site.detectedCms ? ` · ${site.detectedCms.name} detected` : ""}</small></div>
           <span className={`workspace-site-state${site.status === "connected" ? " is-connected" : ""}`}><i className={`status-dot ${site.status === "connected" ? "is-good" : "is-waiting"}`} />{site.status === "connected" ? "Connected" : "Setup needed"}</span>
           {canManage && <Link className="workspace-site-settings" href={`/dashboard/websites/${encodeURIComponent(site.domain)}`}><Settings2 size={14} /> Configure</Link>}
           <a className="workspace-site-settings" href={`/api/sites/${encodeURIComponent(site.domain)}/report?format=csv`}><Download size={14} /> Export report</a>

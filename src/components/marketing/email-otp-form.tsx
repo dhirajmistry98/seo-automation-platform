@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Mail, RotateCw, ShieldCheck, Timer } from "lucide-react";
 
-const CODE_LIFETIME_SECONDS = 15 * 60;
+const CODE_LIFETIME_SECONDS = 15;
 
 function formatRemaining(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -183,7 +183,7 @@ export function EmailOtpForm({ redirectTo = "/dashboard" }: { redirectTo?: strin
         </form>
       )}
       <p className="otp-feedback" aria-live="polite">{error || message}</p>
-      <p className="otp-security"><ShieldCheck size={13} /> Codes expire after 15 minutes and can only be used once.</p>
+      <p className="otp-security"><ShieldCheck size={13} /> Codes expire after 15 seconds and can only be used once.</p>
     </section>
   );
 }

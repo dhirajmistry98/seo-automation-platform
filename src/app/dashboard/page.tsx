@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, ArrowRight, ArrowUpRight, BarChart3, CheckCircle2, FileText, Globe2, ListTodo, LockKeyhole, MapPin, Sparkles } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, CheckCircle2, FileText, Globe2, ListTodo, LockKeyhole, MapPin, Sparkles } from "lucide-react";
 import { getWorkspaceData } from "@/lib/workspace-data";
 import { OverviewSearchRefresh } from "@/components/workspace/overview-search-refresh";
 
@@ -73,7 +73,7 @@ export default async function DashboardOverview() {
   return <>
     <header className="workspace-page-heading">
       <div><p className="workspace-eyebrow"><span /> SEO STUDIO WORKSPACE</p><h1>Welcome back, {session.user.name?.trim().split(/\s+/)[0] || "there"}.</h1><p>Your SEO work, sites, and team activity in one place.</p></div>
-      <Link href="/dashboard/websites" className="workspace-primary-link">Add a website <ArrowUpRight size={15} /></Link>
+      <Link href="/dashboard/websites" className="workspace-primary-link">Add a website</Link>
     </header>
     {!ready && <div className="workspace-alert" role="status">Workspace data is temporarily unavailable. Check the database connection and refresh this page.</div>}
     <section className="workspace-kpis" aria-label="Workspace summary">
@@ -84,7 +84,7 @@ export default async function DashboardOverview() {
     </section>
     <section className="workspace-performance-grid" aria-label="Organic search and AI visibility overview">
       <article className="workspace-insight-card workspace-organic-card">
-        <header><div><p className="workspace-eyebrow"><BarChart3 size={13} /> ORGANIC SEARCH</p><h2>Organic Search Performance</h2><p>Latest saved Google Search Console report</p></div><Link href="/dashboard/integrations" aria-label="Open Search Console reports"><ArrowUpRight size={16} /></Link></header>
+        <header><div><p className="workspace-eyebrow"><BarChart3 size={13} /> ORGANIC SEARCH</p><h2>Organic Search Performance</h2><p>Latest saved Google Search Console report</p></div><Link href="/dashboard/integrations" aria-label="Open Search Console reports">Open</Link></header>
         {latestSearchReport ? <>
           <div className="workspace-insight-source"><strong>{latestSearchReport.websiteDomain}</strong><span>{latestSearchReport.startDate} – {latestSearchReport.endDate}</span><time dateTime={reportDateTime(latestSearchReport.generatedAt)}>{reportTime(latestSearchReport.generatedAt)}</time></div>
           <dl className="workspace-organic-metrics">
@@ -107,20 +107,20 @@ export default async function DashboardOverview() {
         <p className="workspace-insight-footnote">Search Console data is refreshed when a report is run and may be delayed by Google; it is not minute-by-minute analytics.</p>
       </article>
       <article className="workspace-insight-card workspace-ai-card">
-        <header><div><p className="workspace-eyebrow"><Sparkles size={13} /> GEO · AEO · LLMO</p><h2>AI Visibility</h2><p>Provider mentions and crawl-based readiness</p></div><Link href="/dashboard/research" aria-label="Open AI visibility research"><ArrowUpRight size={16} /></Link></header>
+        <header><div><p className="workspace-eyebrow"><Sparkles size={13} /> GEO · AEO · LLMO</p><h2>AI Visibility</h2><p>Provider mentions and crawl-based readiness</p></div><Link href="/dashboard/research" aria-label="Open AI visibility research">Open</Link></header>
         {latestAiReport ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Sparkles size={18} /></span><div><strong>{metric(aiResultCount)}</strong><p>matching rows in the latest {latestAiReport.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"} provider report</p><small>{latestAiReport.websiteDomain} · {latestAiReport.countryName || latestAiReport.locationName || "saved market"} · {reportTime(latestAiReport.fetchedAt)}</small></div></div> : <div className="workspace-insight-empty workspace-ai-empty"><span><Sparkles size={18} /></span><div><strong>No AI mention report yet</strong><p>Run an AI visibility report for a connected market to see provider observations here.</p><Link href="/dashboard/research">Run AI visibility research <ArrowRight size={13} /></Link></div></div>}
         <div className="workspace-readiness-heading"><strong>Latest crawl-based readiness</strong>{latestReadinessReport && <small>{latestReadinessReport.websiteDomain} · {reportTime(latestReadinessReport.calculatedAt)}</small>}</div>
         <div className="workspace-readiness-list">{(["geo", "aeo", "llmo"] as const).map((key) => {
           const score = scoreValue(latestReadinessReport?.scores?.[key]);
           return <div key={key}><span>{key.toUpperCase()}</span><div className="workspace-readiness-track"><i style={{ width: `${score ?? 0}%` }} /></div><strong>{score === null ? "—" : `${score}%`}</strong></div>;
         })}</div>
-        <div className="workspace-ai-actions"><Link href="/dashboard/research">Run a new AI mentions report <ArrowRight size={13} /></Link><Link href="/dashboard/visibility">Open readiness details <ArrowUpRight size={13} /></Link></div>
+        <div className="workspace-ai-actions"><Link href="/dashboard/research">Run a new AI mentions report <ArrowRight size={13} /></Link><Link href="/dashboard/visibility">Open readiness details</Link></div>
         <p className="workspace-insight-footnote">Readiness scores inspect the latest crawl’s structure and metadata. They are not measured rankings, citations or answers in AI products.</p>
       </article>
     </section>
     <section className="workspace-section workspace-overview-sites" aria-labelledby="recent-sites-title">
       <div className="workspace-section-heading"><div><p className="workspace-eyebrow">WEBSITE PORTFOLIO</p><h2 id="recent-sites-title">Your websites</h2><p>Open a site to audit it, review findings, and manage its setup.</p></div><Link className="workspace-text-link" href="/dashboard/websites">View all websites <ArrowRight size={14} /></Link></div>
-      {websites.length ? <div className="workspace-overview-site-list">{websites.slice(0, 4).map((site) => <Link className="workspace-overview-site" href="/dashboard/websites" key={site.domain}><span className="workspace-overview-site-icon"><Globe2 size={17} /></span><span className="workspace-overview-site-copy"><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "DNS verification needed"}</small></span>{site.lastAudit?.score !== undefined && <span className="workspace-overview-score">{site.lastAudit.score}<small>SEO health</small></span>}<ArrowUpRight size={15} /></Link>)}</div> : <div className="workspace-site-empty"><span><Globe2 size={18} /></span><div><strong>No websites yet</strong><p>Add a public domain to start collecting real SEO data.</p></div><Link href="/dashboard/websites">Add website</Link></div>}
+      {websites.length ? <div className="workspace-overview-site-list">{websites.slice(0, 4).map((site) => <Link className="workspace-overview-site" href="/dashboard/websites" key={site.domain}><span className="workspace-overview-site-icon"><Globe2 size={17} /></span><span className="workspace-overview-site-copy"><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "DNS verification needed"}</small></span>{site.lastAudit?.score !== undefined && <span className="workspace-overview-score">{site.lastAudit.score}<small>SEO health</small></span>}</Link>)}</div> : <div className="workspace-site-empty"><span><Globe2 size={18} /></span><div><strong>No websites yet</strong><p>Add a public domain to start collecting real SEO data.</p></div><Link href="/dashboard/websites">Add website</Link></div>}
     </section>
     <section className="workspace-section workspace-overview-next" aria-labelledby="overview-next-title">
       <div className="workspace-section-heading"><div><p className="workspace-eyebrow">GET STARTED</p><h2 id="overview-next-title">Choose what to do next</h2><p>Each area has its own page and controls.</p></div></div>

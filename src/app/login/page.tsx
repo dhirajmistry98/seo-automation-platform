@@ -7,7 +7,7 @@ import { EmailOtpForm } from "@/components/marketing/email-otp-form";
 import { BrandLogo } from "@/components/marketing/brand-logo";
 import { BRAND } from "@/lib/marketing";
 import { emailDeliveryConfigured } from "@/lib/email";
-import { AlertCircle, ArrowLeft, ArrowUpRight, Check, Search, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Search, ShieldCheck } from "lucide-react";
 
 interface LoginPageProps {
   searchParams: Promise<{ error?: string; callbackUrl?: string }>;
@@ -75,7 +75,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           <aside className="login-guidance" aria-label="Getting started guidance">
             <div><strong>New to SEO STUDIO?</strong><p>See the quick guide to setting up your website, target market and data sources.</p></div>
-            <Link href="/#guidance">View guide <ArrowUpRight size={14} aria-hidden="true" /></Link>
+            <Link href="/#guidance">View guide</Link>
           </aside>
 
           {error && (
@@ -94,14 +94,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
                 <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
               </svg>
-              Continue with Google <ArrowUpRight size={15} />
+              Continue with Google
             </button>
           </form>
 
           {emailOtpEnabled ? <>
             <div className="login-divider"><span>OR CONTINUE WITH EMAIL</span></div>
             <EmailOtpForm redirectTo={callbackUrl} />
-            <p className="login-security-note"><ShieldCheck size={14} /> Your sign-in is protected. Email codes expire after 15 minutes.</p>
+            <p className="login-security-note"><ShieldCheck size={14} /> Your sign-in is protected. Email codes expire after 15 seconds.</p>
           </> : <div className="login-email-unavailable" role="status"><ShieldCheck size={15} /><span>Email sign-in is not enabled for this deployment. Continue with Google.</span></div>}
         </div>
         <p className="login-help">Need help? <Link href="/">Visit {BRAND.name}</Link></p>

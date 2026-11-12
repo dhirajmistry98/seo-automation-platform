@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, ArrowUpRight, LoaderCircle } from "lucide-react";
+import { Activity, LoaderCircle } from "lucide-react";
 
 export type AuthoritySnapshot = {
   score: number;
@@ -65,6 +65,6 @@ export function AuthorityIndexCard({ domain, initialHistory }: { domain: string;
       </div>
     </div>
     {history.length > 1 && <div className="authority-index-history"><h3>Recent snapshots</h3><ol>{history.slice(0, 6).map((item, index) => <li key={`${item.calculatedAt}-${index}`}><span>{new Date(item.calculatedAt).toLocaleDateString()}</span><strong>{item.score}/100</strong><small>confidence {item.confidence}/100</small></li>)}</ol></div>}
-    <p className="authority-index-footnote">Snapshots use existing reports and make no paid provider request. Refresh the source reports to update the estimate. <ArrowUpRight size={13} aria-hidden="true" /></p>
+    <p className="authority-index-footnote">Snapshots use existing reports and make no paid provider request. Refresh the source reports to update the estimate.</p>
   </section>;
 }

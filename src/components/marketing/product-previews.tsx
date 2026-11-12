@@ -1,6 +1,6 @@
 import { BRAND } from "@/lib/marketing";
 import { BrandLogo } from "./brand-logo";
-import { Activity, ArrowUpRight, Check, CircleHelp, Globe2, LayoutDashboard, Search, Sparkles } from "lucide-react";
+import { Activity, Check, CircleHelp, Globe2, LayoutDashboard, MousePointerClick, Search, Sparkles } from "lucide-react";
 
 export function DashboardPreview() {
   return (
@@ -16,7 +16,7 @@ export function DashboardPreview() {
           <div className="hidden items-center gap-2 rounded-lg border border-brand-cream bg-brand-cream px-2.5 py-2 text-[10px] text-brand-cream sm:flex"><Globe2 size={12} /> Connect a website</div>
         </div>
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          {[["SEO health", Activity, "No audit yet"], ["Organic clicks", ArrowUpRight, "Connect Search Console"], ["Keywords", Search, "No keywords tracked"], ["Issues found", CircleHelp, "Run your first audit"]].map(([label, Icon, detail]) => {
+          {[["SEO health", Activity, "No audit yet"], ["Organic clicks", MousePointerClick, "Connect Search Console"], ["Keywords", Search, "No keywords tracked"], ["Issues found", CircleHelp, "Run your first audit"]].map(([label, Icon, detail]) => {
             const MetricIcon = Icon as typeof Activity;
             return <div key={label as string} className="preview-stat"><div className="flex items-center justify-between"><span className="preview-label">{label as string}</span><MetricIcon size={13} className="text-brand-cream" /></div><strong className="preview-number">—</strong><span className="text-[9px] text-brand-cream">{detail as string}</span></div>;
           })}

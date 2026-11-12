@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import {
   createOtpDigest,
+  EMAIL_OTP_RESEND_MS,
   EMAIL_OTP_TTL_MS,
   emailKey,
   ensureEmailOtpIndexes,
@@ -43,12 +44,12 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db();
     const now = new Date();
-    const ipLimit = await consumeRateLimit(db, "email-otp-send-ip", requestClientIp(request), 10, 60 * 60_000, now);
+    const ipLimit = await consumeRateLimit(db, "email-otp-send-ip", requestClientIp(request), 20, 60 * 60_000, now);
     if (!ipLimit.allowed) return response("Please wait before requesting another sign-in code.", 429, ipLimit.retryAfterSeconds);
-    const emailLimit = await consumeRateLimit(db, "email-otp-send-email", email, 5, 60 * 60_000, now);
+    const emailLimit = await consumeRateLimit(db, "email-otp-send-email", email, 10, 60 * 60_000, now);
     if (!emailLimit.allowed) return response("Please wait before requesting another sign-in code.", 429, emailLimit.retryAfterSeconds);
     const allowed = await reserveEmailOtpSend(db, email, now);
-    if (!allowed) return response("Please wait a minute before requesting another code.", 429, 60);
+    if (!allowed) return response("Please wait a few seconds before requesting another code.", 429, Math.ceil(EMAIL_OTP_RESEND_MS / 1000));
 
     const { otpCodes } = await ensureEmailOtpIndexes(db);
     const code = randomInt(0, 1_000_000).toString().padStart(6, "0");

@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
-  ArrowUpRight,
   BarChart3,
   Blocks,
   Check,
@@ -108,7 +107,7 @@ export default async function GuidePage() {
             <p className="marketing-guide-lede">Learn how SEO Studio works, what the platform offers, how to build toward better search visibility, and how brands and creators can collaborate.</p>
             <div className="marketing-guide-hero-actions">
               <Link href="#first-steps" className="button-primary">Start with the first steps <ArrowRight size={15} aria-hidden="true" /></Link>
-              <Link href="/#home" className="marketing-guide-text-link">Back to SEO Studio <ArrowUpRight size={15} aria-hidden="true" /></Link>
+              <Link href="/#home" className="marketing-guide-text-link">Back to SEO Studio</Link>
             </div>
             <p className="marketing-guide-public-note"><ShieldCheck size={15} aria-hidden="true" /> This guide is public. You can read it before creating an account.</p>
           </div>
@@ -162,12 +161,12 @@ export default async function GuidePage() {
                 <article>
                   <p className="marketing-guide-kicker">FOR CREATORS</p><h3>Build a trusted profile</h3>
                   <ol><li>Create an influencer account and add your portfolio, categories, location and rates.</li><li>Connect Instagram through the official authorization flow so the marketplace can verify ownership and current account statistics. There is no minimum follower count.</li><li>After review, find approved brands and campaigns, then apply with your proposal.</li></ol>
-                  <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fcreator">Create an influencer profile <ArrowUpRight size={14} aria-hidden="true" /></Link>
+                  <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fcreator">Create an influencer profile</Link>
                 </article>
                 <article>
                   <p className="marketing-guide-kicker">FOR BRANDS</p><h3>Find the right creator</h3>
                   <ol><li>Create a brand profile with your business, offerings and audience.</li><li>After approval, publish a brief with budget, deliverables and deadlines.</li><li>Review applications or invite suitable verified creators to collaborate.</li></ol>
-                  <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fbrand">Create a brand profile <ArrowUpRight size={14} aria-hidden="true" /></Link>
+                  <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fbrand">Create a brand profile</Link>
                 </article>
               </div>
               <div className="marketing-guide-collab-flow"><span>Application or invitation</span><ArrowRight size={14} aria-hidden="true" /><span>Accepted campaign conversation</span><ArrowRight size={14} aria-hidden="true" /><span>Agreed scope and deliverables</span><ArrowRight size={14} aria-hidden="true" /><span>Submit, review and complete</span></div>
@@ -178,12 +177,12 @@ export default async function GuidePage() {
               <ol className="marketing-guide-checklist">
                 {firstSteps.map(({ title, text, href, action }, index) => <li key={title}>
                   <span className="marketing-guide-check-number">0{index + 1}</span>
-                  <div><h3>{title}</h3><p>{text}</p><Link href={href}>{action} <ArrowUpRight size={14} aria-hidden="true" /></Link></div>
+                  <div><h3>{title}</h3><p>{text}</p><Link href={href}>{action}</Link></div>
                 </li>)}
               </ol>
               <div className="marketing-guide-last-step">
                 <div><p className="marketing-guide-kicker">READY TO COLLABORATE?</p><h3>Join the creator marketplace</h3><p>Choose the account type that matches your role, complete your profile and follow the review steps before contacting partners.</p></div>
-                <div><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fcreator">Join as a creator <ArrowUpRight size={14} aria-hidden="true" /></Link><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fbrand">Join as a brand <ArrowUpRight size={14} aria-hidden="true" /></Link></div>
+                <div><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fcreator">Join as a creator</Link><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fbrand">Join as a brand</Link></div>
               </div>
             </GuideChapter>
           </div>

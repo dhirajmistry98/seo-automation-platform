@@ -4,7 +4,6 @@ import {
   Activity,
   ArrowDown,
   ArrowRight,
-  ArrowUpRight,
   BadgeCheck,
   BarChart3,
   Blocks,
@@ -122,7 +121,7 @@ export function HeroSection() {
           </h1>
           <p className="landing-hero-lede">Audit your site, find meaningful keyword opportunities, and review every recommended update in one focused workspace.</p>
           <div className="landing-hero-actions">
-            <Link href={ROUTES.signIn} className="button-primary">Explore the workspace <ArrowUpRight size={16} aria-hidden="true" /></Link>
+            <Link href={ROUTES.signIn} className="button-primary">Explore the workspace</Link>
             <a href="#products" className="landing-text-link">See how it works <ArrowDown size={15} aria-hidden="true" /></a>
           </div>
           <p className="landing-hero-note"><span /> Live data appears only after an authorized source is connected.</p>
@@ -150,11 +149,11 @@ export function GettingStartedSection() {
               <span className="landing-guidance-icon"><Icon size={18} aria-hidden="true" /></span>
               <h3>{title}</h3>
               <p>{text}</p>
-              <Link href={href}>{action}<ArrowUpRight size={14} aria-hidden="true" /></Link>
+              <Link href={href}>{action}</Link>
             </li>
           ))}
         </ol>
-        <p className="landing-guidance-note"><ShieldCheck size={15} aria-hidden="true" /> Read the full first-time-user guide for setup steps, feature details, realistic ranking guidance and creator workflows. <Link href="/guide">Open the complete guide <ArrowUpRight size={14} aria-hidden="true" /></Link></p>
+        <p className="landing-guidance-note"><ShieldCheck size={15} aria-hidden="true" /> Read the full first-time-user guide for setup steps, feature details, realistic ranking guidance and creator workflows. <Link href="/guide">Open the complete guide</Link></p>
       </div>
     </section>
   );
@@ -284,7 +283,7 @@ async function MarketplaceSection() {
                 {recentMedia.length > 0 && <div className="landing-marketplace-media-preview">{recentMedia.map((media, index) => { const src = marketplaceText(media.thumbnailUrl) || marketplaceText(media.mediaUrl); return src ? <a key={marketplaceText(media.id) || index} href={marketplaceText(media.permalink) || (username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : undefined)} target="_blank" rel="noopener noreferrer" aria-label={`Open a recent Instagram post by ${marketplaceText(creator.displayName)}`}><Image src={src} alt="" fill sizes="(max-width: 800px) 25vw, 120px" unoptimized /></a> : null; })}</div>}
               </article>;
             })}</div> : <div className="landing-marketplace-empty"><UsersRound size={20} aria-hidden="true" /><div><strong>Creator profiles are being reviewed</strong><p>Verified creators will appear here when they join and complete approval.</p></div></div>}
-            <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fdiscover" className="landing-marketplace-directory-link">Discover creators <ArrowUpRight size={15} aria-hidden="true" /></Link>
+            <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fdiscover" className="landing-marketplace-directory-link">Discover creators</Link>
           </article>
 
           <article className="landing-marketplace-directory">
@@ -305,13 +304,13 @@ async function MarketplaceSection() {
                 </div>
               </article>;
             })}</div> : <div className="landing-marketplace-empty"><Building2 size={20} aria-hidden="true" /><div><strong>Brand profiles are being reviewed</strong><p>Approved businesses will appear here for creators to explore.</p></div></div>}
-            <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fdiscover" className="landing-marketplace-directory-link">Explore brands and campaigns <ArrowUpRight size={15} aria-hidden="true" /></Link>
+            <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fdiscover" className="landing-marketplace-directory-link">Explore brands and campaigns</Link>
           </article>
         </div>
         <div className="landing-marketplace-start">
-          <article><span className="landing-marketplace-start-icon"><UserRound size={18} aria-hidden="true" /></span><div><p className="landing-eyebrow">FOR INFLUENCERS</p><h3>Create your creator profile</h3><p>Connect Instagram, add your portfolio and rates, then apply to open brand campaigns after profile review.</p></div><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fcreator">Join as an influencer <ArrowUpRight size={15} aria-hidden="true" /></Link></article>
-          <article><span className="landing-marketplace-start-icon"><Building2 size={18} aria-hidden="true" /></span><div><p className="landing-eyebrow">FOR BRANDS</p><h3>Create your brand profile</h3><p>Add your business and offerings. After approval, publish campaigns, discover verified creators and invite them to collaborate.</p></div><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fbrand">Join as a brand <ArrowUpRight size={15} aria-hidden="true" /></Link></article>
-          <article><span className="landing-marketplace-start-icon"><SearchCheck size={18} aria-hidden="true" /></span><div><p className="landing-eyebrow">FOR BUSINESSES &amp; EXPERTS</p><h3>Hire a search specialist</h3><p>Request scoped help with SEO, GEO, AEO, LLMO, local search or WordPress from reviewed professionals.</p></div><Link href="/login?callbackUrl=%2Fmarketplace%2Fservices">Explore expert services <ArrowUpRight size={15} aria-hidden="true" /></Link></article>
+          <article><span className="landing-marketplace-start-icon"><UserRound size={18} aria-hidden="true" /></span><div><p className="landing-eyebrow">FOR INFLUENCERS</p><h3>Create your creator profile</h3><p>Connect Instagram, add your portfolio and rates, then apply to open brand campaigns after profile review.</p></div><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fcreator">Join as an influencer</Link></article>
+          <article><span className="landing-marketplace-start-icon"><Building2 size={18} aria-hidden="true" /></span><div><p className="landing-eyebrow">FOR BRANDS</p><h3>Create your brand profile</h3><p>Add your business and offerings. After approval, publish campaigns, discover verified creators and invite them to collaborate.</p></div><Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fbrand">Join as a brand</Link></article>
+          <article><span className="landing-marketplace-start-icon"><SearchCheck size={18} aria-hidden="true" /></span><div><p className="landing-eyebrow">FOR BUSINESSES &amp; EXPERTS</p><h3>Hire a search specialist</h3><p>Request scoped help with SEO, GEO, AEO, LLMO, local search or WordPress from reviewed professionals.</p></div><Link href="/login?callbackUrl=%2Fmarketplace%2Fservices">Explore expert services</Link></article>
         </div>
         <p className="landing-marketplace-note"><ShieldCheck size={15} aria-hidden="true" /> Creator follower counts come from a current authorized Instagram connection. No sample profiles or manually entered audience numbers are shown.</p>
       </div>
@@ -409,7 +408,7 @@ export function FinalCTA() {
           <p className="landing-eyebrow"><span className="landing-eyebrow-dot" /> Your next useful SEO action</p>
           <h2>Find the issue.<br /><em>Make the improvement.</em></h2>
           <p>Bring analysis, research and approved WordPress updates into one connected workflow.</p>
-          <Link href={ROUTES.signIn} className="button-primary">Get started <ArrowUpRight size={16} aria-hidden="true" /></Link>
+          <Link href={ROUTES.signIn} className="button-primary">Get started</Link>
         </div>
         <div className="landing-cta-mark" aria-hidden="true"><Activity size={32} /></div>
       </div>
@@ -445,7 +444,7 @@ export function SiteFooter() {
             <div className="landing-footer-links">
               <h2>Workspace</h2>
               <Link href={ROUTES.signIn}>Sign in</Link>
-              <Link href={ROUTES.signIn}>Get started <ArrowUpRight size={13} aria-hidden="true" /></Link>
+              <Link href={ROUTES.signIn}>Get started</Link>
             </div>
           </div>
         </div>

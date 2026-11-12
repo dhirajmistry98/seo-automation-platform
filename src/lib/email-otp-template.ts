@@ -20,7 +20,8 @@ function appOrigin() {
  */
 export function buildSignInCodeEmail(code: string, email: string | undefined, expiresAt: Date, ttlMs: number) {
   const origin = appOrigin();
-  const minutes = Math.round(ttlMs / 60_000);
+  const seconds = Math.round(ttlMs / 1000);
+  const lifetime = seconds < 120 ? `${seconds} seconds` : `${Math.round(seconds / 60)} minutes`;
   const expiry = `&amp;exp=${Math.floor(expiresAt.getTime() / 1000)}`;
   const fillUrl = origin && /^\d{6}$/.test(code)
     ? `${origin}/login#otp=${code}${email ? `&amp;email=${encodeURIComponent(email)}` : ""}${expiry}`
@@ -33,7 +34,7 @@ export function buildSignInCodeEmail(code: string, email: string | undefined, ex
     "",
     `Your sign-in code is: ${code}`,
     "",
-    `It expires in ${minutes} minutes and can only be used once.`,
+    `It expires in ${lifetime} and can only be used once.`,
     "If you didn't try to sign in, you can safely ignore this email.",
     fillUrl ? `\nSign in with the code filled in: ${fillUrl.replaceAll("&amp;", "&")}` : "",
   ].join("\n");
@@ -45,7 +46,7 @@ export function buildSignInCodeEmail(code: string, email: string | undefined, ex
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${subject}</title></head>
 <body style="margin:0;padding:0;background:${CREAM};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${NAVY};">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your code expires in ${minutes} minutes.</div>
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your code expires in ${lifetime}.</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};padding:32px 16px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
@@ -71,7 +72,7 @@ export function buildSignInCodeEmail(code: string, email: string | undefined, ex
           </tr></table>
           ${fillUrl ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:${MUTED};text-align:center;">Click the copy icon to open ${BRAND.name} with this code filled in.</p>` : ""}
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;border-top:1px solid #EFE7DE;">
-            <tr><td style="padding-top:16px;font-size:13px;line-height:1.6;color:${MUTED};">Expires in <strong style="color:${NAVY};">${minutes} minutes</strong> and works only once.</td></tr>
+            <tr><td style="padding-top:16px;font-size:13px;line-height:1.6;color:${MUTED};">Expires in <strong style="color:${NAVY};">${lifetime}</strong> and works only once.</td></tr>
             <tr><td style="padding-top:6px;font-size:13px;line-height:1.6;color:${MUTED};">Never share this code. ${BRAND.name} will never ask for it.</td></tr>
             <tr><td style="padding-top:6px;font-size:13px;line-height:1.6;color:${MUTED};">Didn't try to sign in? You can safely ignore this email.</td></tr>
           </table>

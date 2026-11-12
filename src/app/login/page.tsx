@@ -58,7 +58,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </aside>
 
       <section className="login-form-side">
-        <Link href="/" className="login-back"><ArrowLeft size={15} /> Back to home</Link>
+        <div className="login-back-row">
+          <Link href="/" className="login-back">
+            <span className="login-back-icon" aria-hidden="true"><ArrowLeft size={14} /></span>
+            Back to home
+          </Link>
+        </div>
         <div className="login-card">
           <div className="login-form-heading">
             <span className="login-form-icon"><Search size={18} /></span>

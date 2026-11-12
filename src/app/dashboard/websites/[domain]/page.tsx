@@ -12,6 +12,7 @@ import { getWebsiteSeoTarget } from "@/lib/seo/target";
 import { seoCrawlPageLimit } from "@/lib/seo/crawler";
 import { ArrowLeft, Download, Save } from "lucide-react";
 import { WebsiteDeleteControl } from "@/components/workspace/website-delete-control";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const instant = false;
 
@@ -111,13 +112,13 @@ export default async function WebsiteSettingsPage({ params, searchParams }: { pa
         <div className="website-settings-row"><label>Crawl frequency<select name="crawlFrequency" defaultValue={website.crawlFrequency || "manual"}><option value="manual">Manual only</option><option value="weekly">Weekly scheduled audit</option><option value="monthly">Monthly scheduled audit</option></select><small>Scheduled audits run when the configured external scheduler calls the worker endpoint.</small></label><label>Maximum pages<input name="maxPages" type="number" min={1} max={seoCrawlPageLimit()} defaultValue={Math.min(website.maxPages || 25, seoCrawlPageLimit())} /><small>Server limit: {seoCrawlPageLimit()} pages per crawl.</small></label></div>
         <label>PageSpeed schedule<select name="pageSpeedFrequency" defaultValue={website.pageSpeedFrequency || "manual"}><option value="manual">Manual only</option><option value="weekly">Weekly mobile homepage check</option><option value="monthly">Monthly mobile homepage check</option></select><small>Uses the Google PageSpeed API key and an external scheduler. Runs only for verified, active websites.</small></label>
         {website.nextScheduledPageSpeedAt && <p className="website-settings-message" role="status">Next PageSpeed check: {new Date(website.nextScheduledPageSpeedAt).toLocaleString()}{website.lastScheduledPageSpeedStatus ? ` · Last attempt: ${website.lastScheduledPageSpeedStatus}` : ""}.</p>}
-        <button type="submit"><Save size={15} /> Save website settings</button>
+        <SubmitButton><Save size={15} /> Save website settings</SubmitButton>
       </form>
       <form action={setWebsiteActiveAction} className="website-active-form">
         <input type="hidden" name="domain" value={website.domain} />
         <input type="hidden" name="active" value={website.active === false ? "true" : "false"} />
         <div><strong>{website.active === false ? "Website is paused" : "Website is active"}</strong><p>Pausing prevents new site audits. Existing reports and history remain available.</p></div>
-        <button type="submit">{website.active === false ? "Reactivate website" : "Pause website"}</button>
+        <SubmitButton>{website.active === false ? "Reactivate website" : "Pause website"}</SubmitButton>
       </form>
       <section className="website-activity" aria-labelledby="website-activity-title"><div><p className="workspace-eyebrow">AUDIT TRAIL</p><h2 id="website-activity-title">Recent activity</h2></div>{activity.length ? <ol>{activity.map((item, index) => <li key={`${item.auditId || item.action}-${item.createdAt?.toISOString?.() || index}`}><span className="website-activity-dot" /><div><strong>{(item.action || "website.updated").replaceAll(".", " ").replaceAll("_", " ")}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleString() : "Time unavailable"}{item.method ? ` · ${item.method.replaceAll("_", " ")}` : ""}{typeof item.pageCount === "number" ? ` · ${item.pageCount} pages` : ""}{typeof item.issueCount === "number" ? ` · ${item.issueCount} findings` : ""}</small></div></li>)}</ol> : <p>No recorded website activity yet. Verification and audits will appear here.</p>}</section>
       <div className="website-delete-panel"><div><strong>Remove this website</strong><p>Delete this site and its saved SEO data from this workspace.</p></div><WebsiteDeleteControl domain={website.domain} /></div>

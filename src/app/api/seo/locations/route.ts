@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
-import { dataForSeoGet, isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
+import { DataForSeoAccountError, dataForSeoGet, isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
 
 type ProviderLanguage = { language_code: string; language_name: string; available_sources?: string[] };
 type LocationRecord = { location_code: number; location_name: string; location_code_parent?: number | null; country_iso_code: string; location_type: string };
@@ -109,6 +109,7 @@ export async function GET(request: Request) {
     return json({ locations: locations.slice(0, 30) });
   } catch (error) {
     console.error("SEO location catalog request failed:", error instanceof Error ? error.message : "unknown error");
+    if (error instanceof DataForSeoAccountError) return json({ error: error.message }, 503);
     return json({ error: "Search locations are temporarily unavailable. Check the SEO provider connection and try again." }, 502);
   }
 }

@@ -78,6 +78,25 @@ export async function readDataForSeoResponse(response: Response): Promise<DataFo
   }
 }
 
+/** Account-level DataForSEO problems an admin must fix in the DataForSEO dashboard (not a temporary outage). */
+export class DataForSeoAccountError extends Error {
+  providerCode: number;
+  constructor(message: string, providerCode: number) {
+    super(message);
+    this.name = "DataForSeoAccountError";
+    this.providerCode = providerCode;
+  }
+}
+
+function accountError(statusCode: number | undefined, httpStatus: number) {
+  const code = Number(statusCode) || 0;
+  if (code === 40104) return new DataForSeoAccountError("Your DataForSEO account is not verified yet. Complete verification at app.dataforseo.com, then try again.", code);
+  if (code === 40100 || code === 40101 || httpStatus === 401) return new DataForSeoAccountError("DataForSEO rejected the login. Check DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD (use the API password from app.dataforseo.com, not your account password).", code);
+  if (code === 40202 || code === 40209 || httpStatus === 429) return new DataForSeoAccountError("DataForSEO rate limit reached. Wait a minute and try again.", code);
+  if ((code >= 40200 && code < 40300) || httpStatus === 402) return new DataForSeoAccountError("Your DataForSEO balance is too low. Add funds at app.dataforseo.com, then try again.", code);
+  return null;
+}
+
 export async function dataForSeoPost(path: string, payload: Array<Record<string, unknown>>) {
   const login = process.env.DATAFORSEO_LOGIN?.trim();
   const password = process.env.DATAFORSEO_PASSWORD?.trim();
@@ -98,7 +117,7 @@ export async function dataForSeoPost(path: string, payload: Array<Record<string,
   try { result = await readDataForSeoResponse(response); }
   catch { throw new Error("SEO research provider returned an invalid or oversized response."); }
   if (!response.ok || (result.status_code && result.status_code >= 40000)) {
-    throw new Error("SEO research provider request failed. Check the provider account, API balance, and request settings.");
+    throw accountError(result.status_code, response.status) ?? new Error("SEO research provider request failed. Check the provider account, API balance, and request settings.");
   }
   const failedTask = result.tasks?.find((task) => task.status_code && task.status_code >= 40000);
   if (failedTask) throw new Error("SEO research provider could not complete the request. Check the location, language, and account limits.");
@@ -124,7 +143,7 @@ export async function dataForSeoGet(path: string) {
   let result: DataForSeoResponse;
   try { result = await readDataForSeoResponse(response); }
   catch { throw new Error("SEO research provider returned an invalid or oversized response."); }
-  if (!response.ok || (result.status_code && result.status_code >= 40000)) throw new Error("SEO research provider request failed. Check the provider account and API access.");
+  if (!response.ok || (result.status_code && result.status_code >= 40000)) throw accountError(result.status_code, response.status) ?? new Error("SEO research provider request failed. Check the provider account and API access.");
   const failedTask = result.tasks?.find((task) => task.status_code && task.status_code >= 40000);
   if (failedTask) throw new Error("SEO research provider could not load its location catalog.");
   return result;

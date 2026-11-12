@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Manrope } from "next/font/google";
 import "./globals.css";
+import { ButtonLoadingFeedback } from "@/components/ui/button-loading-feedback";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">{children}<ButtonLoadingFeedback /></body>
     </html>
   );
 }

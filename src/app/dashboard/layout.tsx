@@ -13,6 +13,7 @@ import { ensurePersonalOrganization, getOrganizationMemberships } from "@/lib/or
 import { BRAND } from "@/lib/marketing";
 import { BriefcaseBusiness, LogOut, UsersRound } from "lucide-react";
 import "./dashboard.css";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const instant = false;
 
@@ -33,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return <div className="workspace-shell">
     <header className="workspace-header"><div className="workspace-header-inner">
       <Link href="/dashboard" className="workspace-brand" aria-label={`${BRAND.name} workspace`}><BrandLogo className="workspace-brand-logo" /><span><strong>{BRAND.name}</strong><small>WORKSPACE</small></span></Link>
-      <div className="workspace-account"><Link href="/influencer-marketing" className="workspace-module-switch"><UsersRound size={15} aria-hidden="true" /><span>Influencer Marketing</span></Link><Link href="/marketplace/services" className="workspace-module-switch"><BriefcaseBusiness size={15} aria-hidden="true" /><span>Expert services</span></Link><WorkspaceNotifications /><Link href="/dashboard/account" className="workspace-account-profile" aria-label="Open account settings"><UserAvatar src={user.image} name={user.name || user.email || firstName} /><span className="workspace-account-copy"><strong>{user.name || "Account"}</strong><small>{user.email}</small></span></Link><form action={signOutAction}><button className="workspace-signout" type="submit" aria-label="Sign out"><LogOut size={15} aria-hidden="true" /><span>Sign out</span></button></form></div>
+      <div className="workspace-account"><Link href="/influencer-marketing" className="workspace-module-switch"><UsersRound size={15} aria-hidden="true" /><span>Influencer Marketing</span></Link><Link href="/marketplace/services" className="workspace-module-switch"><BriefcaseBusiness size={15} aria-hidden="true" /><span>Expert services</span></Link><WorkspaceNotifications /><Link href="/dashboard/account" className="workspace-account-profile" aria-label="Open account settings"><UserAvatar src={user.image} name={user.name || user.email || firstName} /><span className="workspace-account-copy"><strong>{user.name || "Account"}</strong><small>{user.email}</small></span></Link><form action={signOutAction}><SubmitButton className="workspace-signout" aria-label="Sign out"><LogOut size={15} aria-hidden="true" /><span>Sign out</span></SubmitButton></form></div>
     </div></header>
     <div className="workspace-layout"><WorkspaceNavigation siteCount={siteCount} /><main className="workspace-main workspace-main-redesign workspace-route-main">{siteCount === null && <div className="workspace-alert" role="status">Workspace database is unavailable. Start MongoDB or update <code>MONGODB_URI</code>, then refresh.</div>}{children}<footer className="workspace-footer"><span>{BRAND.name} · SEO workspace</span><Link href="/">Back to the website</Link></footer></main></div>
   </div>;

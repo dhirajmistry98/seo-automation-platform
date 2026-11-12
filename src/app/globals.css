@@ -3,6 +3,44 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Tailwind v4 preflight resets buttons to the default arrow cursor. Restore the pointer on everything clickable.
+   Kept in the base layer so component classes can still override it. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  input:is([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"], [type="range"], [type="color"]):not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Shared button spinner: set by <SubmitButton> while a server action runs and by <ButtonLoadingFeedback> for client buttons. */
+button[data-loading] { cursor: progress !important; }
+button[data-loading]::after {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  margin-left: .45em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  vertical-align: -.15em;
+  animation: button-loading-spin .7s linear infinite;
+}
+@keyframes button-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { button[data-loading]::after { animation-duration: 1.6s; } }
+
 @theme inline {
   --color-brand-navy: var(--brand-navy);
   --color-brand-cream: var(--brand-cream);

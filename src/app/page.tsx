@@ -11,6 +11,8 @@ const description = "Analyze, optimize and automate your website SEO with one co
 export const metadata: Metadata = {
   title,
   description,
+  // Website ownership verification for this site inside SEO Studio.
+  other: { "seo-studio-verification": "c04b5e0d85d7402b9af099c69318c8bb743df175c3209d00" },
   ...(siteUrl ? {
     metadataBase: new URL(siteUrl),
     alternates: { canonical: "/" },

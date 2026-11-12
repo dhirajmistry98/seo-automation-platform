@@ -8,6 +8,7 @@ import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
 import { hasOrganizationPermission } from "@/lib/organizations";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const instant = false;
 
@@ -27,7 +28,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
         <label htmlFor="website-domain">Website domain</label>
         <label htmlFor="website-organization">Add to workspace</label>
         <select id="website-organization" name="organizationId" defaultValue="">{organizations.filter((item) => hasOrganizationPermission(item.role, "websites.manage")).map((item) => <option value={item.id} key={item.id}>{item.name} · {item.role.replaceAll("_", " ")}</option>)}</select>
-        <div><Globe2 size={17} aria-hidden="true" /><input id="website-domain" name="domain" type="text" placeholder="example.com" autoComplete="url" required maxLength={2048} /><button type="submit">Add website</button></div>
+        <div><Globe2 size={17} aria-hidden="true" /><input id="website-domain" name="domain" type="text" placeholder="example.com" autoComplete="url" required maxLength={2048} /><SubmitButton>Add website</SubmitButton></div>
         {message && <p className={`workspace-form-message${["invalid", "unavailable"].includes(query.site || "") ? " is-error" : ""}`} role="status">{message}</p>}
       </form> : <p className="workspace-alert">Website setup is unavailable until MongoDB is running and reachable.</p>}
     </section>

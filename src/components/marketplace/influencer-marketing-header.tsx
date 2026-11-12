@@ -7,6 +7,7 @@ import { ArrowLeft, BriefcaseBusiness, ChevronDown, Compass, Heart, LayoutDashbo
 import { BrandLogo } from "@/components/marketing/brand-logo";
 import { WorkspaceNotifications } from "@/components/workspace/workspace-notifications";
 import { signOutAction } from "@/app/login/action";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const base = "/influencer-marketing";
 const primaryLinks = [
@@ -65,7 +66,7 @@ export function InfluencerMarketingHeader({ brandName, userName, userEmail, show
             {showAdmin && <Link role="menuitem" href={`${base}/admin`}><ShieldCheck size={15} /> Administration</Link>}
             <hr />
             <Link role="menuitem" href="/dashboard"><LayoutDashboard size={15} /> SEO Dashboard <ArrowLeft size={13} className="imh-menu-trailing" /></Link>
-            <form action={signOutAction}><button role="menuitem" type="submit"><LogOut size={15} /> Sign out</button></form>
+            <form action={signOutAction}><SubmitButton role="menuitem"><LogOut size={15} /> Sign out</SubmitButton></form>
           </div>}
         </div>
       </div>

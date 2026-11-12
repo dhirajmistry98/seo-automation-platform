@@ -9,6 +9,7 @@ import {
   normalizeEmail,
   reserveEmailOtpSend,
 } from "@/lib/email-otp";
+import { buildSignInCodeEmail } from "@/lib/email-otp-template";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, requestClientIp, sameOriginError } from "@/lib/security/request";
 
@@ -70,9 +71,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         from: sender,
         to: [email],
-        subject: "Your SEO STUDIO sign-in code",
-        text: `Your SEO STUDIO sign-in code is ${code}. It expires in 10 minutes. If you did not request this code, you can ignore this email.`,
-        html: `<div style="font-family:Arial,sans-serif;color:#18372a;max-width:520px;margin:auto"><p style="font-size:14px">Your SEO STUDIO sign-in code</p><p style="font-size:32px;font-weight:700;letter-spacing:8px;margin:20px 0">${code}</p><p style="font-size:14px;color:#63756b">This code expires in 10 minutes. If you did not request it, you can ignore this email.</p></div>`,
+        ...buildSignInCodeEmail(code),
       }),
       cache: "no-store",
     });

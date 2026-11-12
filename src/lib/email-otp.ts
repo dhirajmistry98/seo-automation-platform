@@ -45,14 +45,21 @@ function otpDigest(email: string, code: string) {
   return createHmac("sha256", secret()).update(`rankpilot-otp:${email}:${code}`).digest();
 }
 
+// Index creation is a server round trip; run it once per server instance instead of on every request.
+let emailOtpIndexesReady: Promise<unknown> | null = null;
+
 export async function ensureEmailOtpIndexes(db: Db) {
   const otpCodes = db.collection<OtpDocument>(EMAIL_OTP_COLLECTION);
   const rateLimits = db.collection<RateLimitDocument>(EMAIL_OTP_RATE_COLLECTION);
-  await Promise.all([
+  emailOtpIndexesReady ??= Promise.all([
     otpCodes.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     rateLimits.createIndex({ emailHash: 1 }, { unique: true }),
     rateLimits.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-  ]);
+  ]).catch((error) => {
+    emailOtpIndexesReady = null;
+    throw error;
+  });
+  await emailOtpIndexesReady;
   return { otpCodes, rateLimits };
 }
 

@@ -756,8 +756,6 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 .login-google-form { margin-top:21px; }
 .login-google { display:flex; width:100%; min-height:46px; align-items:center; justify-content:center; gap:10px; border:1px solid color-mix(in srgb,var(--brand-navy) 28%,transparent); background:transparent; color:var(--brand-navy); font-size:11px; font-weight:600; transition:background .18s ease,border-color .18s ease; }
 .login-google:hover { border-color:var(--brand-navy); background:color-mix(in srgb,var(--brand-navy) 5%,transparent); }
-.login-google svg:last-child { margin-left:auto; }
-.login-google svg:first-child { margin-left:auto; }
 .login-divider { margin-top:23px; color:color-mix(in srgb,var(--brand-navy) 58%,transparent); }
 .login-divider::before,.login-divider::after { background:color-mix(in srgb,var(--brand-navy) 22%,transparent); }
 .login-shell .otp-panel { border:0; border-top:1px solid color-mix(in srgb,var(--brand-navy) 20%,transparent); border-radius:0; background:transparent; padding:19px 0 0; }

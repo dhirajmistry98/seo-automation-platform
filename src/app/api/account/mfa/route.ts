@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { createRecoveryCodes, createTotpSecret, decryptTotpSecret, encryptTotpSecret, hashRecoveryCode, verifyTotp } from "@/lib/mfa";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { emailDeliveryConfigured } from "@/lib/email";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 
 async function getUser() {
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
   const existing = await context.db.collection("user_mfa").findOne({ userId });
   if (body.action === "begin") {
     if (existing?.enabled) return NextResponse.json({ error: "Authenticator MFA is already enabled." }, { status: 409 });
-    if (!process.env.RESEND_API_KEY || !process.env.AUTH_EMAIL_FROM) return NextResponse.json({ error: "Configure email sign-in delivery before enabling MFA. MFA requires both an email code and an authenticator code at sign-in." }, { status: 503 });
+    if (!emailDeliveryConfigured()) return NextResponse.json({ error: "Configure email sign-in delivery before enabling MFA. MFA requires both an email code and an authenticator code at sign-in." }, { status: 503 });
     if (!process.env.MFA_ENCRYPTION_KEY) return NextResponse.json({ error: "Set MFA_ENCRYPTION_KEY before enabling authenticator MFA." }, { status: 503 });
     const secret = createTotpSecret(); const now = new Date(); const email = context.session.user.email || userId;
     await context.db.collection("user_mfa").updateOne({ userId }, { $set: { email: email.toLowerCase(), pendingSecretEncrypted: encryptTotpSecret(secret), pendingUntil: new Date(now.getTime() + 10 * 60_000), updatedAt: now }, $setOnInsert: { userId, createdAt: now } }, { upsert: true });

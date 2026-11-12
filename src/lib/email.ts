@@ -25,21 +25,81 @@ export function buildOrganizationInvitationEmail(organizationName: string, role:
   };
 }
 
-export async function sendTransactionalEmail(email: TransactionalEmail) {
+/** Gmail (or Google Workspace) SMTP: sends to any recipient without owning a domain. Needs a Google App Password. */
+function gmailConfig() {
+  const user = process.env.GMAIL_USER?.trim();
+  const password = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "");
+  return user && password ? { user, password } : null;
+}
+
+function resendConfig() {
   const apiKey = process.env.RESEND_API_KEY;
   const sender = process.env.AUTH_EMAIL_FROM;
-  if (!apiKey || !sender) return false;
+  return apiKey && sender ? { apiKey, sender } : null;
+}
 
+/** True when at least one delivery method (Gmail SMTP or Resend) is configured. */
+export function emailDeliveryConfigured() {
+  return Boolean(gmailConfig() || resendConfig());
+}
+
+function senderName() {
+  const configured = process.env.AUTH_EMAIL_FROM?.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim();
+  return (configured || "SEO Studio").replace(/[\r\n"<>]/g, "");
+}
+
+async function sendWithGmail(config: { user: string; password: string }, email: TransactionalEmail) {
+  const { createTransport } = await import("nodemailer");
+  const transport = createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: config.user, pass: config.password },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+  });
+  try {
+    await transport.sendMail({
+      from: { name: senderName(), address: config.user },
+      to: email.to,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+      disableFileAccess: true,
+      disableUrlAccess: true,
+    });
+    return true;
+  } catch (error) {
+    console.error("Gmail SMTP delivery failed:", error instanceof Error ? error.message : error);
+    return false;
+  } finally {
+    transport.close();
+  }
+}
+
+async function sendWithResend(config: { apiKey: string; sender: string }, email: TransactionalEmail) {
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: "Bearer " + apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: sender, to: [email.to], subject: email.subject, text: email.text, html: email.html }),
+      headers: { Authorization: "Bearer " + config.apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: config.sender, to: [email.to], subject: email.subject, text: email.text, html: email.html }),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
+    if (!response.ok) console.error("Resend delivery failed:", response.status, (await response.text()).slice(0, 300));
     return response.ok;
-  } catch {
+  } catch (error) {
+    console.error("Resend delivery failed:", error instanceof Error ? error.message : error);
     return false;
   }
+}
+
+/** Sends via Gmail SMTP when configured, otherwise via Resend. Returns false when nothing is configured or delivery fails. */
+export async function sendTransactionalEmail(email: TransactionalEmail) {
+  const gmail = gmailConfig();
+  if (gmail) return sendWithGmail(gmail, email);
+  const resend = resendConfig();
+  if (resend) return sendWithResend(resend, email);
+  return false;
 }

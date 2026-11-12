@@ -6,6 +6,7 @@ import { signInWithGoogle } from "./action";
 import { EmailOtpForm } from "@/components/marketing/email-otp-form";
 import { BrandLogo } from "@/components/marketing/brand-logo";
 import { BRAND } from "@/lib/marketing";
+import { emailDeliveryConfigured } from "@/lib/email";
 import { AlertCircle, ArrowLeft, ArrowUpRight, Check, Search, ShieldCheck } from "lucide-react";
 
 interface LoginPageProps {
@@ -20,7 +21,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error, callbackUrl: requestedCallback } = await searchParams;
   const validCallback = typeof requestedCallback === "string" && requestedCallback.startsWith("/") && !requestedCallback.startsWith("//") && !requestedCallback.includes("\\") && !requestedCallback.startsWith("/login");
   const callbackUrl = validCallback ? requestedCallback.slice(0, 2048) : "/dashboard";
-  const emailOtpEnabled = Boolean(process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM);
+  const emailOtpEnabled = emailDeliveryConfigured();
   if (session?.user) redirect(callbackUrl);
   const getErrorMessage = (code: string) => {
     switch (code) {

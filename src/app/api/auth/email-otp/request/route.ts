@@ -10,6 +10,7 @@ import {
   reserveEmailOtpSend,
 } from "@/lib/email-otp";
 import { buildSignInCodeEmail } from "@/lib/email-otp-template";
+import { emailDeliveryConfigured, sendTransactionalEmail } from "@/lib/email";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, requestClientIp, sameOriginError } from "@/lib/security/request";
 
@@ -29,9 +30,7 @@ function response(message: string, status = 200, retryAfter?: number) {
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return sameOriginError();
-  const apiKey = process.env.RESEND_API_KEY;
-  const sender = process.env.AUTH_EMAIL_FROM;
-  if (!apiKey || !sender) return response("Email sign-in is not configured yet.", 503);
+  if (!emailDeliveryConfigured()) return response("Email sign-in is not configured yet.", 503);
 
   const parsed = await readJsonLimited<{ email?: unknown }>(request, 4_096);
   if (!parsed.ok) return response(parsed.status === 413 ? "Request is too large." : "Enter a valid email address.", parsed.status);
@@ -62,21 +61,9 @@ export async function POST(request: Request) {
       attempts: 0,
     });
 
-    const delivery = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: sender,
-        to: [email],
-        ...buildSignInCodeEmail(code),
-      }),
-      cache: "no-store",
-    });
+    const delivered = await sendTransactionalEmail({ to: email, ...buildSignInCodeEmail(code) });
 
-    if (!delivery.ok) {
+    if (!delivered) {
       await otpCodes.deleteOne({ _id: inserted.insertedId });
       return response("We could not send a sign-in code right now. Please try again later.", 503);
     }

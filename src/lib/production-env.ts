@@ -57,10 +57,12 @@ export function assertProductionEnvironment() {
   }
 
   validPair(process.env.RESEND_API_KEY, process.env.AUTH_EMAIL_FROM, "RESEND_API_KEY and AUTH_EMAIL_FROM");
+  validPair(process.env.GMAIL_USER, process.env.GMAIL_APP_PASSWORD, "GMAIL_USER and GMAIL_APP_PASSWORD");
+  const emailConfigured = Boolean((process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM) || (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD));
   validPair(process.env.AUTH_GOOGLE_ID, process.env.AUTH_GOOGLE_SECRET, "AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET");
   validPair(process.env.GOOGLE_OAUTH_CLIENT_ID, process.env.GOOGLE_OAUTH_CLIENT_SECRET, "GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET");
-  if (!(process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM) && !(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)) {
-    throw new Error("Configure at least one production sign-in provider: Resend email OTP or Google OAuth.");
+  if (!emailConfigured && !(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)) {
+    throw new Error("Configure at least one production sign-in provider: email OTP (Gmail or Resend) or Google OAuth.");
   }
   const googleReportingConfigured = Boolean(
     (process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET) ||

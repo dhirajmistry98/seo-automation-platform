@@ -6,6 +6,7 @@ import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConf
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
+import { parseGeoPoint, serpLocation } from "@/lib/seo/geo-target";
 
 type Context = { params: Promise<{ domain: string }> };
 type ResearchKind = "keywords" | "questions" | "rank" | "backlinks" | "competitors" | "ai_visibility";
@@ -45,6 +46,10 @@ export async function POST(request: Request, context: Context) {
   const countryName = typeof body.countryName === "string" && body.countryName.trim().length <= 120 ? body.countryName.trim() : String(website.rankTrackingCountryName || countryCode);
   const locationName = typeof body.locationName === "string" && body.locationName.trim().length <= 255 ? body.locationName.trim() : String(website.rankTrackingLocationName || countryCode);
   const languageCode = typeof body.languageCode === "string" && /^[a-z]{2,3}$/.test(body.languageCode) ? body.languageCode : String(website.rankTrackingLanguageCode || "en");
+  // Exact point for local SEO: from the request when it chose a location, otherwise the website's saved live location.
+  const geoPoint = body.locationCode !== undefined
+    ? parseGeoPoint(body.latitude, body.longitude, body.radiusKm)
+    : parseGeoPoint(website.rankTrackingLatitude, website.rankTrackingLongitude, website.rankTrackingRadiusKm);
   const device = kind === "rank" ? normalizeSearchDevice(body.device) : undefined;
   const platform = kind === "ai_visibility" && body.platform === "chat_gpt" ? "chat_gpt" : "google";
   const competitorDomain = kind === "competitors" ? normalizeResearchDomain(body.competitorDomain) : null;
@@ -81,7 +86,7 @@ export async function POST(request: Request, context: Context) {
       const keywords = Array.isArray(body.keywords) ? [...new Set(body.keywords.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean))].slice(0, 10) : [];
       if (!keywords.length || keywords.some((item) => item.length > 120)) return error("Enter between 1 and 10 keywords, up to 120 characters each.");
       query = keywords.join(", ").slice(0, 2_000);
-      providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, location_code: locationCode, language_code: languageCode, device, depth: 100 })));
+      providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, ...serpLocation(locationCode, geoPoint), language_code: languageCode, device, depth: 100 })));
       items = buildDomainRankRows(providerResult.tasks || [], keywords, domain);
     } else if (kind === "backlinks") {
       query = safeDomain(domain);
@@ -127,6 +132,7 @@ export async function POST(request: Request, context: Context) {
       query,
       locationCode,
       locationName,
+      ...(geoPoint ? { geoPoint } : {}),
       countryCode,
       countryName,
       countryLocationCode,

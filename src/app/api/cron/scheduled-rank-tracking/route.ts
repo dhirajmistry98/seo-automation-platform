@@ -4,6 +4,7 @@ import clientPromise from "@/lib/mongodb";
 import { dataForSeoPost, buildDomainRankRows, isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
 import { getRankTrackingKeywords, nextRankTrackingAt, parseRankTrackingDevice, parseRankTrackingFrequency, parseRankTrackingLanguageCode, parseRankTrackingLocationCode } from "@/lib/seo/rank-schedule";
+import { parseGeoPoint, serpLocation } from "@/lib/seo/geo-target";
 
 export const maxDuration = 90;
 
@@ -57,10 +58,11 @@ export async function POST(request: Request) {
   const countryName = typeof site.rankTrackingCountryName === "string" ? site.rankTrackingCountryName : countryCode;
   const languageCode = parseRankTrackingLanguageCode(site.rankTrackingLanguageCode) || "en";
   const device = parseRankTrackingDevice(site.rankTrackingDevice) || "desktop";
+  const geoPoint = parseGeoPoint(site.rankTrackingLatitude, site.rankTrackingLongitude, site.rankTrackingRadiusKm);
   const query = keywords.join(", ");
 
   try {
-    const providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, location_code: locationCode, language_code: languageCode, device, depth: 100 })));
+    const providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, ...serpLocation(locationCode, geoPoint), language_code: languageCode, device, depth: 100 })));
     const rows = resultDocument(buildDomainRankRows(providerResult.tasks || [], keywords, String(site.domain)));
     const completedAt = new Date();
     const ownership = await db.collection("websites").findOne({ _id: site._id, rankTrackingLeaseToken: leaseToken }, { projection: { rankTrackingFrequency: 1 } });

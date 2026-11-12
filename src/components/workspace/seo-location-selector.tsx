@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LoaderCircle, MapPin, Search } from "lucide-react";
+import { Crosshair, LoaderCircle, MapPin, Search, X } from "lucide-react";
+import { DEFAULT_RADIUS_KM, RADIUS_OPTIONS_KM } from "@/lib/seo/geo-target";
 import type { SeoTarget } from "@/lib/seo/target";
 
 type Language = { code: string; name: string };
@@ -16,6 +17,9 @@ export function SeoLocationSelector({ value, onChange, hiddenPrefix, label = "Se
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [accuracyMetres, setAccuracyMetres] = useState<number | null>(null);
+  const hasPoint = typeof value.latitude === "number" && typeof value.longitude === "number";
   const country = countries.find((item) => item.countryCode === value.countryCode);
   const languageOptions = country?.languages.length
     ? (country.languages.some((item) => item.code === value.languageCode) ? country.languages : [{ code: value.languageCode, name: value.languageCode.toUpperCase() }, ...country.languages])
@@ -51,17 +55,61 @@ export function SeoLocationSelector({ value, onChange, hiddenPrefix, label = "Se
     return () => { active = false; window.clearTimeout(timer); };
   }, [query, value.countryCode]);
 
+  /** The target without an exact point (choosing a country or city replaces the live location). */
+  function withoutPoint(target: SeoTarget): SeoTarget {
+    const { latitude: _latitude, longitude: _longitude, radiusKm: _radiusKm, ...rest } = target;
+    void _latitude; void _longitude; void _radiusKm;
+    return rest;
+  }
+
+  /** Like Google: ask the browser for the device's precise position (GPS on phones, Wi-Fi on laptops). */
+  function requestLiveLocation() {
+    if (!("geolocation" in navigator)) { setError("This browser cannot share its location."); return; }
+    setLocating(true); setError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocating(false);
+        setAccuracyMetres(Math.round(position.coords.accuracy));
+        onChange({
+          ...value,
+          locationCode: value.countryLocationCode,
+          locationName: "Your live location",
+          latitude: Number(position.coords.latitude.toFixed(7)),
+          longitude: Number(position.coords.longitude.toFixed(7)),
+          radiusKm: value.radiusKm ?? DEFAULT_RADIUS_KM,
+        });
+        setQuery(""); setMatches([]);
+      },
+      (failure) => {
+        setLocating(false);
+        setError(failure.code === failure.PERMISSION_DENIED
+          ? "Location permission was blocked. Allow location for this site in your browser's address bar, then try again."
+          : failure.code === failure.TIMEOUT
+            ? "Finding your location took too long. Try again, or search for a city instead."
+            : "Your location could not be determined. Try again, or search for a city instead.");
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 },
+    );
+  }
+
+  function clearLiveLocation() {
+    setAccuracyMetres(null);
+    onChange({ ...withoutPoint(value), locationCode: value.countryLocationCode, locationName: value.countryName });
+  }
+
   function changeCountry(countryCode: string) {
     const next = countries.find((item) => item.countryCode === countryCode);
     if (!next) return;
     const language = next.languages.find((item) => item.code === value.languageCode) || next.languages.find((item) => item.code === "en") || next.languages[0];
+    setAccuracyMetres(null);
     onChange({ locationCode: next.locationCode, locationName: next.name, countryCode: next.countryCode, countryName: next.name, countryLocationCode: next.locationCode, languageCode: language?.code || "en" });
     setQuery(""); setMatches([]); setError("");
   }
 
   function selectLocation(location: Location) {
     const selectedCountry = countries.find((item) => item.countryCode === location.country_iso_code);
-    onChange({ ...value, locationCode: location.location_code, locationName: location.location_name, countryCode: location.country_iso_code, countryName: selectedCountry?.name || value.countryName, countryLocationCode: selectedCountry?.locationCode || value.countryLocationCode });
+    setAccuracyMetres(null);
+    onChange({ ...withoutPoint(value), locationCode: location.location_code, locationName: location.location_name, countryCode: location.country_iso_code, countryName: selectedCountry?.name || value.countryName, countryLocationCode: selectedCountry?.locationCode || value.countryLocationCode });
     setQuery(""); setMatches([]); setError("");
   }
 
@@ -77,6 +125,9 @@ export function SeoLocationSelector({ value, onChange, hiddenPrefix, label = "Se
       <input type="hidden" name={`${hiddenPrefix}CountryName`} value={value.countryName} />
       <input type="hidden" name={`${hiddenPrefix}CountryLocationCode`} value={value.countryLocationCode} />
       <input type="hidden" name={`${hiddenPrefix}LanguageCode`} value={value.languageCode} />
+      <input type="hidden" name={`${hiddenPrefix}Latitude`} value={hasPoint ? String(value.latitude) : ""} />
+      <input type="hidden" name={`${hiddenPrefix}Longitude`} value={hasPoint ? String(value.longitude) : ""} />
+      <input type="hidden" name={`${hiddenPrefix}RadiusKm`} value={hasPoint ? String(value.radiusKm ?? DEFAULT_RADIUS_KM) : ""} />
     </>}
     <div className="seo-location-controls">
       <label>Country<select value={value.countryCode} onChange={(event) => changeCountry(event.target.value)} disabled={loadingCountries || !countries.length}>
@@ -90,7 +141,29 @@ export function SeoLocationSelector({ value, onChange, hiddenPrefix, label = "Se
         {languageOptions.map((item) => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}
       </select></label>
     </div>
-    <div className="seo-location-selected"><MapPin size={14} aria-hidden="true" /><span>{value.locationName || country?.name || "Choose a search location"}</span><small>{value.locationName && country ? `${country.name} · ${value.locationCode === value.countryLocationCode ? "country" : "local area"}` : "Select a country or search for a city / region"}</small></div>
+    <div className="seo-location-live">
+      <button type="button" className="seo-location-live-button" onClick={requestLiveLocation} disabled={locating} data-no-loader>
+        {locating ? <LoaderCircle size={14} className="seo-location-spinner" aria-hidden="true" /> : <Crosshair size={14} aria-hidden="true" />}
+        {locating ? "Finding your location…" : hasPoint ? "Update live location" : "Use my live location"}
+      </button>
+      {hasPoint && <label className="seo-location-radius">Radius<select value={value.radiusKm ?? DEFAULT_RADIUS_KM} onChange={(event) => onChange({ ...value, radiusKm: Number(event.target.value) })}>
+        {RADIUS_OPTIONS_KM.map((km) => <option key={km} value={km}>{km} km</option>)}
+      </select></label>}
+    </div>
+    {hasPoint ? (
+      <div className="seo-location-selected is-live">
+        <Crosshair size={14} aria-hidden="true" />
+        <span>Your live location</span>
+        <small>
+          {value.latitude?.toFixed(5)}, {value.longitude?.toFixed(5)} · {value.radiusKm ?? DEFAULT_RADIUS_KM} km radius{accuracyMetres !== null ? ` · accurate to ~${accuracyMetres} m` : ""} ·{" "}
+          <a href={`https://www.google.com/maps?q=${value.latitude},${value.longitude}`} target="_blank" rel="noreferrer">View on Google Maps</a>
+        </small>
+        <button type="button" className="seo-location-clear" onClick={clearLiveLocation} aria-label="Stop using live location" data-no-loader><X size={13} aria-hidden="true" /></button>
+      </div>
+    ) : (
+      <div className="seo-location-selected"><MapPin size={14} aria-hidden="true" /><span>{value.locationName || country?.name || "Choose a search location"}</span><small>{value.locationName && country ? `${country.name} · ${value.locationCode === value.countryLocationCode ? "country" : "local area"}` : "Select a country, search a city, or use your live location"}</small></div>
+    )}
+    {hasPoint && <p className="seo-location-message" role="status">Rank checks use results as seen from this exact spot, like a searcher standing there. Keyword volumes stay country-wide ({country?.name || value.countryName}); make sure that country matches where you are.</p>}
     {error && <p className="seo-location-message is-error" role="status">{error}</p>}
     {query.trim().length === 1 && <p className="seo-location-message" role="status">Enter at least two characters to search locations.</p>}
     {matches.length > 0 && <ul className="seo-location-results" aria-label="Matching locations">{matches.map((item) => <li key={`${item.location_code}-${item.location_name}`}><button type="button" onClick={() => selectLocation(item)}><MapPin size={14} aria-hidden="true" /><span>{item.location_name}</span><small>{item.location_type}</small></button></li>)}</ul>}

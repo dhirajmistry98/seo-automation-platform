@@ -1901,3 +1901,16 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 @media (max-width: 700px) {
   .landing-scroll-cue { right: 16px; bottom: 16px; transform: none; }
 }
+
+/* Live location ("Use my live location") in the SEO location picker. */
+.seo-location-live { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.seo-location-live-button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d85800; border-radius: 8px; background: #fff8f1; padding: 8px 12px; color: #b94b0c; font-size: 12px; font-weight: 650; }
+.seo-location-live-button:hover:not(:disabled) { background: #ffefe0; }
+.seo-location-live-button:disabled { opacity: .7; }
+.seo-location-radius { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.seo-location-radius select { border: 1px solid #cfc7be; border-radius: 6px; background: #fff; padding: 5px 8px; font-size: 12px; }
+.seo-location-selected.is-live { position: relative; padding-right: 32px; }
+.seo-location-selected.is-live > svg { color: #d85800; }
+.seo-location-selected a { color: #b94b0c; text-decoration: underline; text-underline-offset: 2px; }
+.seo-location-clear { position: absolute; top: 50%; right: 6px; display: inline-grid; width: 22px; height: 22px; place-items: center; transform: translateY(-50%); border-radius: 999px; color: #70675e; }
+.seo-location-clear:hover { background: #f0e1d3; color: #2b241e; }

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import type { Db } from "mongodb";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
@@ -7,9 +8,35 @@ import { seoCrawlPageLimit } from "@/lib/seo/crawler";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { isSameOriginRequest, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { processNextCrawlJob } from "@/lib/seo/crawl-worker";
+
+// The crawl runs in this function after the response is sent (see startCrawlWorker), so allow the full limit.
+export const maxDuration = 300;
 
 type Context = { params: Promise<{ domain: string }> };
 const noStore = { "Cache-Control": "no-store, max-age=0" };
+
+/**
+ * Runs the crawl right away, after the response is sent, instead of waiting for an external scheduler.
+ * The claim is atomic, so extra calls (several tabs polling, a cron) never run the same job twice.
+ */
+function startCrawlWorker(db: Db, jobId: string) {
+  after(async () => {
+    try {
+      await processNextCrawlJob(db, { jobId });
+    } catch (error) {
+      console.error("Crawl worker failed:", error instanceof Error ? error.message : error);
+    }
+  });
+}
+
+/** A job nobody is working on: queued/retrying and due, or running/saving with an expired lease (its worker was stopped). */
+function needsWorker(job: Record<string, unknown>, now = Date.now()) {
+  const due = (value: unknown) => !(value instanceof Date) || value.getTime() <= now;
+  if (job.status === "queued" || job.status === "retrying") return due(job.nextAttemptAt) && due(job.leaseUntil);
+  if (job.status === "running" || job.status === "saving") return job.leaseUntil instanceof Date && job.leaseUntil.getTime() <= now;
+  return false;
+}
 
 async function getContext(request: Request, context: Context) {
   const session = await auth();
@@ -30,7 +57,10 @@ export async function POST(request: Request, context: Context) {
   if (!site.verifiedAt) return NextResponse.json({ error: "Verify domain ownership before crawling." }, { status: 403, headers: noStore });
   const jobs = db.collection("seo_crawl_jobs");
   const active = await jobs.findOne({ websiteDomain: domain, organizationId: site.organizationId, status: { $in: ["queued", "running", "saving", "retrying", "cancel_requested"] } }, { sort: { createdAt: -1 } });
-  if (active) return NextResponse.json({ jobId: active.jobId, auditId: active.auditId, status: active.status, progress: active.progress }, { status: 202, headers: noStore });
+  if (active) {
+    if (needsWorker(active)) startCrawlWorker(db, String(active.jobId));
+    return NextResponse.json({ jobId: active.jobId, auditId: active.auditId, status: active.status, progress: active.progress }, { status: 202, headers: noStore });
+  }
 
   const accountLimit = await consumeRateLimit(db, "seo-crawl", String(site.organizationId || site.ownerId), 5, 60 * 60_000);
   if (!accountLimit.allowed) return NextResponse.json({ error: "This workspace has reached its crawl limit. Try again later." }, { status: 429, headers: { ...noStore, "Retry-After": String(accountLimit.retryAfterSeconds) } });
@@ -50,6 +80,7 @@ export async function POST(request: Request, context: Context) {
   await db.collection("seo_audits").insertOne({ auditId, ownerId: session.user.id, organizationId: site.organizationId, websiteDomain: domain, status: "queued", pageCount: 0, startedAt, source: "first_party_crawler" });
   await db.collection("seo_crawl_job_events").insertOne({ jobId, auditId, action: "queued", actorId: session.user.id, createdAt: startedAt });
   await db.collection("audit_logs").insertOne({ ownerId: session.user.id, organizationId: site.organizationId, websiteDomain: domain, action: "seo.audit.queued", auditId, jobId, createdAt: startedAt });
+  startCrawlWorker(db, jobId);
   return NextResponse.json({ jobId, auditId, status: "queued", progress }, { status: 202, headers: noStore });
 }
 
@@ -60,13 +91,15 @@ export async function GET(request: Request, context: Context) {
   const jobId = new URL(request.url).searchParams.get("jobId");
   const scope = { websiteDomain: domain, organizationId: site.organizationId, $or: [{ ownerId: session.user.id }, { organizationId: site.organizationId }] };
   if (!jobId) {
-    const recentJobs = await db.collection("seo_crawl_jobs").find(scope, { projection: { _id: 0, jobId: 1, auditId: 1, status: 1, progress: 1, attemptCount: 1, nextAttemptAt: 1, error: 1, updatedAt: 1, createdAt: 1, summary: 1 } }).sort({ createdAt: -1 }).limit(10).toArray();
+    const recentJobs = await db.collection("seo_crawl_jobs").find(scope, { projection: { _id: 0, jobId: 1, auditId: 1, status: 1, progress: 1, attemptCount: 1, nextAttemptAt: 1, error: 1, updatedAt: 1, createdAt: 1, summary: 1, leaseUntil: 1, startedAt: 1, lastAttemptAt: 1 } }).sort({ createdAt: -1 }).limit(10).toArray();
     const activeJob = recentJobs.find((item) => ["queued", "running", "saving", "retrying", "cancel_requested"].includes(String(item.status))) ?? null;
+    if (activeJob && needsWorker(activeJob)) startCrawlWorker(db, String(activeJob.jobId));
     return NextResponse.json({ activeJob, jobs: recentJobs }, { headers: noStore });
   }
   if (!/^[a-f\d-]{36}$/i.test(jobId)) return NextResponse.json({ error: "A valid crawl job ID is required." }, { status: 400, headers: noStore });
-  const job = await db.collection("seo_crawl_jobs").findOne({ ...scope, jobId }, { projection: { _id: 0, jobId: 1, auditId: 1, status: 1, progress: 1, attemptCount: 1, nextAttemptAt: 1, error: 1, updatedAt: 1, createdAt: 1 } });
+  const job = await db.collection("seo_crawl_jobs").findOne({ ...scope, jobId }, { projection: { _id: 0, jobId: 1, auditId: 1, status: 1, progress: 1, attemptCount: 1, nextAttemptAt: 1, error: 1, updatedAt: 1, createdAt: 1, leaseUntil: 1, lastAttemptAt: 1 } });
   if (!job) return NextResponse.json({ error: "Crawl job not found." }, { status: 404, headers: noStore });
+  if (needsWorker(job)) startCrawlWorker(db, jobId);
   const summary = job.status === "completed" ? await db.collection("seo_audits").findOne({ auditId: job.auditId }, { projection: { _id: 0, auditId: 1, score: 1, confidence: 1, confidenceNote: 1, pageCount: 1, issueCounts: 1 } }) : null;
   return NextResponse.json({ ...job, summary }, { headers: noStore });
 }

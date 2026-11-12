@@ -1,4 +1,5 @@
 "use server";
+import { parseGeoPoint } from "@/lib/seo/geo-target";
 
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
@@ -65,6 +66,7 @@ export async function updateWebsiteAction(formData: FormData) {
   const rankTrackingCountryName = textField(formData, "rankTrackingCountryName", 120);
   const rankTrackingCountryLocationCode = parseRankTrackingLocationCode(textField(formData, "rankTrackingCountryLocationCode", 12) || "2356");
   const rankTrackingLanguageCode = parseRankTrackingLanguageCode(textField(formData, "rankTrackingLanguageCode", 3) || "en");
+  const rankTrackingPoint = parseGeoPoint(textField(formData, "rankTrackingLatitude", 20), textField(formData, "rankTrackingLongitude", 20), textField(formData, "rankTrackingRadiusKm", 6));
   const rankTrackingDevice = parseRankTrackingDevice(textField(formData, "rankTrackingDevice", 10) || "desktop");
   if (!["business", "blog", "ecommerce", "other"].includes(websiteType) || !["manual", "weekly", "monthly"].includes(crawlFrequency) || !["manual", "weekly", "monthly"].includes(pageSpeedFrequency) || !Number.isInteger(maxPages) || maxPages < 1 || maxPages > seoCrawlPageLimit() || !rankTrackingFrequency || !rankTrackingLocationCode || !rankTrackingLocationName || !/^[A-Z]{2}$/.test(rankTrackingCountryCode) || !rankTrackingCountryName || !rankTrackingCountryLocationCode || !rankTrackingLanguageCode || !rankTrackingDevice) redirect(`${base}?error=fields`);
   if (rankTrackingFrequency !== "manual" && !getRankTrackingKeywords(primaryKeywords).length) redirect(`${base}?error=rank_keywords`);
@@ -94,6 +96,10 @@ export async function updateWebsiteAction(formData: FormData) {
         competitorDomains,
         sitemapUrl, robotsUrl, crawlFrequency, maxPages, pageSpeedFrequency, rankTrackingFrequency, rankTrackingLocationCode, rankTrackingLocationName, rankTrackingCountryCode, rankTrackingCountryName, rankTrackingCountryLocationCode, rankTrackingLanguageCode, rankTrackingDevice,
         nextScheduledRankTrackingAt: nextRankTrackingAt(rankTrackingFrequency),
+        // Live location for local SEO; null clears it when the user switches back to a city or country.
+        rankTrackingLatitude: rankTrackingPoint?.latitude ?? null,
+        rankTrackingLongitude: rankTrackingPoint?.longitude ?? null,
+        rankTrackingRadiusKm: rankTrackingPoint?.radiusKm ?? null,
         updatedBy: session.user.id,
         nextScheduledAuditAt: scheduleDays ? new Date(Date.now() + scheduleDays * 86400_000) : null,
         nextScheduledPageSpeedAt: pageSpeedDays ? new Date(Date.now() + pageSpeedDays * 86400_000) : null,

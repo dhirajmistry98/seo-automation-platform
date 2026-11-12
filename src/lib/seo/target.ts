@@ -1,3 +1,5 @@
+import { parseGeoPoint } from "./geo-target.ts";
+
 export type SeoTarget = {
   locationCode: number;
   locationName: string;
@@ -5,6 +7,10 @@ export type SeoTarget = {
   countryName: string;
   countryLocationCode: number;
   languageCode: string;
+  /** Exact point for local SEO ("live location"). When set, live Google results are fetched from here. */
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
 };
 
 const legacyMarkets: Record<number, { countryCode: string; name: string }> = {
@@ -29,6 +35,9 @@ export function getWebsiteSeoTarget(website: {
   rankTrackingCountryName?: unknown;
   rankTrackingCountryLocationCode?: unknown;
   rankTrackingLanguageCode?: unknown;
+  rankTrackingLatitude?: unknown;
+  rankTrackingLongitude?: unknown;
+  rankTrackingRadiusKm?: unknown;
   targetCountry?: unknown;
   targetLanguage?: unknown;
 }): SeoTarget {
@@ -57,5 +66,6 @@ export function getWebsiteSeoTarget(website: {
     : typeof website.targetLanguage === "string" && /^[a-z]{2,3}$/i.test(website.targetLanguage)
       ? website.targetLanguage.toLowerCase()
       : "en";
-  return { locationCode, locationName, countryCode, countryName, countryLocationCode, languageCode };
+  const point = parseGeoPoint(website.rankTrackingLatitude, website.rankTrackingLongitude, website.rankTrackingRadiusKm);
+  return { locationCode, locationName, countryCode, countryName, countryLocationCode, languageCode, ...(point ?? {}) };
 }

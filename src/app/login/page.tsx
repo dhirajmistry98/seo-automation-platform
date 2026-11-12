@@ -101,7 +101,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           {emailOtpEnabled ? <>
             <div className="login-divider"><span>OR CONTINUE WITH EMAIL</span></div>
             <EmailOtpForm redirectTo={callbackUrl} />
-            <p className="login-security-note"><ShieldCheck size={14} /> Your sign-in is protected. Email codes expire after 10 minutes.</p>
+            <p className="login-security-note"><ShieldCheck size={14} /> Your sign-in is protected. Email codes expire after 15 minutes.</p>
           </> : <div className="login-email-unavailable" role="status"><ShieldCheck size={15} /><span>Email sign-in is not enabled for this deployment. Continue with Google.</span></div>}
         </div>
         <p className="login-help">Need help? <Link href="/">Visit {BRAND.name}</Link></p>

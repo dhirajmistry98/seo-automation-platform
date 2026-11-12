@@ -15,9 +15,9 @@ import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, requestClientIp, sameOriginError } from "@/lib/security/request";
 
 
-function response(message: string, status = 200, retryAfter?: number) {
+function response(message: string, status = 200, retryAfter?: number, extra?: Record<string, unknown>) {
   return NextResponse.json(
-    { message },
+    { message, ...extra },
     {
       status,
       headers: {
@@ -61,14 +61,16 @@ export async function POST(request: Request) {
       attempts: 0,
     });
 
-    const delivered = await sendTransactionalEmail({ to: email, ...buildSignInCodeEmail(code) });
+    const delivered = await sendTransactionalEmail({ to: email, ...buildSignInCodeEmail(code, email, expiresAt, EMAIL_OTP_TTL_MS) });
 
     if (!delivered) {
       await otpCodes.deleteOne({ _id: inserted.insertedId });
       return response("We could not send a sign-in code right now. Please try again later.", 503);
     }
 
-    return response("If this address can receive mail, a sign-in code is on its way.", 200);
+    return response("If this address can receive mail, a sign-in code is on its way.", 200, undefined, {
+      expiresInSeconds: Math.floor(EMAIL_OTP_TTL_MS / 1000),
+    });
   } catch {
     return response("We could not send a sign-in code right now. Please try again later.", 503);
   }

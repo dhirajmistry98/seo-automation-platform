@@ -256,6 +256,12 @@ html, body { font-family: var(--font-manrope), Arial, sans-serif; }
 .empty-chart-icon { display:flex; height:29px; width:29px; align-items:center; justify-content:center; border:1px solid var(--brand-cream); border-radius:9px; background:var(--brand-cream); color:var(--brand-cream); }
 .otp-change-row { display:flex; align-items:center; justify-content:space-between; margin-top:10px; color:var(--brand-cream); font-size:9px; }
 .otp-change-row button { color:var(--brand-coral); font-size:9px; font-weight:650; text-decoration:underline; text-underline-offset:2px; }
+.otp-timer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:7px; color:var(--brand-cream); font-size:10px; }
+.otp-timer span { display:inline-flex; align-items:center; gap:5px; }
+.otp-timer strong { color:var(--brand-coral); font-variant-numeric:tabular-nums; font-weight:700; }
+.otp-timer-expired span { color:var(--brand-coral); font-weight:650; }
+.otp-timer button { display:inline-flex; align-items:center; gap:4px; color:var(--brand-coral); font-size:10px; font-weight:650; text-decoration:underline; text-underline-offset:2px; }
+.otp-timer button:disabled { cursor:not-allowed; opacity:.55; }
 
 /* One-line SEO STUDIO header follows 21st.dev's horizontal navigation pattern. */
 .site-header-inner { display:flex; min-height:76px; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:clamp(12px,2vw,28px); }

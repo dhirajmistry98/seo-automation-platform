@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Db, ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 
-export const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
+export const EMAIL_OTP_TTL_MS = 15 * 60 * 1000;
 export const EMAIL_OTP_RESEND_MS = 60 * 1000;
 export const EMAIL_OTP_MAX_ATTEMPTS = 5;
 export const EMAIL_OTP_COLLECTION = "email_login_otps";

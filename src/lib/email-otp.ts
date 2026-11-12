@@ -2,9 +2,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Db, ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 
-export const EMAIL_OTP_TTL_MS = 15 * 1000;
+export const EMAIL_OTP_TTL_MS = 30 * 1000;
 // Matches the code lifetime so "Send a new code" works as soon as a code expires.
-export const EMAIL_OTP_RESEND_MS = 15 * 1000;
+export const EMAIL_OTP_RESEND_MS = 30 * 1000;
 export const EMAIL_OTP_MAX_ATTEMPTS = 5;
 export const EMAIL_OTP_COLLECTION = "email_login_otps";
 export const EMAIL_OTP_RATE_COLLECTION = "email_login_otp_limits";

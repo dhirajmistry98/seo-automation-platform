@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, FileSearch, Gauge, ListTodo, LoaderCircle, ShieldCheck } from "lucide-react";
 import { CrawlProgressPanel } from "@/components/workspace/crawl-progress-panel";
+import { readJson } from "@/lib/read-json";
 
 type Verification = { token: string; verified: boolean; method?: string | null; recordName: string; recordValue: string; htmlMetaName: string; htmlMetaContent: string; htmlMetaTag: string };
 export type AuditSummary = { auditId: string; score: number; confidence: number; pageCount: number; issueCounts: { critical: number; warning: number; notice: number }; confidenceNote: string };
@@ -29,15 +30,15 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/sites/${encodeURIComponent(domain)}/verify`, { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() as Promise<Verification> : null)
+      .then(async (response) => response.ok ? readJson(response) as Promise<Verification> : null)
       .then((data) => { if (!cancelled && data) { setVerification(data); setVerified(data.verified); } })
       .catch(() => { if (!cancelled) setMessage("Verification instructions could not be loaded."); });
     fetch(`/api/sites/${encodeURIComponent(domain)}/pagespeed`, { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() : null)
+      .then(async (response) => response.ok ? readJson(response) : null)
       .then((data) => { if (!cancelled && data?.reports?.[0]) setPageSpeed(data.reports[0]); })
       .catch(() => undefined);
     fetch(`/api/sites/${encodeURIComponent(domain)}/crawl-jobs`, { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() as Promise<{ activeJob: CrawlJob | null; jobs: CrawlJob[] }> : null)
+      .then(async (response) => response.ok ? readJson(response) as Promise<{ activeJob: CrawlJob | null; jobs: CrawlJob[] }> : null)
       .then((data) => { if (!cancelled && data) { setRecentCrawls(data.jobs || []); if (data.activeJob) setCrawlJob(data.activeJob); } })
       .catch(() => undefined);
     return () => { cancelled = true; };
@@ -49,7 +50,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     const poll = async () => {
       try {
         const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/crawl-jobs?jobId=${encodeURIComponent(crawlJob.jobId)}`, { cache: "no-store" });
-        const data = await response.json() as CrawlJob & { error?: string };
+        const data = await readJson(response) as CrawlJob & { error?: string };
         if (!response.ok) throw new Error(data.error || "Crawl status could not be loaded.");
         if (stopped) return;
         if (data.status === "completed") {
@@ -57,8 +58,8 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
           setMessage(`Audit complete · ${data.summary?.pageCount ?? data.progress?.pagesScanned ?? 0} pages scanned.`);
           setCrawlJob(null);
           setTasksOpen(true);
-          void fetch(`/api/sites/${encodeURIComponent(domain)}/tasks`, { cache: "no-store" }).then(async (response) => response.ok ? response.json() as Promise<{ tasks: SeoTask[]; members?: TaskMember[] }> : null).then((taskData) => { if (!stopped && taskData) { setTasks(taskData.tasks || []); setTaskMembers(taskData.members || []); } }).catch(() => undefined);
-          void fetch(`/api/sites/${encodeURIComponent(domain)}/crawl-jobs`, { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((history) => { if (!stopped && history) setRecentCrawls(history.jobs || []); }).catch(() => undefined);
+          void fetch(`/api/sites/${encodeURIComponent(domain)}/tasks`, { cache: "no-store" }).then(async (response) => response.ok ? readJson(response) as Promise<{ tasks: SeoTask[]; members?: TaskMember[] }> : null).then((taskData) => { if (!stopped && taskData) { setTasks(taskData.tasks || []); setTaskMembers(taskData.members || []); } }).catch(() => undefined);
+          void fetch(`/api/sites/${encodeURIComponent(domain)}/crawl-jobs`, { cache: "no-store" }).then((response) => response.ok ? readJson(response) : null).then((history) => { if (!stopped && history) setRecentCrawls(history.jobs || []); }).catch(() => undefined);
         } else if (["failed", "cancelled"].includes(data.status)) {
           setMessage(data.status === "cancelled" ? "Crawl cancelled safely." : "Crawl failed after its retry limit. Open crawl history for details.");
           setCrawlJob(null);
@@ -76,7 +77,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     setBusy("verify"); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ method: verificationMethod }) });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error ?? "Could not verify this domain.");
       setVerified(true); setMessage(verificationMethod === "dns_txt" ? "Domain ownership verified with DNS TXT." : "Domain ownership verified with the homepage meta tag.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Verification failed."); }
@@ -87,7 +88,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     setBusy("audit"); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/crawl-jobs`, { method: "POST" });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error ?? "The crawl could not be queued.");
       setCrawlJob(data); setMessage(data.status === "queued" ? "" : "A crawl is already running for this website. Showing its progress.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Audit failed."); }
@@ -98,7 +99,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     if (!crawlJob) return;
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/crawl-jobs?jobId=${encodeURIComponent(crawlJob.jobId)}`, { method: "DELETE" });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error ?? "The crawl could not be cancelled.");
       setCrawlJob({ ...crawlJob, status: data.status });
       setMessage(data.status === "cancelled" ? "Queued crawl cancelled." : "Cancellation requested. The worker will stop safely after the current page.");
@@ -107,7 +108,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
 
   async function loadTasks() {
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/tasks`, { cache: "no-store" });
-    const data = await response.json();
+    const data = await readJson(response);
     if (!response.ok) throw new Error(data.error ?? "Could not load tasks.");
     setTasks(data.tasks); setTaskMembers(data.members || []);
   }
@@ -117,7 +118,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     setBusy("audit"); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ auditId: summary.auditId }) });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error ?? "Could not generate tasks.");
       await loadTasks(); setTasksOpen(true); setMessage(`${data.created} task${data.created === 1 ? "" : "s"} added, ${data.reopened} reopened.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Could not create tasks."); }
@@ -126,7 +127,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
 
   async function updateTask(taskId: string, update: Partial<Pick<SeoTask, "status" | "assigneeId" | "dueDate">>) {
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/tasks`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ taskId, ...update }) });
-    const data = await response.json();
+    const data = await readJson(response);
     if (!response.ok) { setMessage(data.error ?? "Could not update task."); return; }
     setTasks((current) => current.map((task) => task._id === taskId ? { ...task, ...update } : task));
     setMessage("Task updated.");
@@ -138,7 +139,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     const formData = new FormData(form);
     const comment = String(formData.get("comment") || "");
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/tasks`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment", taskId, comment }) });
-    const data = await response.json();
+    const data = await readJson(response);
     if (!response.ok) { setMessage(data.error ?? "Could not add comment."); return; }
     form.reset(); await loadTasks(); setMessage("Comment added to the task.");
   }
@@ -147,7 +148,7 @@ export function SiteAuditControls({ domain, siteUrl, verifiedAt, lastAudit, canM
     setBusy("audit"); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/pagespeed`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: siteUrl, strategy: pageSpeedStrategy }) });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error ?? "PageSpeed request failed.");
       setPageSpeed(data); setMessage("PageSpeed data retrieved from Google.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "PageSpeed request failed."); }

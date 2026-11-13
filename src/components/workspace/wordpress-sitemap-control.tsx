@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ExternalLink, FileText, LoaderCircle, RefreshCw } from "lucide-react";
 import { WorkspaceActionDialog } from "./workspace-action-dialog";
+import { readJson } from "@/lib/read-json";
 
 type SitemapStatus = {
   manager: "wordpress_core" | "seo_plugin" | "unsupported";
@@ -27,7 +28,7 @@ export function WordPressSitemapControl({ domain }: { domain: string }) {
   const load = useCallback(async () => {
     try {
       const response = await fetch("/api/sites/" + encodeURIComponent(domain) + "/wordpress-sitemap", { cache: "no-store" });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "Could not read WordPress sitemap status.");
       setStatus(data as SitemapStatus);
     } catch (caught) {
@@ -49,7 +50,7 @@ export function WordPressSitemapControl({ domain }: { domain: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: pendingEnabled, approved: true }),
       });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "Could not update the WordPress sitemap.");
       setStatus(data as SitemapStatus);
     } catch (caught) {

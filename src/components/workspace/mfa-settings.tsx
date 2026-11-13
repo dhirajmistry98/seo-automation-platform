@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Copy, KeyRound, ShieldCheck } from "lucide-react";
 import { WorkspaceActionDialog } from "./workspace-action-dialog";
+import { readJson } from "@/lib/read-json";
 
 type Status = { enabled: boolean; remainingRecoveryCodes: number };
 export function MfaSettings() {
@@ -15,21 +16,21 @@ export function MfaSettings() {
   const [busy, setBusy] = useState(false);
   const [disableDialogOpen, setDisableDialogOpen] = useState(false);
   function notify(text: string, tone: "success" | "error" = "success") { setMessage(text); setMessageTone(tone); }
-  async function refresh() { const response = await fetch("/api/account/mfa", { cache: "no-store" }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not load MFA status."); setStatus(data); }
+  async function refresh() { const response = await fetch("/api/account/mfa", { cache: "no-store" }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load MFA status."); setStatus(data); }
   useEffect(() => { void Promise.resolve().then(refresh).catch((error) => notify(error.message, "error")); }, []);
   async function begin() {
     setBusy(true); setMessage("");
-    try { const response = await fetch("/api/account/mfa", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "begin" }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not start MFA setup."); setUri(data.otpauthUri); }
+    try { const response = await fetch("/api/account/mfa", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "begin" }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not start MFA setup."); setUri(data.otpauthUri); }
     catch (error) { notify(error instanceof Error ? error.message : "Could not start MFA setup.", "error"); } finally { setBusy(false); }
   }
   async function confirm(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setMessage("");
-    try { const response = await fetch("/api/account/mfa", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "confirm", code }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not enable MFA."); setRecoveryCodes(data.recoveryCodes || []); setUri(""); setCode(""); await refresh(); notify("Authenticator MFA is enabled. Save the recovery codes somewhere safe."); }
+    try { const response = await fetch("/api/account/mfa", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "confirm", code }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not enable MFA."); setRecoveryCodes(data.recoveryCodes || []); setUri(""); setCode(""); await refresh(); notify("Authenticator MFA is enabled. Save the recovery codes somewhere safe."); }
     catch (error) { notify(error instanceof Error ? error.message : "Could not enable MFA.", "error"); } finally { setBusy(false); }
   }
   async function disable(value: string) {
     setBusy(true); setMessage("");
-    try { const response = await fetch("/api/account/mfa", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: value }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not disable MFA."); setRecoveryCodes([]); await refresh(); notify("Authenticator MFA has been disabled."); }
+    try { const response = await fetch("/api/account/mfa", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: value }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not disable MFA."); setRecoveryCodes([]); await refresh(); notify("Authenticator MFA has been disabled."); }
     catch (error) { throw new Error(error instanceof Error ? error.message : "Could not disable MFA."); } finally { setBusy(false); }
   }
   return <section className="mfa-settings"><div><p className="workspace-eyebrow">SIGN-IN SECURITY</p><h3><ShieldCheck size={16} /> Authenticator MFA</h3><p>Require an authenticator code after the email sign-in code. Google sign-in is disabled while MFA is enabled.</p><small>{status.enabled ? `Enabled · ${status.remainingRecoveryCodes} recovery codes left` : "Not enabled"}</small></div>

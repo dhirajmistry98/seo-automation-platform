@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, AlertCircle, RefreshCw, Server } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type HealthResponse = {
   status: string;
@@ -20,7 +21,7 @@ export function BackendTestPing() {
     try {
       const start = performance.now();
       const res = await fetch("/api/health");
-      const data = await res.json() as Omit<HealthResponse, "roundTripMs">;
+      const data = await readJson(res) as Omit<HealthResponse, "roundTripMs">;
       const roundTrip = Math.round(performance.now() - start);
       setResult({ ...data, roundTripMs: roundTrip });
     } catch (err) {

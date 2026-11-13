@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, BriefcaseBusiness, Camera, CircleUserRound, Compass, Megaphone, MessageSquareText, ShoppingBag, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type RecordValue = Record<string, unknown>;
 type Identity = { name: string; email: string };
@@ -44,11 +45,11 @@ export function InfluencerMarketingAccountScreen({ identity }: { identity: Ident
     let active = true;
     Promise.all([
       fetch("/api/marketplace/v1/me", { cache: "no-store" }).then(async (response) => {
-        const value = await response.json() as MarketplaceMe & { error?: string };
+        const value = await readJson(response) as MarketplaceMe & { error?: string };
         if (!response.ok) throw new Error(value.error || "Marketplace account details could not be loaded.");
         return value;
       }),
-      fetch("/api/marketplace/instagram/insights", { cache: "no-store" }).then(async (response) => response.ok ? response.json() as Promise<InstagramState> : null),
+      fetch("/api/marketplace/instagram/insights", { cache: "no-store" }).then(async (response) => response.ok ? readJson(response) as Promise<InstagramState> : null),
     ]).then(([account, social]) => {
       if (!active) return;
       setCurrentTime(Date.now());

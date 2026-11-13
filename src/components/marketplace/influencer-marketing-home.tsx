@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeCheck, BriefcaseBusiness, CircleAlert, Clapperboard, Dumbbell, Gem, Home, Laptop, MapPin, Megaphone, MessageSquareText, Plane, Search, ShieldCheck, Shirt, Sparkles, UserRound, UtensilsCrossed, WandSparkles } from "lucide-react";
 import { CreatorTile } from "./creator-tile";
+import { readJson } from "@/lib/read-json";
 
 type Item = Record<string, unknown>;
 const api = "/api/marketplace/v1";
@@ -53,7 +54,7 @@ export function InfluencerMarketingHome({ basePath = "/influencer-marketing" }: 
           fetch(`${api}/influencers?sort=followers_desc&limit=8`, { cache: "no-store" }),
           fetch(`${api}/influencers?sort=followers_asc&limit=4`, { cache: "no-store" }),
         ]);
-        const [meData, featuredData, risingData] = await Promise.all([meResponse.json() as Promise<Item>, featuredResponse.json() as Promise<Item>, risingResponse.json() as Promise<Item>]);
+        const [meData, featuredData, risingData] = await Promise.all([readJson(meResponse) as Promise<Item>, readJson(featuredResponse) as Promise<Item>, readJson(risingResponse) as Promise<Item>]);
         if (!active) return;
         if (!meResponse.ok) throw new Error(str(meData.error) || "Marketplace data could not be loaded.");
         setMe(meData);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Activity, LoaderCircle } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 export type AuthoritySnapshot = {
   score: number;
@@ -33,7 +34,7 @@ export function AuthorityIndexCard({ domain, initialHistory }: { domain: string;
     setMissing([]);
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/authority`, { method: "POST" });
-      const payload = await response.json();
+      const payload = await readJson(response);
       if (!response.ok) {
         setMissing(Array.isArray(payload.missing) ? payload.missing.filter((item: unknown): item is string => typeof item === "string") : []);
         throw new Error(payload.error || "Could not calculate the Authority Index.");

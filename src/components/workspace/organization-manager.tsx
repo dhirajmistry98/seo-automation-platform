@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Copy, Plus, RefreshCw, Users } from "lucide-react";
 import { WorkspaceActionDialog } from "./workspace-action-dialog";
+import { readJson } from "@/lib/read-json";
 
 type Organization = { id: string; name: string; role: string };
 type Member = { userId: string; name?: string; email?: string; role: string };
@@ -28,7 +29,7 @@ export function OrganizationManager() {
   async function loadOrganizations() {
     const response = await fetch("/api/organizations", { cache: "no-store" });
     if (!response.ok) throw new Error("Could not load organizations.");
-    const result = await response.json();
+    const result = await readJson(response);
     const next = result.organizations as Organization[];
     setOrganizations(next);
     setSelected((current) => current && next.some((item) => item.id === current) ? current : next[0]?.id || "");
@@ -37,7 +38,7 @@ export function OrganizationManager() {
     if (!id) return;
     const response = await fetch(`/api/organizations/${id}/members`, { cache: "no-store" });
     if (!response.ok) { setMembers([]); setInvitations([]); return; }
-    const result = await response.json();
+    const result = await readJson(response);
     setMembers(result.members || []);
     setInvitations(result.invitations || []);
   }
@@ -48,7 +49,7 @@ export function OrganizationManager() {
     event.preventDefault(); setBusy(true); setMessage("");
     try {
       const response = await fetch("/api/organizations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-      const result = await response.json();
+      const result = await readJson(response);
       if (!response.ok) throw new Error(result.error || "Could not create organization.");
       setName(""); await loadOrganizations(); setSelected(result.organization.id); notify("Organization created.", "success");
     } catch (error) { notify(error instanceof Error ? error.message : "Request failed.", "error"); } finally { setBusy(false); }
@@ -57,14 +58,14 @@ export function OrganizationManager() {
     event.preventDefault(); if (!selected) return; setBusy(true); setMessage(""); setLink("");
     try {
       const response = await fetch(`/api/organizations/${selected}/members`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, role }) });
-      const result = await response.json();
+      const result = await readJson(response);
       if (!response.ok) throw new Error(result.error || "Could not create invitation.");
       setEmail(""); setLink(result.invitationUrl || ""); notify(result.delivery === "email" ? "Invitation email sent." : "Invitation created. Copy the link and send it to the invitee.", "success"); await loadMembers(selected);
     } catch (error) { notify(error instanceof Error ? error.message : "Request failed.", "error"); } finally { setBusy(false); }
   }
   async function updateMember(userId: string, newRole: string) {
     const response = await fetch(`/api/organizations/${selected}/members`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, role: newRole }) });
-    const result = await response.json(); if (!response.ok) { notify(result.error || "Could not update role.", "error"); return; } await loadMembers(selected); notify("Member role updated.", "success");
+    const result = await readJson(response); if (!response.ok) { notify(result.error || "Could not update role.", "error"); return; } await loadMembers(selected); notify("Member role updated.", "success");
   }
   function removeMember(userId: string) {
     const member = members.find((item) => item.userId === userId);
@@ -88,7 +89,7 @@ export function OrganizationManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transfer ? { action: "transfer_owner", userId: memberAction.member.userId } : { userId: memberAction.member.userId }),
       });
-      const result = await response.json();
+      const result = await readJson(response);
       if (!response.ok) throw new Error(result.error || (transfer ? "Could not transfer ownership." : "Could not remove member."));
 
       if (transfer) {

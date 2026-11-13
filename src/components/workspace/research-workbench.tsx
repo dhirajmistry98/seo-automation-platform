@@ -5,6 +5,7 @@ import { Activity, ArrowUpRight, LoaderCircle, MapPinned, Search, ShieldCheck, S
 import { SeoLocationSelector } from "@/components/workspace/seo-location-selector";
 import { ProviderAccountAlert, isBlockingIssue, providerActionLabel, type ProviderIssue } from "@/components/workspace/provider-account-alert";
 import type { SeoTarget } from "@/lib/seo/target";
+import { readJson } from "@/lib/read-json";
 
 type Report = { _id?: string; kind: "keywords" | "questions" | "rank" | "backlinks" | "competitors" | "ai_visibility"; query: string; competitorDomain?: string; locationCode: number; locationName?: string; countryCode?: string; countryName?: string; countryLocationCode?: number; languageCode: string; device?: "desktop" | "mobile"; platform?: "google" | "chat_gpt"; source?: string; fetchedAt: string; providerSummary?: Array<Record<string, unknown>>; result: Array<Record<string, unknown>> };
 type Props = { domain: string; verified: boolean; configured: boolean; competitorDomains: string[]; initialHistory: Report[]; initialTarget: SeoTarget };
@@ -32,7 +33,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
   const fetchProviderStatus = useCallback(async (fresh: boolean) => {
     const response = await fetch(`/api/seo/provider-status${fresh ? "?fresh=1" : ""}`, { cache: "no-store" });
     if (!response.ok) return null;
-    const status = await response.json() as { state: string; message?: string; actionUrl: string };
+    const status = await readJson(response) as { state: string; message?: string; actionUrl: string };
     return status.state === "ready" || status.state === "not_configured"
       ? null
       : { state: status.state as ProviderIssue["state"], message: status.message, actionUrl: status.actionUrl };
@@ -62,7 +63,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
       if ((kind === "keywords" || kind === "rank") && keyList.length > (kind === "rank" ? 10 : 25)) throw new Error(`This report supports up to ${kind === "rank" ? 10 : 25} keywords at a time.`);
       if (kind === "questions" && keyList.length !== 1) throw new Error("Question research supports one topic phrase per request.");
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/research`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, keywords: keyList, latitude: target.latitude, longitude: target.longitude, radiusKm: target.radiusKm, locationCode: target.locationCode, locationName: target.locationName, countryCode: target.countryCode, countryName: target.countryName, countryLocationCode: target.countryLocationCode, languageCode: target.languageCode, ...(kind === "rank" ? { device } : {}), ...(kind === "competitors" ? { competitorDomain } : {}), ...(kind === "ai_visibility" ? { platform } : {}) }) });
-      const payload = await response.json();
+      const payload = await readJson(response);
       if (!response.ok) {
         if (payload.providerIssue) { setProviderIssue({ ...payload.providerIssue, message: payload.error }); return; }
         throw new Error(payload.error || "Research request failed.");

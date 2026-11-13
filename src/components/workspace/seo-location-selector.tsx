@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Crosshair, LoaderCircle, MapPin, Search, X } from "lucide-react";
 import { DEFAULT_RADIUS_KM, RADIUS_OPTIONS_KM } from "@/lib/seo/geo-target";
 import type { SeoTarget } from "@/lib/seo/target";
+import { readJson } from "@/lib/read-json";
 
 type Language = { code: string; name: string };
 type Country = { locationCode: number; countryCode: string; name: string; languages: Language[] };
@@ -29,7 +30,7 @@ export function SeoLocationSelector({ value, onChange, hiddenPrefix, label = "Se
     let active = true;
     fetch("/api/seo/locations?kind=countries", { cache: "no-store" })
       .then(async (response) => {
-        const payload = await response.json();
+        const payload = await readJson(response);
         if (!response.ok) throw new Error(payload.error || "Countries could not be loaded.");
         if (active) setCountries(Array.isArray(payload.countries) ? payload.countries : []);
       })
@@ -45,7 +46,7 @@ export function SeoLocationSelector({ value, onChange, hiddenPrefix, label = "Se
       setSearching(true); setError("");
       fetch(`/api/seo/locations?kind=search&country=${encodeURIComponent(value.countryCode)}&q=${encodeURIComponent(query.trim())}`, { cache: "no-store" })
         .then(async (response) => {
-          const payload = await response.json();
+          const payload = await readJson(response);
           if (!response.ok) throw new Error(payload.error || "Locations could not be loaded.");
           if (active) setMatches(Array.isArray(payload.locations) ? payload.locations : []);
         })

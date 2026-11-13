@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Mail, RotateCw, ShieldCheck, Timer } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 const CODE_LIFETIME_SECONDS = 30;
 
@@ -65,7 +66,7 @@ export function EmailOtpForm({ redirectTo = "/dashboard" }: { redirectTo?: strin
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const result = await response.json() as { message?: string; expiresInSeconds?: number };
+      const result = await readJson(response) as { message?: string; expiresInSeconds?: number };
       if (!response.ok) {
         setError(result.message || "We could not send a sign-in code.");
         return;

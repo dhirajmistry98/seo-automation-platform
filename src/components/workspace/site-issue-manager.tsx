@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, CircleOff, RotateCcw } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type Issue = { _id: string; title: string; severity: string; status: string; pageUrl: string; evidence?: string; recommendation?: string; lastDetectedAt?: string };
 export function SiteIssueManager({ domain, canManage }: { domain: string; canManage: boolean }) {
@@ -10,14 +11,14 @@ export function SiteIssueManager({ domain, canManage }: { domain: string; canMan
   const [busyId, setBusyId] = useState("");
   async function load() {
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/issues`, { cache: "no-store" });
-    const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not load audit issues.");
+    const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load audit issues.");
     setIssues(data.issues || []);
   }
   useEffect(() => {
     let active = true;
     fetch(`/api/sites/${encodeURIComponent(domain)}/issues`, { cache: "no-store" })
       .then(async (response) => {
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.error || "Could not load audit issues.");
         if (active) setIssues(data.issues || []);
       })
@@ -28,7 +29,7 @@ export function SiteIssueManager({ domain, canManage }: { domain: string; canMan
     setBusyId(issue._id); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/issues`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ issueId: issue._id, action }) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.error || "Could not update issue.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not update issue.");
       setMessage(action === "resolve" ? `Issue verified absent in audit ${data.verifiedByAuditId}.` : `Issue marked ${action === "ignore" ? "ignored" : "open"}.`);
       await load();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Could not update issue."); } finally { setBusyId(""); }

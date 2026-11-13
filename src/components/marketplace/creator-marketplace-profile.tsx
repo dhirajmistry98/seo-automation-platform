@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, Clock3, Compass, Heart, Link2, Megaphone, Share2, ShoppingCart, Sparkles, Star, Timer, UsersRound } from "lucide-react";
 import { CreatorTile, RatingBadge, StarRow } from "./creator-tile";
+import { readJson } from "@/lib/read-json";
 
 type Item = Record<string, unknown>;
 const api = "/api/marketplace/v1";
@@ -39,16 +40,16 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     async function loadProfile() {
       try {
         const response = await fetch(`${api}/influencers/${encodeURIComponent(creatorId)}`, { cache: "no-store" });
-        const payload = await response.json() as Item;
+        const payload = await readJson(response) as Item;
         if (!response.ok) throw new Error(str(payload.error) || "Creator profile could not be loaded.");
         if (active) { setCreator(obj(payload.influencer)); setReviews(arr(payload.reviews)); setSimilar(arr(payload.similar)); }
       } catch (caught) { if (active) setError(caught instanceof Error ? caught.message : "Creator profile could not be loaded."); }
     }
     async function loadBrandActions() {
       const [cartResult, campaignResult, meResult] = await Promise.allSettled([
-        fetch(`${api}/cart`, { cache: "no-store" }).then(async (response) => response.ok ? response.json() as Promise<Item> : {} as Item),
-        fetch(`${api}/campaigns?mine=1`, { cache: "no-store" }).then(async (response) => response.ok ? response.json() as Promise<Item> : {} as Item),
-        fetch(`${api}/me`, { cache: "no-store" }).then(async (response) => response.ok ? response.json() as Promise<Item> : {} as Item),
+        fetch(`${api}/cart`, { cache: "no-store" }).then(async (response) => response.ok ? readJson(response) as Promise<Item> : {} as Item),
+        fetch(`${api}/campaigns?mine=1`, { cache: "no-store" }).then(async (response) => response.ok ? readJson(response) as Promise<Item> : {} as Item),
+        fetch(`${api}/me`, { cache: "no-store" }).then(async (response) => response.ok ? readJson(response) as Promise<Item> : {} as Item),
       ]);
       if (!active) return;
       if (cartResult.status === "fulfilled") setSaved(arr(cartResult.value.items).some((item) => str(item.creatorId) === creatorId));
@@ -62,7 +63,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
 
   async function post(path: string, body: Item) {
     const response = await fetch(`${api}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const payload = await response.json() as Item;
+    const payload = await readJson(response) as Item;
     if (!response.ok) throw new Error(str(payload.error) || "The request could not be completed.");
     return payload;
   }

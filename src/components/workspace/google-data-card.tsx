@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BarChart3, ExternalLink, LoaderCircle, RefreshCw } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type Service = { service: string; label: string; status: string; providerEmail?: string | null };
 type Property = { siteUrl: string; permissionLevel?: string };
@@ -36,7 +37,7 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     let active = true;
     fetch(`/api/integrations/google/status?domain=${encodeURIComponent(domain)}`, { cache: "no-store" })
       .then(async (response) => {
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.error || "Could not read Google connections.");
         if (active) setServices(data.services || []);
       })
@@ -48,7 +49,7 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     let active = true;
     fetch(`/api/sites/${encodeURIComponent(domain)}/search-console`, { cache: "no-store" })
       .then(async (response) => {
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.error || "Could not list Search Console properties.");
         const next = data.properties as Property[];
         if (active) {
@@ -64,7 +65,7 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     let active = true;
     fetch(`/api/sites/${encodeURIComponent(domain)}/analytics`, { cache: "no-store" })
       .then(async (response) => {
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.error || "Could not list GA4 properties.");
         const next = (data.properties || []) as AnalyticsProperty[];
         if (active) {
@@ -79,7 +80,7 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     setBusy(true); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/search-console`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ property, dimension }) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.error || "Search Console report failed.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Search Console report failed.");
       setRows(data.report.rows || []); setSearchComparison(data.report.comparisonRows || []); setSearchOpportunityCount((data.report.queryOpportunities || []).length); setMessage(`${data.report.rowCount} rows from ${data.report.startDate} through ${data.report.endDate}; compared with the previous period.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Search Console report failed."); } finally { setBusy(false); }
   }
@@ -87,34 +88,34 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     setBusy(true); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/analytics`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ propertyId: analyticsPropertyId }) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.error || "Analytics report failed.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Analytics report failed.");
       setAnalyticsReport(data.report); setMessage(`GA4 Organic Search report loaded for ${data.report.dateRange.startDate} through ${data.report.dateRange.endDate}, compared with the prior period.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Analytics report failed."); } finally { setBusy(false); }
   }
   async function loadMerchantAccounts() {
-    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { cache: "no-store" }); const data = await response.json();
+    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { cache: "no-store" }); const data = await readJson(response);
     if (!response.ok) throw new Error(data.error || "Could not list Merchant Center accounts.");
     setMerchantAccounts(data.accounts || []); setMerchantAccountId((data.accounts || [])[0]?.name?.replace("accounts/", "") || "");
   }
   async function runMerchantReport() {
     setBusy(true); setMessage("");
-    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantAccountId }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Merchant report failed."); setMerchantRows(data.report.results || []); setMessage(`Merchant report loaded for ${data.startDate} through ${data.endDate}.`); }
+    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantAccountId }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Merchant report failed."); setMerchantRows(data.report.results || []); setMessage(`Merchant report loaded for ${data.startDate} through ${data.endDate}.`); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Merchant report failed."); } finally { setBusy(false); }
   }
   async function loadBusinessAccounts() {
-    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { cache: "no-store" }); const data = await response.json();
+    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { cache: "no-store" }); const data = await readJson(response);
     if (!response.ok) throw new Error(data.error || "Could not list Business Profile accounts.");
     const next = data.accounts || []; setBusinessAccounts(next); setBusinessAccount(next[0]?.name || ""); if (next[0]?.name) await loadBusinessLocations(next[0].name);
   }
   async function loadBusinessLocations(account: string) {
     if (!account) return;
-    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile?account=${encodeURIComponent(account)}`, { cache: "no-store" }); const data = await response.json();
+    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile?account=${encodeURIComponent(account)}`, { cache: "no-store" }); const data = await readJson(response);
     if (!response.ok) throw new Error(data.error || "Could not list Business Profile locations.");
     const next = data.locations || []; setBusinessLocations(next); setBusinessLocation(next[0]?.name || "");
   }
   async function runBusinessReport() {
     setBusy(true); setMessage("");
-    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locationName: businessLocation }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Business Profile report failed."); setBusinessSeries(data.report); setMessage(`Business Profile report loaded through ${data.endDate.year}-${data.endDate.month}-${data.endDate.day}.`); }
+    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locationName: businessLocation }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Business Profile report failed."); setBusinessSeries(data.report); setMessage(`Business Profile report loaded through ${data.endDate.year}-${data.endDate.month}-${data.endDate.day}.`); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Business Profile report failed."); } finally { setBusy(false); }
   }
   return <details className="google-data-card"><summary><BarChart3 size={15} /> Google integrations & reports <span>{services.filter((item) => item.status === "connected").length} connected</span></summary>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, LoaderCircle, RefreshCw, Sparkles } from "lucide-react";
 import type { SearchVisibilityReport } from "@/lib/seo/search-visibility";
+import { readJson } from "@/lib/read-json";
 
 type VisibilitySnapshot = SearchVisibilityReport & {
   sourceAuditId: string;
@@ -28,7 +29,7 @@ export function SearchVisibilityReportCard({ domain, initialReports, hasCrawl, c
     setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/visibility`, { method: "POST" });
-      const payload = await response.json();
+      const payload = await readJson(response);
       if (!response.ok) throw new Error(payload.error || "Search visibility analysis could not be completed.");
       setReports((previous) => [payload.report as VisibilitySnapshot, ...previous].slice(0, 12));
       setMessage("Analysis saved from the latest website crawl.");

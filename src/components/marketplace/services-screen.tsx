@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { BadgeCheck, BriefcaseBusiness, Clock3, ExternalLink, MapPin, Search, Send, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import { SERVICE_SPECIALTIES } from "@/lib/marketplace/services";
+import { readJson } from "@/lib/read-json";
 
 type Profile = { _id: string; displayName: string; headline: string; bio: string; specialties: string[]; location: string; experienceYears: number; status: string; updatedAt?: string; portfolio?: string[]; website?: string | null };
 type Proposal = { _id: string; message: string; scope: string; amountPaise: number; deliveryDays: number; status: string; createdAt: string };
@@ -41,8 +42,8 @@ export function ServicesMarketplaceScreen() {
         fetch("/api/marketplace/services/v1/overview", { cache: "no-store" }),
         fetch(`/api/marketplace/services/v1/listings?${qs.toString()}`, { cache: "no-store" }),
       ]);
-      const overviewData = await overviewResponse.json();
-      const listingsData = await listingsResponse.json();
+      const overviewData = await readJson(overviewResponse);
+      const listingsData = await readJson(listingsResponse);
       if (!overviewResponse.ok || !listingsResponse.ok) throw new Error(overviewData.error || listingsData.error || "Could not load the expert marketplace.");
       setOverview({ ...emptyOverview, ...overviewData });
       setListings(Array.isArray(listingsData.listings) ? listingsData.listings : []);
@@ -50,7 +51,7 @@ export function ServicesMarketplaceScreen() {
       setNextSkip(typeof listingsData.nextSkip === "number" ? listingsData.nextSkip : 0);
       if (overviewData.admin) {
         const response = await fetch("/api/marketplace/services/v1/admin", { cache: "no-store" });
-        const data = await response.json();
+        const data = await readJson(response);
         if (response.ok) setAdminData(data);
       }
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load the expert marketplace."); }
@@ -66,7 +67,7 @@ export function ServicesMarketplaceScreen() {
       if (query) params.set("q", query);
       if (category) params.set("category", category);
       const response = await fetch(`/api/marketplace/services/v1/listings?${params.toString()}`, { cache: "no-store" });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "Could not load more services.");
       setListings((current) => [...current, ...(Array.isArray(data.listings) ? data.listings : [])]);
       setHasMore(data.hasMore === true);
@@ -79,7 +80,7 @@ export function ServicesMarketplaceScreen() {
     setBusy(true); setError(""); setMessage("");
     try {
       const response = await fetch(`/api/marketplace/services/v1${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "The request could not be completed.");
       setMessage(success);
       await refresh(query, category);
@@ -221,13 +222,13 @@ function ServiceOrderPanel({ orderId, request, role, onRefresh }: { orderId: str
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const refresh = useCallback(async () => {
-    try { const response = await fetch(`/api/marketplace/services/v1/orders/${encodeURIComponent(orderId)}`, { cache: "no-store" }); const result = await response.json(); if (!response.ok) throw new Error(result.error || "Could not load project status."); setData(result); setError(""); }
+    try { const response = await fetch(`/api/marketplace/services/v1/orders/${encodeURIComponent(orderId)}`, { cache: "no-store" }); const result = await readJson(response); if (!response.ok) throw new Error(result.error || "Could not load project status."); setData(result); setError(""); }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load project status."); }
   }, [orderId]);
   useEffect(() => { const initial = window.setTimeout(() => { void refresh(); }, 0); const timer = window.setInterval(() => void refresh(), 15_000); return () => { window.clearTimeout(initial); window.clearInterval(timer); }; }, [refresh]);
   async function action(body: Record<string, unknown>) {
     setBusy(true); setError(""); setNotice("");
-    try { const response = await fetch(`/api/marketplace/services/v1/orders/${encodeURIComponent(orderId)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.error || "Order update failed."); setNotice(result.message || "Project status updated."); await refresh(); await onRefresh(); }
+    try { const response = await fetch(`/api/marketplace/services/v1/orders/${encodeURIComponent(orderId)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const result = await readJson(response); if (!response.ok) throw new Error(result.error || "Order update failed."); setNotice(result.message || "Project status updated."); await refresh(); await onRefresh(); }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Order update failed."); }
     finally { setBusy(false); }
   }
@@ -261,7 +262,7 @@ function ServiceRequestChat({ requestId }: { requestId: string }) {
   const load = useCallback(async () => {
     try {
       const response = await fetch("/api/marketplace/services/v1/requests/" + encodeURIComponent(requestId) + "/messages", { cache: "no-store" });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "Could not load project messages.");
       setMessages(Array.isArray(data.messages) ? data.messages : []);
       setError("");
@@ -289,7 +290,7 @@ function ServiceRequestChat({ requestId }: { requestId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, clientId: requestIdempotencyKey }),
       });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "Could not send the project message.");
       form.reset();
       setClientId("");
@@ -336,7 +337,7 @@ function ServiceRequestAttachmentUploader({ requestId, disabled, onUploaded }: {
           headers: { "Content-Type": file.type, "X-File-Name": file.name.replace(/[^\x20-\x7E]/g, "_") },
           body: file,
         });
-        const data = await response.json();
+        const data = await readJson(response);
         if (!response.ok) throw new Error(data.error || "Could not upload the selected project file.");
         uploaded += 1;
       }

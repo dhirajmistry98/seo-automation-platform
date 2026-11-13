@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, LoaderCircle, RefreshCw, Save } from "lucide-react";
 import { WorkspaceActionDialog } from "./workspace-action-dialog";
+import { readJson } from "@/lib/read-json";
 
 type Post = { wordpressPostId: number; title: string; url: string; postType: string; status: string; meta?: Record<string, string> };
 type PendingUpdate = { postId: number; title: string; metadata: Record<string, string> };
@@ -17,7 +18,7 @@ export function WordPressContentEditor({ domain }: { domain: string }) {
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
   function notify(text: string, tone: "info" | "success" | "error" = "info") { setMessage(text); setMessageTone(tone); }
   const load = useCallback(async () => {
-    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/wordpress-content`, { cache: "no-store" }); const data = await response.json();
+    const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/wordpress-content`, { cache: "no-store" }); const data = await readJson(response);
     if (!response.ok) throw new Error(data.error || "Could not load synced WordPress content.");
     const next = data.posts as Post[];
     const nextId = postId && next.some((post) => String(post.wordpressPostId) === postId) ? postId : next[0] ? String(next[0].wordpressPostId) : "";
@@ -40,7 +41,7 @@ export function WordPressContentEditor({ domain }: { domain: string }) {
     setBusy(true); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/wordpress-metadata`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ postId: pendingUpdate.postId, metadata: pendingUpdate.metadata, approved: true }) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.error || "WordPress update failed.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "WordPress update failed.");
       notify("Approved metadata update applied to WordPress.", "success");
       try { await load(); } catch { notify("Metadata was applied, but the synced content list could not refresh.", "success"); }
     } catch (error) { throw new Error(error instanceof Error ? error.message : "WordPress update failed."); } finally { setBusy(false); }

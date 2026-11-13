@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type Props = { domain: string; property: string; startDate: string; endDate: string; dimension: string };
 
@@ -20,7 +21,7 @@ export function OverviewSearchRefresh({ domain, property, startDate, endDate, di
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ property, startDate, endDate, dimension }),
       });
-      const payload = await response.json();
+      const payload = await readJson(response);
       if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Could not refresh Search Console data.");
       setMessage("Updated with the latest data available from Google.");
       router.refresh();

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Copy, KeyRound, LoaderCircle, RotateCcw } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type ConnectionStatus = { tokenIssued: boolean; connectedAt: string | null; lastSyncAt: string | null; lastSyncStatus?: string | null; pluginVersion?: string | null; appEditingReady?: boolean };
 
@@ -15,7 +16,7 @@ export function WordPressConnectionCard({ domain, appUrl }: { domain: string; ap
   useEffect(() => {
     let cancelled = false;
     fetch("/api/sites/" + encodeURIComponent(domain) + "/wordpress-token", { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() as Promise<ConnectionStatus> : null)
+      .then(async (response) => response.ok ? readJson(response) as Promise<ConnectionStatus> : null)
       .then((data) => { if (!cancelled && data) setStatus(data); })
       .catch(() => undefined);
     return () => { cancelled = true; };
@@ -25,7 +26,7 @@ export function WordPressConnectionCard({ domain, appUrl }: { domain: string; ap
     setBusy(true); setNewToken(""); setMessage(""); setCopied(false);
     try {
       const response = await fetch("/api/sites/" + encodeURIComponent(domain) + "/wordpress-token", { method: "POST" });
-      const data = await response.json();
+      const data = await readJson(response);
       if (!response.ok) throw new Error(data.error ?? "Could not issue a connection token.");
       setNewToken(data.token); setStatus((current) => ({ tokenIssued: true, connectedAt: null, lastSyncAt: current?.lastSyncAt ?? null, lastSyncStatus: null, pluginVersion: current?.pluginVersion ?? null, appEditingReady: data.appEditingReady }));
       setMessage("Token created. Copy it now; it will not be shown again.");

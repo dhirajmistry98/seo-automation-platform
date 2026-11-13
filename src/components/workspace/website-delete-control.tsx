@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { WorkspaceActionDialog } from "./workspace-action-dialog";
+import { readJson } from "@/lib/read-json";
 
 export function WebsiteDeleteControl({ domain }: { domain: string }) {
   const router = useRouter();
@@ -15,7 +16,7 @@ export function WebsiteDeleteControl({ domain }: { domain: string }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ confirmation }),
     });
-    const result = await response.json();
+    const result = await readJson(response);
     if (!response.ok) throw new Error(result.error || "Website deletion failed.");
     router.replace("/dashboard/websites?site=deleted");
   }

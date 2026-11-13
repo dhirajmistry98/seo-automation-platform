@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Check } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type Notification = { _id: string; title: string; message: string; websiteDomain?: string; href?: string; createdAt: string; readAt?: string };
 export function WorkspaceNotifications({ scope }: { scope?: "influencer-marketing" } = {}) {
@@ -13,7 +14,7 @@ export function WorkspaceNotifications({ scope }: { scope?: "influencer-marketin
     let active = true;
     fetch(`/api/notifications${scope ? `?scope=${scope}` : ""}`, { cache: "no-store" })
       .then(async (response) => {
-        const data = await response.json();
+        const data = await readJson(response);
         if (response.ok && active) {
           setItems(data.notifications || []);
           setUnread(data.unreadCount || 0);

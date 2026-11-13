@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Camera, CircleAlert, MapPin, ShoppingCart, Trash2, UserRound } from "lucide-react";
+import { readJson } from "@/lib/read-json";
 
 type Item = Record<string, unknown>;
 const api = "/api/marketplace/v1";
@@ -24,7 +25,7 @@ export function CreatorCartScreen() {
     setLoading(true); setError("");
     try {
       const [cartResponse, campaignResponse] = await Promise.all([fetch(api + "/cart", { cache: "no-store" }), fetch(api + "/campaigns?mine=1", { cache: "no-store" })]);
-      const [cartData, campaignData] = await Promise.all([cartResponse.json() as Promise<Item>, campaignResponse.json() as Promise<Item>]);
+      const [cartData, campaignData] = await Promise.all([readJson(cartResponse) as Promise<Item>, readJson(campaignResponse) as Promise<Item>]);
       if (!cartResponse.ok) throw new Error(str(cartData.error) || "Your creator cart could not be loaded.");
       setItems(arr(cartData.items)); setCampaigns(arr(campaignData.campaigns).filter((campaign) => campaign.status === "open"));
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Your creator cart could not be loaded."); }
@@ -37,7 +38,7 @@ export function CreatorCartScreen() {
     setBusyId(creatorId); setError(""); setNotice("");
     try {
       const response = await fetch(api + "/cart/" + encodeURIComponent(creatorId), { method: "DELETE" });
-      const result = await response.json() as Item;
+      const result = await readJson(response) as Item;
       if (!response.ok) throw new Error(str(result.error) || "Creator could not be removed.");
       setItems((current) => current.filter((item) => str(item.creatorId) !== creatorId));
       setNotice("Creator removed from your cart.");
@@ -53,7 +54,7 @@ export function CreatorCartScreen() {
     setBusyId(creatorId); setError(""); setNotice("");
     try {
       const response = await fetch(api + "/campaigns/" + encodeURIComponent(campaignId) + "/invite", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ influencerProfileId: creatorId, message: data.get("message") }) });
-      const result = await response.json() as Item;
+      const result = await readJson(response) as Item;
       if (!response.ok) throw new Error(str(result.error) || "Invitation could not be sent.");
       setNotice("Invitation sent. The creator can reply and negotiate in Collaborations."); form.reset();
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Invitation could not be sent."); }

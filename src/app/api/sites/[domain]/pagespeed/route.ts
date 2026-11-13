@@ -88,7 +88,8 @@ export async function POST(request: Request, context: Context) {
     return NextResponse.json(record, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "PageSpeed request failed.";
-    await setIntegrationStatus("error", message);
+    // Recording the failure must never turn a readable error into an empty 500.
+    await setIntegrationStatus("error", message).catch(() => undefined);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

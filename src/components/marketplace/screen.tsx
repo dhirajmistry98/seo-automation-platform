@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BadgeCheck, BriefcaseBusiness, Camera, CircleAlert, Clock3, MapPin, Megaphone, MessageSquareText, Package, Plus, RefreshCw, Search, Send, ShieldCheck, ShoppingCart, Sparkles, Trash2, UserRound, X } from "lucide-react";
 import { RatingBadge } from "./creator-tile";
+import { readJson } from "@/lib/read-json";
 
 type View = "overview" | "influencer" | "brand" | "discover" | "campaigns" | "campaign" | "inbox" | "admin";
 type Item = Record<string, unknown>;
@@ -98,7 +99,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
 
   const fetchJson = useCallback(async (path: string) => {
     const response = await fetch(`${api}${path}`, { cache: "no-store" });
-    const payload = await response.json() as Data;
+    const payload = await readJson(response) as Data;
     if (!response.ok) throw new Error(str(payload.error) || "Unable to load marketplace data.");
     return payload;
   }, []);
@@ -190,7 +191,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
     setCartBusyId(creatorId); setNotice(null);
     try {
       const response = await fetch(`${api}/cart`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ influencerId: creatorId }) });
-      const payload = await response.json() as Data;
+      const payload = await readJson(response) as Data;
       if (!response.ok) throw new Error(str(payload.error) || "Creator could not be added to your cart.");
       setCartIds((current) => current.includes(creatorId) ? current : [...current, creatorId]);
       setData((current) => ({ ...current, cartTotal: Number(current.cartTotal || 0) + (payload.alreadyAdded ? 0 : 1) }));
@@ -218,7 +219,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
         try {
           const response = await fetch(`/api/marketplace/realtime/token?collaborationId=${encodeURIComponent(activeConversationId)}`, { cache: "no-store" });
           if (!response.ok) throw new Error("Real-time authorization failed.");
-          callback(null, await response.json());
+          callback(null, await readJson(response));
         } catch (caught) { callback(caught instanceof Error ? caught.message : "Real-time authorization failed.", null); }
       } });
       const channel = client.channels.get(`marketplace:collaboration:${activeConversationId}`);
@@ -236,7 +237,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
     setBusy(true); setNotice(null);
     try {
       const response = await fetch(`${api}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const payload = await response.json() as Data;
+      const payload = await readJson(response) as Data;
       if (!response.ok) throw new Error(str(payload.error) || "The change could not be saved.");
       setNotice({ text: success, tone: "success" }); await load(); if (activeConversationId) await loadConversation();
       return payload;
@@ -401,7 +402,7 @@ function AttachmentUploader({ collaborationId, busy, mutate }: { collaborationId
       const attachmentIds: string[] = [];
       for (const file of files) {
         const response = await fetch(`/api/marketplace/files?collaborationId=${encodeURIComponent(collaborationId)}`, { method: "POST", headers: { "Content-Type": file.type, "X-File-Name": file.name.replace(/[^\x20-\x7E]/g, "_") }, body: file });
-        const payload = await response.json() as Data;
+        const payload = await readJson(response) as Data;
         if (!response.ok) throw new Error(str(payload.error) || "File upload failed.");
         attachmentIds.push(str(obj(payload.file).id));
       }
@@ -442,13 +443,13 @@ function InstagramInsightsPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const load = useCallback(async () => {
-    try { const response = await fetch("/api/marketplace/instagram/insights", { cache: "no-store" }); const result = await response.json() as Data; if (!response.ok) throw new Error(str(result.error) || "Could not load Instagram insights."); setReport(result); }
+    try { const response = await fetch("/api/marketplace/instagram/insights", { cache: "no-store" }); const result = await readJson(response) as Data; if (!response.ok) throw new Error(str(result.error) || "Could not load Instagram insights."); setReport(result); }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Could not load Instagram insights."); }
   }, []);
   useEffect(() => { const initial = window.setTimeout(() => { void load(); }, 0); return () => window.clearTimeout(initial); }, [load]);
   async function refreshInsights() {
     setBusy(true); setError("");
-    try { const response = await fetch("/api/marketplace/instagram/insights", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); const result = await response.json() as Data; if (!response.ok) throw new Error(str(result.error) || "Could not refresh Instagram insights."); setReport((current) => ({ ...current, latest: obj(result.report), connected: true })); }
+    try { const response = await fetch("/api/marketplace/instagram/insights", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); const result = await readJson(response) as Data; if (!response.ok) throw new Error(str(result.error) || "Could not refresh Instagram insights."); setReport((current) => ({ ...current, latest: obj(result.report), connected: true })); }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Could not refresh Instagram insights."); }
     finally { setBusy(false); }
   }

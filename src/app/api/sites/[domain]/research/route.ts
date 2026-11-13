@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice } from "@/lib/integrations/dataforseo";
+import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice, DATAFORSEO_DASHBOARD_URL, DataForSeoAccountError } from "@/lib/integrations/dataforseo";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
@@ -156,6 +156,9 @@ export async function POST(request: Request, context: Context) {
       : "This report uses your DataForSEO account and may incur provider charges. Competitor metrics are third-party estimates.";
     return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice }, { headers: { "Cache-Control": "no-store" } });
   } catch (caught) {
+    if (caught instanceof DataForSeoAccountError) {
+      return NextResponse.json({ error: caught.message, providerIssue: { state: caught.reason, actionUrl: DATAFORSEO_DASHBOARD_URL } }, { status: 503, headers: { "Cache-Control": "no-store" } });
+    }
     const message = caught instanceof Error ? caught.message : "SEO research is temporarily unavailable.";
     const status = /not configured/.test(message) ? 503 : 502;
     return error(message, status);

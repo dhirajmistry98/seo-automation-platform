@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Activity, LoaderCircle, Search, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Activity, ArrowUpRight, LoaderCircle, MapPinned, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { SeoLocationSelector } from "@/components/workspace/seo-location-selector";
+import { ProviderAccountAlert, isBlockingIssue, providerActionLabel, type ProviderIssue } from "@/components/workspace/provider-account-alert";
 import type { SeoTarget } from "@/lib/seo/target";
 
 type Report = { _id?: string; kind: "keywords" | "questions" | "rank" | "backlinks" | "competitors" | "ai_visibility"; query: string; competitorDomain?: string; locationCode: number; locationName?: string; countryCode?: string; countryName?: string; countryLocationCode?: number; languageCode: string; device?: "desktop" | "mobile"; platform?: "google" | "chat_gpt"; source?: string; fetchedAt: string; providerSummary?: Array<Record<string, unknown>>; result: Array<Record<string, unknown>> };
@@ -23,6 +24,37 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [providerIssue, setProviderIssue] = useState<ProviderIssue | null>(null);
+  const [checkingProvider, setCheckingProvider] = useState(false);
+  const blocked = isBlockingIssue(providerIssue);
+
+  /** Server's view of the DataForSEO account (a free check, no report charge). */
+  const fetchProviderStatus = useCallback(async (fresh: boolean) => {
+    const response = await fetch(`/api/seo/provider-status${fresh ? "?fresh=1" : ""}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const status = await response.json() as { state: string; message?: string; actionUrl: string };
+    return status.state === "ready" || status.state === "not_configured"
+      ? null
+      : { state: status.state as ProviderIssue["state"], message: status.message, actionUrl: status.actionUrl };
+  }, []);
+
+  useEffect(() => {
+    if (!configured) return;
+    let active = true;
+    fetchProviderStatus(false).then((issue) => { if (active) setProviderIssue(issue); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [configured, fetchProviderStatus]);
+
+  async function recheckProvider() {
+    setCheckingProvider(true);
+    try {
+      const issue = await fetchProviderStatus(true);
+      setProviderIssue(issue);
+      if (!issue) { setError(""); setNotice("DataForSEO account is ready. You can run reports now."); }
+    } catch { /* Keep the current state; running a report reports problems anyway. */ }
+    finally { setCheckingProvider(false); }
+  }
+
   const keyList = keywords.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
   async function run(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(""); setNotice(""); setLoading(true);
@@ -31,7 +63,10 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
       if (kind === "questions" && keyList.length !== 1) throw new Error("Question research supports one topic phrase per request.");
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/research`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, keywords: keyList, latitude: target.latitude, longitude: target.longitude, radiusKm: target.radiusKm, locationCode: target.locationCode, locationName: target.locationName, countryCode: target.countryCode, countryName: target.countryName, countryLocationCode: target.countryLocationCode, languageCode: target.languageCode, ...(kind === "rank" ? { device } : {}), ...(kind === "competitors" ? { competitorDomain } : {}), ...(kind === "ai_visibility" ? { platform } : {}) }) });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Research request failed.");
+      if (!response.ok) {
+        if (payload.providerIssue) { setProviderIssue({ ...payload.providerIssue, message: payload.error }); return; }
+        throw new Error(payload.error || "Research request failed.");
+      }
       const report = payload.report as Report;
       setActive(report); setHistory((current) => [report, ...current].slice(0, 20)); setNotice(payload.requestNotice || "Report saved.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not run the report."); }
@@ -41,6 +76,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
     <section className="research-panel"><div className="research-panel-heading"><span className="research-icon"><Sparkles size={17} /></span><div><p className="workspace-eyebrow">NEW REPORT</p><h2>Configure research</h2></div></div>
       {!configured && <div className="research-config-alert"><strong>Provider setup required</strong><p>Add <code>DATAFORSEO_LOGIN</code> and <code>DATAFORSEO_PASSWORD</code> to the server environment, then restart the app.</p></div>}
       {!verified && <div className="research-config-alert"><strong>Website verification required</strong><p>Verify domain ownership on the Websites page before running provider reports.</p></div>}
+      {providerIssue && <ProviderAccountAlert issue={providerIssue} checking={checkingProvider} onRecheck={() => void recheckProvider()} />}
       <form className="research-form" onSubmit={run}>
         <label>Report type<select value={kind} onChange={(event) => setKind(event.target.value as Report["kind"])}><option value="keywords">Keyword demand</option><option value="questions">AEO question keywords</option><option value="rank">Live organic positions</option><option value="backlinks">Backlink summary</option><option value="competitors">Competitor keyword gaps</option><option value="ai_visibility">AI search mentions</option></select></label>
         {kind === "ai_visibility" && <label>AI search source<select value={platform} onChange={(event) => setPlatform(event.target.value as "google" | "chat_gpt")}><option value="google">Google AI Overviews</option><option value="chat_gpt">ChatGPT</option></select><small>Provider coverage varies by country. ChatGPT data is currently available only for United States English.</small></label>}
@@ -50,10 +86,15 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
         {(kind === "keywords" || kind === "questions" || kind === "rank") && <label>{kind === "questions" ? "Topic phrase" : "Keywords"}<textarea value={keywords} onChange={(event) => setKeywords(event.target.value)} placeholder={kind === "rank" ? "One keyword per line (up to 10)" : kind === "questions" ? "For example: home solar installation" : "One keyword per line (up to 25)"} rows={kind === "questions" ? 2 : 5} required /></label>}
         {kind === "rank" && <label>Search device<select value={device} onChange={(event) => setDevice(event.target.value as "desktop" | "mobile")}><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select></label>}
         <SeoLocationSelector value={target} onChange={setTarget} label="City, region, or local area" />
-        <p className="research-data-note">City and region targeting applies to live organic position checks. Keyword demand, competitor summaries, and AI visibility use the closest country-level dataset supported by each provider API.</p>
-        <p className="research-cost-note"><Activity size={14} /> Each run calls your configured research provider and may incur charges. AI mention results are sampled provider observations, not a promise of future citations.</p>
+        <div className="research-info">
+          <p><MapPinned size={14} aria-hidden="true" /> City, region and live-location targeting applies to live Google position checks. Keyword demand, competitors and AI visibility use country-level data.</p>
+          <p><Activity size={14} aria-hidden="true" /> Each run uses DataForSEO credit. AI mention results are sampled observations, not a promise of future citations.</p>
+        </div>
         {error && <p className="research-error" role="alert">{error}</p>}{notice && <p className="research-success" role="status">{notice}</p>}
-        <button className="research-submit" type="submit" disabled={loading || !configured || !verified || ((kind === "keywords" || kind === "questions" || kind === "rank") && !keyList.length) || (kind === "competitors" && !competitorDomain)}>{loading ? <><LoaderCircle size={16} className="research-spinner" /> Running report…</> : <><Search size={16} /> Run report</>}</button>
+        <div className={`research-submit-row${blocked ? " is-blocked" : ""}`}>
+          {blocked && providerIssue && <a className="research-verify-button" href={providerIssue.actionUrl} target="_blank" rel="noreferrer"><ShieldCheck size={16} aria-hidden="true" /> {providerActionLabel(providerIssue)} <ArrowUpRight size={14} aria-hidden="true" /></a>}
+          <button className="research-submit" type="submit" disabled={loading || blocked || !configured || !verified || ((kind === "keywords" || kind === "questions" || kind === "rank") && !keyList.length) || (kind === "competitors" && !competitorDomain)}>{loading ? <><LoaderCircle size={16} className="research-spinner" /> Running report…</> : <><Search size={16} /> Run report</>}</button>
+        </div>
       </form>
     </section>
     <section className="research-results"><div className="research-results-heading"><div><p className="workspace-eyebrow">PROVIDER RESULTS</p><h2>{active ? (active.kind === "keywords" ? "Keyword demand" : active.kind === "questions" ? "AEO question keywords" : active.kind === "rank" ? `${active.device === "mobile" ? "Mobile" : "Desktop"} organic positions` : active.kind === "competitors" ? "Competitor keyword gaps" : active.kind === "ai_visibility" ? "AI search mentions" : "Backlink summary") : "Your research results"}</h2><p>{active ? `${active.query} · ${reportLocation(active)} · ${new Date(active.fetchedAt).toLocaleString()}` : "Run a report to see live third-party data."}</p></div></div>

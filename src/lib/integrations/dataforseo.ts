@@ -79,21 +79,28 @@ export async function readDataForSeoResponse(response: Response): Promise<DataFo
 }
 
 /** Account-level DataForSEO problems an admin must fix in the DataForSEO dashboard (not a temporary outage). */
+export type DataForSeoAccountIssue = "unverified" | "bad_credentials" | "no_balance" | "rate_limited";
+
+/** Where the account owner fixes each problem. */
+export const DATAFORSEO_DASHBOARD_URL = "https://app.dataforseo.com/";
+
 export class DataForSeoAccountError extends Error {
   providerCode: number;
-  constructor(message: string, providerCode: number) {
+  reason: DataForSeoAccountIssue;
+  constructor(message: string, providerCode: number, reason: DataForSeoAccountIssue) {
     super(message);
     this.name = "DataForSeoAccountError";
     this.providerCode = providerCode;
+    this.reason = reason;
   }
 }
 
 function accountError(statusCode: number | undefined, httpStatus: number) {
   const code = Number(statusCode) || 0;
-  if (code === 40104) return new DataForSeoAccountError("Your DataForSEO account is not verified yet. Complete verification at app.dataforseo.com, then try again.", code);
-  if (code === 40100 || code === 40101 || httpStatus === 401) return new DataForSeoAccountError("DataForSEO rejected the login. Check DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD (use the API password from app.dataforseo.com, not your account password).", code);
-  if (code === 40202 || code === 40209 || httpStatus === 429) return new DataForSeoAccountError("DataForSEO rate limit reached. Wait a minute and try again.", code);
-  if ((code >= 40200 && code < 40300) || httpStatus === 402) return new DataForSeoAccountError("Your DataForSEO balance is too low. Add funds at app.dataforseo.com, then try again.", code);
+  if (code === 40104) return new DataForSeoAccountError("Your DataForSEO account is not verified yet. Complete verification at app.dataforseo.com, then try again.", code, "unverified");
+  if (code === 40100 || code === 40101 || httpStatus === 401) return new DataForSeoAccountError("DataForSEO rejected the login. Check DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD (use the API password from app.dataforseo.com, not your account password).", code, "bad_credentials");
+  if (code === 40202 || code === 40209 || httpStatus === 429) return new DataForSeoAccountError("DataForSEO rate limit reached. Wait a minute and try again.", code, "rate_limited");
+  if ((code >= 40200 && code < 40300) || httpStatus === 402) return new DataForSeoAccountError("Your DataForSEO balance is too low. Add funds at app.dataforseo.com, then try again.", code, "no_balance");
   return null;
 }
 
@@ -168,3 +175,39 @@ export function buildDomainRankRows(tasks: NonNullable<DataForSeoResponse["tasks
   });
 }
 
+export type DataForSeoAccountStatus =
+  | { state: "ready"; balance: number | null }
+  | { state: "not_configured" }
+  | { state: "unavailable"; message: string }
+  | { state: DataForSeoAccountIssue; message: string };
+
+const globalForProviderStatus = globalThis as typeof globalThis & { dataForSeoStatus?: { at: number; value: DataForSeoAccountStatus } };
+const STATUS_CACHE_MS = 60_000;
+
+/**
+ * Checks the DataForSEO account with free endpoints (no report charge): verification/login, then balance.
+ * Cached for a minute per server instance; pass `fresh` after the user says they fixed the account.
+ */
+export async function getDataForSeoAccountStatus(fresh = false): Promise<DataForSeoAccountStatus> {
+  if (!isDataForSeoConfigured()) return { state: "not_configured" };
+  const cached = globalForProviderStatus.dataForSeoStatus;
+  if (!fresh && cached && Date.now() - cached.at < STATUS_CACHE_MS) return cached.value;
+  let value: DataForSeoAccountStatus;
+  try {
+    // appendix/user_data answers even for unverified accounts, so first probe a small free endpoint
+    // that DataForSEO blocks until the account is verified (it also catches wrong credentials).
+    await dataForSeoGet("serp/google/languages");
+    const result = await dataForSeoGet("appendix/user_data");
+    const money = (result.tasks?.[0]?.result?.[0] as { money?: { balance?: unknown } } | undefined)?.money;
+    const balance = typeof money?.balance === "number" ? money.balance : null;
+    value = balance !== null && balance <= 0
+      ? { state: "no_balance", message: "Your DataForSEO balance is empty. Add funds at app.dataforseo.com, then try again." }
+      : { state: "ready", balance };
+  } catch (error) {
+    value = error instanceof DataForSeoAccountError
+      ? { state: error.reason, message: error.message }
+      : { state: "unavailable", message: "DataForSEO could not be reached. Try again in a moment." };
+  }
+  globalForProviderStatus.dataForSeoStatus = { at: Date.now(), value };
+  return value;
+}

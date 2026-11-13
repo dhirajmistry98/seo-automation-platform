@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, KeyRound, LoaderCircle, RotateCw, ShieldAlert, Wallet } from "lucide-react";
+import { KeyRound, LoaderCircle, RotateCw, ShieldAlert, Wallet } from "lucide-react";
 
 export type ProviderIssue = {
   state: "unverified" | "bad_credentials" | "no_balance" | "rate_limited" | "unavailable";
@@ -76,7 +76,7 @@ export function ProviderAccountAlert({ issue, checking, onRecheck }: { issue: Pr
       )}
       <div className="provider-alert-actions">
         <a className="provider-alert-primary" href={issue.actionUrl} target="_blank" rel="noreferrer">
-          {copy.action} <ArrowUpRight size={14} aria-hidden="true" />
+          {copy.action}
         </a>
         <button type="button" className="provider-alert-secondary" onClick={onRecheck} disabled={checking} data-no-loader>
           {checking ? <LoaderCircle size={14} className="research-spinner" aria-hidden="true" /> : <RotateCw size={14} aria-hidden="true" />}

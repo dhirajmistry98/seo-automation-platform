@@ -393,12 +393,12 @@
 .workspace-action-dialog-actions button:disabled { cursor:not-allowed; opacity:.45; }
 .workspace-action-dialog-actions button:focus-visible,.workspace-action-dialog-close:focus-visible { outline:3px solid #ff6a0060; outline-offset:2px; }
 .workspace-action-dialog .site-spin { animation:site-spin 1s linear infinite; }
-.workspace-shell .workspace-feedback,.workspace-shell [role="status"]:not(.workspace-alert),.workspace-shell [role="alert"]:not(.workspace-action-dialog-error) { display:flex; width:100%; align-items:flex-start; gap:9px; margin-top:9px; border:1px solid #e5d7c4; border-left:3px solid #c65a0c; border-radius:8px; background:#fff8ed; padding:10px 12px; color:#69411f; font-size:11px; line-height:1.55; }
-.workspace-shell .workspace-feedback::before,.workspace-shell [role="status"]:not(.workspace-alert)::before,.workspace-shell [role="alert"]:not(.workspace-action-dialog-error)::before { width:7px; height:7px; flex:none; margin-top:5px; border-radius:50%; background:#c65a0c; content:""; }
+.workspace-shell .workspace-feedback,.workspace-shell [role="status"]:not(.workspace-alert),.workspace-shell [role="alert"]:not(.workspace-action-dialog-error):not(.provider-alert) { display:flex; width:100%; align-items:flex-start; gap:9px; margin-top:9px; border:1px solid #e5d7c4; border-left:3px solid #c65a0c; border-radius:8px; background:#fff8ed; padding:10px 12px; color:#69411f; font-size:11px; line-height:1.55; }
+.workspace-shell .workspace-feedback::before,.workspace-shell [role="status"]:not(.workspace-alert)::before,.workspace-shell [role="alert"]:not(.workspace-action-dialog-error):not(.provider-alert)::before { width:7px; height:7px; flex:none; margin-top:5px; border-radius:50%; background:#c65a0c; content:""; }
 .workspace-shell .workspace-feedback.is-success,.workspace-shell [role="status"].is-success { border-color:#c8ddcf; border-left-color:#397354; background:#f0f7f2; color:#285b3f; }
 .workspace-shell .workspace-feedback.is-success::before,.workspace-shell [role="status"].is-success::before { background:#397354; }
-.workspace-shell .workspace-feedback.is-error,.workspace-shell [role="alert"],.workspace-shell [role="alert"]:not(.workspace-action-dialog-error) { border-color:#e9c4bb; border-left-color:#a4382d; background:#fff3ef; color:#7f3025; }
-.workspace-shell .workspace-feedback.is-error::before,.workspace-shell [role="alert"]::before { background:#a4382d; }
+.workspace-shell .workspace-feedback.is-error,.workspace-shell [role="alert"]:not(.provider-alert),.workspace-shell [role="alert"]:not(.workspace-action-dialog-error):not(.provider-alert) { border-color:#e9c4bb; border-left-color:#a4382d; background:#fff3ef; color:#7f3025; }
+.workspace-shell .workspace-feedback.is-error::before,.workspace-shell [role="alert"]:not(.provider-alert)::before { background:#a4382d; }
 
 .mfa-settings { display: grid; gap: 8px; margin-top: 15px; border-top: 1px solid #ded8d1; padding-top: 13px; }
 .mfa-settings > div:first-child h3 { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; }

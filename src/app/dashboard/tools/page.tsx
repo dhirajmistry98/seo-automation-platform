@@ -11,12 +11,12 @@ import { hasOrganizationPermission } from "@/lib/organizations";
 export const instant = false;
 
 const liveTools = [
-  { name: "Technical site audits", description: "Crawl verified pages for metadata, indexability, schema, errors, and internal links.", icon: FileSearch, state: "Available" },
-  { name: "PageSpeed reports", description: "Load mobile and desktop Lighthouse scores and performance opportunities.", icon: Gauge, state: "Available" },
-  { name: "SEO action plans", description: "Turn open audit findings into trackable tasks for your workspace.", icon: ListTodo, state: "Available" },
-  { name: "Search Console & GA4", description: "Review verified search performance and authorized traffic reports.", icon: BarChart3, state: "Connect Google" },
-  { name: "SEO Authority Index", description: "Calculate a versioned authority estimate from saved backlink, Search Console and crawl evidence.", icon: Activity, state: "Open research" },
-  { name: "GEO, AEO & LLMO readiness", description: "Review first-party content and technical signals from the latest site crawl.", icon: Sparkles, state: "Available" },
+  { name: "Technical site audits", description: "Crawl verified pages for metadata, indexability, schema, errors, and internal links.", icon: FileSearch, state: "Run audit", href: "#website-controls" },
+  { name: "PageSpeed reports", description: "Load mobile and desktop Lighthouse scores and performance opportunities.", icon: Gauge, state: "Run PageSpeed", href: "#website-controls" },
+  { name: "SEO action plans", description: "Turn open audit findings into trackable tasks for your workspace.", icon: ListTodo, state: "Create plan", href: "#website-controls" },
+  { name: "Search Console & GA4", description: "Review verified search performance and authorized traffic reports.", icon: BarChart3, state: "Connect Google", href: "/dashboard/integrations" },
+  { name: "SEO Authority Index", description: "Calculate a versioned authority estimate from saved backlink, Search Console and crawl evidence.", icon: Activity, state: "Open research", href: "/dashboard/research" },
+  { name: "GEO, AEO & LLMO readiness", description: "Review first-party content and technical signals from the latest site crawl.", icon: Sparkles, state: "Open readiness", href: "/dashboard/visibility" },
 ];
 const plannedTools = [
   { name: "Content and internal link opportunities", description: "Deeper clustering and recommendations need broader crawl and content analysis.", icon: Link2 },
@@ -33,9 +33,9 @@ export default async function SeoToolsPage() {
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> MEASURE & IMPROVE</p><h1>SEO tools</h1><p>Run available analysis and review each site&apos;s findings and action plan.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><Search size={15} /> Open SEO research</Link></header>
     {!workspace.available && <div className="workspace-alert" role="status">SEO tools are paused because website data could not be loaded from MongoDB.</div>}
     <section className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">READY TO USE</p><h2>Live tools</h2><p>Run them from a verified website. Results are saved in that website’s history.</p></div></div>
-      <div className="workspace-tool-grid">{liveTools.map(({ name, description, icon: Icon, state }) => <article className="workspace-tool-card" key={name}><span><Icon size={18} /></span><div><h3>{name}</h3><p>{description}</p></div><small>{state}</small></article>)}</div>
+      <div className="workspace-tool-grid">{liveTools.map(({ name, description, icon: Icon, state, href }) => <Link className="workspace-tool-card" href={href} key={name}><span><Icon size={18} aria-hidden="true" /></span><div><h3>{name}</h3><p>{description}</p></div><small>{state}</small></Link>)}</div>
     </section>
-    <section className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">BY WEBSITE</p><h2>Audit and task controls</h2><p>Ownership and team permissions determine which controls are available.</p></div></div>
+    <section id="website-controls" className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">BY WEBSITE</p><h2>Audit and task controls</h2><p>Ownership and team permissions determine which controls are available.</p></div></div>
       {websites.length ? <div className="workspace-site-list">{websites.map((site) => {
         const role = websiteRole(memberships, site);
         const canManage = hasOrganizationPermission(role, "websites.manage");

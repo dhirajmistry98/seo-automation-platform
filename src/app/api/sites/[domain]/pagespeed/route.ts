@@ -51,7 +51,7 @@ export async function POST(request: Request, context: Context) {
   const statusFilter = { ownerId: session.user.id, websiteDomain: domain, provider: "google_pagespeed" };
   const setIntegrationStatus = async (status: string, errorMessage?: string) => integrations.updateOne(statusFilter, {
     $set: { userId: session.user.id, updatedBy: session.user.id, status, lastAttemptAt: new Date(), ...(status === "connected" ? { lastSyncedAt: new Date(), lastError: null } : errorMessage ? { lastError: errorMessage } : {}) },
-    $setOnInsert: { ownerId: session.user.id, userId: session.user.id, createdBy: session.user.id, websiteDomain: domain, provider: "google_pagespeed", createdAt: new Date() },
+    $setOnInsert: { ownerId: session.user.id, createdBy: session.user.id, websiteDomain: domain, provider: "google_pagespeed", createdAt: new Date() },
   }, { upsert: true });
   try {
     await setIntegrationStatus("syncing");

@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       const identity = { organizationId: site.organizationId, websiteDomain: site.domain, pageUrl: finding.pageUrl, ruleId: finding.ruleId };
       const existing = await db.collection("seo_issues").findOne(identity, { projection: { _id: 1, status: 1 } });
       const reopened = existing && ["resolved", "ignored", "done"].includes(String(existing.status));
-      const issueResult = await db.collection("seo_issues").updateOne(identity, { $set: { ...finding, status: reopened ? "open" : existing?.status || "open", lastDetectedAt: completedAt }, $setOnInsert: { firstDetectedAt: completedAt, detectionCount: 0, createdAt: completedAt }, $inc: { detectionCount: 1 } }, { upsert: true });
+      const issueResult = await db.collection("seo_issues").updateOne(identity, { $set: { ...finding, status: reopened ? "open" : existing?.status || "open", lastDetectedAt: completedAt }, $setOnInsert: { firstDetectedAt: completedAt, createdAt: completedAt }, $inc: { detectionCount: 1 } }, { upsert: true });
       const issueId = existing?._id || issueResult.upsertedId;
       if (finding.severity === "critical" && (!existing || reopened)) newlyCritical.push({ title: finding.title, pageUrl: finding.pageUrl });
       if (issueId) await db.collection("seo_issue_history").insertOne({ ownerId, organizationId: site.organizationId, websiteDomain: site.domain, issueId, auditId, action: reopened ? "reopened" : "detected", severity: finding.severity, evidence: finding.evidence, detectedAt: completedAt });

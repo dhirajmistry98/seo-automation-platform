@@ -1730,7 +1730,13 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 .site-header-influencer-short,.site-nav-influencer-mobile { display:none; }
 .site-nav-influencer-mobile svg { margin-right:7px; color:var(--brand-coral); }
 @media (max-width:1160px) { .site-header-influencer { min-height:36px; gap:5px; padding-inline:9px; font-size:9px; } .site-header-influencer-long { display:none; } .site-header-influencer-short { display:inline; } }
-@media (max-width:600px) { .site-header-influencer { display:none; } .site-nav-influencer-mobile { display:flex!important; } }
+/* Mobile: keep Influencer reachable as a compact icon button in the top bar; the menu also lists it. */
+@media (max-width:700px) { .site-nav-influencer-mobile { display:flex!important; } }
+@media (max-width:600px) { .site-header-influencer { width:38px; min-height:38px; padding:0; gap:0; } .site-header-influencer-long,.site-header-influencer-short { display:none; } }
+@media (max-width:420px) { .site-header-influencer { width:34px; min-height:34px; } }
+/* "Free" badge on nav items such as the SEO Checker. */
+.site-nav-badge { margin-left:6px; border-radius:999px; background:var(--brand-coral); padding:2px 6px; color:#fff; font-size:9px; font-weight:700; letter-spacing:.04em; line-height:1.2; text-transform:uppercase; }
+.site-header-nav .site-nav-link.is-active .site-nav-badge { background:#ff5a00; }
 
 /* Refined SEO Studio sign-in: stronger contrast, calmer surfaces and a compact responsive form. */
 .login-shell {

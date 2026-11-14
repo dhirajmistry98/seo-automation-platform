@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 import { SiteFooter } from "@/components/marketing/homepage-sections";
 import { SiteHeader } from "@/components/marketing/site-header";
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/seo-checker" },
 };
 
+export const instant = false;
+
 export default async function SeoCheckerPage() {
+  await connection();
   const session = await auth();
   return (
     <>

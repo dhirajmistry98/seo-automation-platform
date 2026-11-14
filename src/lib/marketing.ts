@@ -9,13 +9,11 @@ export const ROUTES = {
   signIn: "/login",
 };
 
-export const NAV_ITEMS = [
+export const NAV_ITEMS: Array<{ label: string; href: string; badge?: string }> = [
   { label: "Home", href: "/#home" },
   { label: "Features", href: "/#features" },
-  { label: "SEO Application", href: "/#application" },
-  { label: "Free SEO Checker", href: "/seo-checker" },
-  { label: "WordPress Plugin", href: "/#wordpress" },
-  { label: "Influencer", href: "/#marketplace" },
+  { label: "SEO Checker", href: "/seo-checker", badge: "Free" },
+  { label: "WordPress", href: "/#wordpress" },
   { label: "Integrations", href: "/#integrations" },
   { label: "Resources", href: "/#faq" },
 ];

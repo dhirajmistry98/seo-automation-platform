@@ -2,7 +2,8 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 import type { Db } from "mongodb";
 
 export const GOOGLE_SERVICES = {
-  search_console: { label: "Search Console", scope: "https://www.googleapis.com/auth/webmasters.readonly" },
+  // Full Search Console scope: needed to submit sitemaps (reports and URL inspection also work with it).
+  search_console: { label: "Search Console", scope: "https://www.googleapis.com/auth/webmasters" },
   analytics: { label: "Google Analytics", scope: "https://www.googleapis.com/auth/analytics.readonly" },
   merchant_center: { label: "Merchant Center", scope: "https://www.googleapis.com/auth/content" },
   business_profile: { label: "Business Profile", scope: "https://www.googleapis.com/auth/business.manage" },
@@ -85,4 +86,10 @@ export async function getGoogleAccessToken(db: Db, organizationId: unknown, doma
   const accessTokenExpiresAt = new Date(Date.now() + (body.expires_in ?? 3600) * 1000);
   await db.collection("google_connections").updateOne({ _id: connection._id }, { $set: { accessTokenEncrypted: encryptGoogleSecret(body.access_token), accessTokenExpiresAt, lastRefreshedAt: new Date() } });
   return body.access_token;
+}
+
+/** Whether the stored connection was granted a scope (e.g. full Search Console access for sitemap submission). */
+export async function googleConnectionHasScope(db: Db, organizationId: unknown, domain: string, service: GoogleService, scope: string) {
+  const connection = await db.collection("google_connections").findOne({ organizationId, domain, service, status: "connected" }, { projection: { grantedScopes: 1 } });
+  return Array.isArray(connection?.grantedScopes) && connection.grantedScopes.includes(scope);
 }

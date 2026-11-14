@@ -807,3 +807,26 @@ a.workspace-tool-card:focus-visible { outline:2px solid #ff6a00; outline-offset:
   .seo-check-facts > div { grid-template-columns: 1fr; gap: 2px; }
   .seo-check-issues li { flex-direction: column; gap: 5px; }
 }
+
+/* Google indexing panel (google-indexing-panel.tsx): sitemap submission and index checks. */
+.google-indexing { display: grid; gap: 10px; margin-top: 12px; border-top: 1px solid #ded8d1; padding-top: 12px; }
+.google-indexing-title { display: flex; align-items: center; gap: 6px; color: #2b241e; font-size: 11px; }
+.google-indexing-title svg { color: #d85800; }
+.google-indexing-block { display: grid; gap: 7px; border: 1px solid #ded8d1; background: #fff; padding: 10px; }
+.google-indexing-block > p { color: #625a53; font-size: 10px; }
+.google-indexing-row { display: flex; gap: 6px; }
+.google-indexing-row input { flex: 1; min-width: 0; min-height: 32px; border: 1px solid #cfc7be; background: #faf8f5; padding: 0 9px; color: #2b241e; font-size: 11px; }
+.google-indexing-row button { display: inline-flex; flex: none; min-height: 32px; align-items: center; gap: 6px; border: 0; background: #080706; padding: 0 12px; color: #f3efea; font-size: 10px; font-weight: 600; cursor: pointer; }
+.google-indexing-row button:disabled { cursor: wait; opacity: .6; }
+.google-indexing-result { display: grid; gap: 6px; border-left: 3px solid #b7791f; background: #fffaf0; padding: 9px 11px; font-size: 10px; }
+.google-indexing-result.is-indexed { border-left-color: #2f7a4b; background: #f0f7f2; }
+.google-indexing-result > strong { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.google-indexing-result.is-indexed > strong { color: #2f7a4b; }
+.google-indexing-result:not(.is-indexed) > strong { color: #8a4b0c; }
+.google-indexing-result dl { display: grid; gap: 3px; margin: 0; }
+.google-indexing-result dl > div { display: grid; grid-template-columns: 110px minmax(0,1fr); gap: 8px; }
+.google-indexing-result dt { color: #70675e; }
+.google-indexing-result dd { margin: 0; overflow-wrap: anywhere; color: #2b241e; }
+.google-indexing-result p { color: #625a53; }
+.google-indexing-result a { display: inline-flex; width: max-content; align-items: center; gap: 4px; color: #a8450a; font-weight: 600; }
+@media (max-width: 600px) { .google-indexing-row { flex-direction: column; } .google-indexing-row button { justify-content: center; } .google-indexing-result dl > div { grid-template-columns: 1fr; } }

@@ -22,12 +22,19 @@ const globalForMongo = globalThis as typeof globalThis & {
 const clientPromise =
   globalForMongo.mongoClientPromise ??
   new MongoClient(uri, {
-    maxPoolSize: 10,
+    // Serverless: many small instances under load. Keep each pool small and close idle
+    // connections so a traffic burst stays well under the Atlas connection limit.
+    maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE) || 5,
+    minPoolSize: 0,
+    maxIdleTimeMS: 30_000,
     serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 10_000,
+    socketTimeoutMS: 60_000,
+    retryWrites: true,
+    retryReads: true,
   }).connect();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForMongo.mongoClientPromise = clientPromise;
-}
+// Reuse one client per instance (dev hot reload and warm serverless invocations alike).
+globalForMongo.mongoClientPromise = clientPromise;
 
 export default clientPromise;

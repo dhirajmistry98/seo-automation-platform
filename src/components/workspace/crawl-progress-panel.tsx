@@ -93,7 +93,7 @@ export function CrawlProgressPanel({ job, onCancel }: { job: CrawlJob; onCancel:
 
       <p className="crawl-progress-note">
         {waitingLong
-          ? "Still starting. This page checks every few seconds and restarts the crawler if it stalls."
+          ? "Waiting for a free crawl slot. Many audits are running right now; yours starts automatically and you can leave this page."
           : "Usually takes 1–3 minutes. You can leave this page; the crawl keeps running and results are saved."}
       </p>
     </div>

@@ -10,6 +10,15 @@ import { persistCrawlResult } from "@/lib/seo/persist-crawl";
  */
 export const CRAWL_LEASE_MS = 330_000;
 
+/**
+ * Most crawls allowed to run at once across all workspaces. Extra jobs stay queued and start when a slot
+ * frees up (each progress poll retries them), so a burst of users cannot overload the database or the host.
+ */
+export function crawlConcurrencyLimit() {
+  const value = Number(process.env.SEO_CRAWL_MAX_CONCURRENCY);
+  return Number.isInteger(value) && value >= 1 && value <= 200 ? value : 20;
+}
+
 export type CrawlWorkerResult = { processed: boolean; status?: string; message?: string; [key: string]: unknown };
 
 function claimedDocument<T>(result: T | { value?: T | null } | null): T | null {
@@ -25,6 +34,8 @@ export async function processNextCrawlJob(db: Db, options: { jobId?: string } = 
   await ensureSeoIndexes(db);
   const now = new Date();
   const leaseToken = randomUUID();
+  const running = await db.collection("seo_crawl_jobs").countDocuments({ status: { $in: ["running", "saving"] }, leaseUntil: { $gt: now } });
+  if (running >= crawlConcurrencyLimit()) return { processed: false, status: "busy", message: "All crawl slots are busy. The job stays queued and starts shortly." };
   const claim = await db.collection("seo_crawl_jobs").findOneAndUpdate(
     { ...(options.jobId ? { jobId: options.jobId } : {}), $or: [
       { status: { $in: ["queued", "retrying"] }, $and: [{ $or: [{ nextAttemptAt: { $lte: now } }, { nextAttemptAt: { $exists: false } }] }, { $or: [{ leaseUntil: { $lt: now } }, { leaseUntil: { $exists: false } }] }] },

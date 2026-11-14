@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { auth } from "@/auth";
 import { HomePageContent, SiteFooter } from "@/components/marketing/homepage-sections";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { JsonLd } from "@/components/blog/blog-chrome";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const title = "SEO STUDIO — SEO Automation Platform";
@@ -35,6 +36,11 @@ export default async function HomePage() {
         <HomePageContent />
       </main>
       <SiteFooter />
+      {/* Identifies the organization and site for search engines and AI assistants (GEO). */}
+      {siteUrl && <JsonLd data={[
+        { "@context": "https://schema.org", "@type": "Organization", "@id": `${siteUrl}/#organization`, name: "SEO STUDIO", url: siteUrl, logo: `${siteUrl}/seo-studio-icon.png`, description },
+        { "@context": "https://schema.org", "@type": "WebSite", "@id": `${siteUrl}/#website`, name: "SEO STUDIO", url: siteUrl, description, publisher: { "@id": `${siteUrl}/#organization` } },
+      ]} />}
     </>
   );
 }

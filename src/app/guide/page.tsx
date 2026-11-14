@@ -22,6 +22,7 @@ import { SiteHeader } from "@/components/marketing/site-header";
 
 export const metadata: Metadata = {
   title: "Practical Guide | SEO STUDIO",
+  alternates: { canonical: "/guide" },
   description: "A clear first-time guide to SEO Studio: website audits, search visibility, local SEO, AI search readiness, WordPress and creator collaborations.",
 };
 

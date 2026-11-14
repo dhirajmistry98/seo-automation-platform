@@ -8,6 +8,7 @@ import "./terms.css";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions | SEO STUDIO",
+  alternates: { canonical: "/terms" },
   description: "Terms for using the SEO STUDIO workspace, research tools, WordPress plugin and collaboration marketplace.",
 };
 

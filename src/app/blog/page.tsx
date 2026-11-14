@@ -7,8 +7,8 @@ import { BLOG_CATEGORIES, BLOG_POSTS, formatDate, readingMinutes } from "@/lib/b
 import { siteUrl } from "@/lib/site-url";
 import "./blog.css";
 
-const title = "SEO Studio Blog: Guides to Audits, Rankings, AI Search and More";
-const description = "Step-by-step SEO Studio guides: technical SEO audits, page speed, keyword research and rank tracking in any country, AI search (GEO) readiness, WordPress and influencer marketing.";
+const title = "SEO Guides: Audits, Rankings & AI Search";
+const description = "Step-by-step SEO Studio guides to technical audits, page speed, keyword research, rank tracking, AI search readiness and WordPress SEO.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),

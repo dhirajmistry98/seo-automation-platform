@@ -3,7 +3,7 @@ import type { BlogPost } from "@/lib/blog/types";
 export const influencerMarketing: BlogPost = {
   slug: "influencer-marketing-for-brands-and-creators",
   title: "Influencer Marketing in SEO Studio: How Brands and Creators Work Together",
-  metaTitle: "Influencer Marketing Platform for Brands & Instagram Creators",
+  metaTitle: "Influencer Marketing for Brands & Instagram Creators",
   description: "How SEO Studio's influencer marketing workspace works: verified Instagram creator profiles, brand campaigns, applications, invitations and content review.",
   excerpt: "Brands publish campaigns and invite verified creators; creators connect Instagram, show their work and apply. Here's how the whole collaboration works.",
   category: "Influencer marketing",

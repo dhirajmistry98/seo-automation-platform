@@ -74,6 +74,16 @@ export async function persistCrawlResult(input: {
       }
     }
   }
+  // Auto-resolve open issues on pages this crawl re-scanned where the rule no longer fires,
+  // so fixes made on the site close their issues without a manual "Verify resolved".
+  const detectedKeys = new Set(findings.map((finding) => `${finding.pageUrl}\u0000${finding.ruleId}`));
+  const crawledUrls = pages.map((page) => page.url);
+  const staleIssues = crawledUrls.length ? (await issueCollection.find({ organizationId: site.organizationId, websiteDomain: domain, status: "open", pageUrl: { $in: crawledUrls } }, { projection: { _id: 1, pageUrl: 1, ruleId: 1 } }).toArray()).filter((item) => !detectedKeys.has(`${item.pageUrl}\u0000${item.ruleId}`)) : [];
+  if (staleIssues.length) {
+    await issueCollection.updateMany({ _id: { $in: staleIssues.map((item) => item._id) }, status: "open" }, { $set: { status: "resolved", resolvedAt: completedAt, resolvedBy: "audit", verificationAuditId: auditId, updatedAt: completedAt } });
+    await db.collection("seo_issue_history").bulkWrite(staleIssues.map((item) => ({ updateOne: { filter: { auditId, issueId: item._id, action: "resolved" }, update: { $setOnInsert: { ...siteData, issueId: item._id, auditId, action: "resolved", actorId: "audit", verifiedByAuditId: auditId, changedAt: completedAt } }, upsert: true } })), { ordered: false });
+    await tasks.updateMany({ organizationId: site.organizationId, websiteDomain: domain, sourceIssueId: { $in: staleIssues.map((item) => String(item._id)) }, status: { $ne: "done" } }, { $set: { status: "done", completedAt, updatedAt: completedAt } });
+  }
   await db.collection("seo_scores").updateOne({ ownerId, websiteDomain: domain, auditId }, { $set: { ...siteData, auditId, score: scoreDetails.score, version: summary.scoreVersion, components: scoreDetails.components, confidence: scoreDetails.confidence, scoredAt: completedAt } }, { upsert: true });
   await db.collection("websites").updateOne({ _id: site._id }, { $set: { lastAudit: summary, detectedCms, updatedAt: completedAt } });
   await db.collection("audit_logs").updateOne({ ownerId, websiteDomain: domain, auditId, action: "seo.audit.completed" }, { $setOnInsert: { ...siteData, action: "seo.audit.completed", auditId, pageCount: pages.length, issueCount: findings.length, ...(detectedCms ? { detectedCms } : {}), createdAt: completedAt } }, { upsert: true });

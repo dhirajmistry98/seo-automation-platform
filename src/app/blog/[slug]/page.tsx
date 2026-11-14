@@ -20,7 +20,8 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
   const url = `/blog/${post.slug}`;
   return {
     metadataBase: new URL(siteUrl()),
-    title: `${post.metaTitle} | SEO STUDIO`,
+    // Keep the <title> within 60 characters so search results do not truncate it; drop the brand suffix when it would not fit.
+    title: `${post.metaTitle} | SEO STUDIO`.length <= 60 ? `${post.metaTitle} | SEO STUDIO` : post.metaTitle,
     description: post.description,
     keywords: post.keywords,
     authors: [{ name: BLOG_AUTHOR.name }],

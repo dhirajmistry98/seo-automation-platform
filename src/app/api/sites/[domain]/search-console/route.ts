@@ -11,6 +11,13 @@ function siteHost(property: string) {
   const value = property.startsWith("sc-domain:") ? property.slice("sc-domain:".length) : (() => { try { return new URL(property).hostname; } catch { return ""; } })();
   return value.toLowerCase().replace(/^www\./, "");
 }
+function googleErrorMessage(fallback: string, detail?: string) {
+  if (!detail) return fallback;
+  if (/has not been used|is disabled|SERVICE_DISABLED/i.test(detail)) return `${fallback} The Google Search Console API is not enabled for this app's Google Cloud project. Enable it in Google Cloud Console and try again.`;
+  if (/insufficient|scope/i.test(detail)) return `${fallback} Google did not grant Search Console access. Click Reconnect and allow Search Console on the consent screen.`;
+  if (/permission|not have sufficient/i.test(detail)) return `${fallback} The connected Google account does not have access to this property in Search Console.`;
+  return `${fallback} Google said: ${detail.slice(0, 300)}`;
+}
 function responseError(message: string, status = 400) { return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } }); }
 
 export async function GET(_request: Request, context: Context) {
@@ -23,10 +30,13 @@ export async function GET(_request: Request, context: Context) {
   try {
     const accessToken = await getGoogleAccessToken(db, website.organizationId, domain, "search_console");
     const response = await fetch("https://searchconsole.googleapis.com/webmasters/v3/sites", { redirect: "manual", headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(12_000) });
-    const payload = await response.json() as { siteEntry?: Array<{ siteUrl: string; permissionLevel?: string }> };
-    if (!response.ok) return responseError("Search Console could not list accessible properties.", response.status === 401 ? 401 : 502);
-    const properties = (payload.siteEntry || []).filter((item) => siteHost(item.siteUrl) === domain).map((item) => ({ siteUrl: item.siteUrl, permissionLevel: item.permissionLevel }));
-    return NextResponse.json({ properties }, { headers: { "Cache-Control": "no-store" } });
+    const payload = await response.json().catch(() => ({})) as { siteEntry?: Array<{ siteUrl: string; permissionLevel?: string }>; error?: { message?: string } };
+    if (!response.ok) return responseError(googleErrorMessage("Search Console could not list accessible properties.", payload.error?.message), response.status === 401 ? 401 : 502);
+    const entries = (payload.siteEntry || []).filter((item) => item.permissionLevel !== "siteUnverifiedUser");
+    const properties = entries.filter((item) => siteHost(item.siteUrl) === domain.replace(/^www\./, "")).map((item) => ({ siteUrl: item.siteUrl, permissionLevel: item.permissionLevel }));
+    // When nothing matches, list what the connected account can see so the user knows why.
+    const otherProperties = properties.length ? [] : entries.slice(0, 20).map((item) => item.siteUrl);
+    return NextResponse.json({ properties, otherProperties }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return responseError(error instanceof Error ? error.message : "Search Console is unavailable.", 503); }
 }
 
@@ -45,7 +55,7 @@ export async function POST(request: Request, context: Context) {
   let parsedPropertyHost = "";
   if (property.startsWith("sc-domain:")) parsedPropertyHost = property.slice(10).toLowerCase().replace(/^www\./, "");
   else { try { parsedPropertyHost = new URL(property).hostname.toLowerCase().replace(/^www\./, ""); } catch {} }
-  if (!property || parsedPropertyHost !== domain) return responseError("Choose a Search Console property for this website.");
+  if (!property || parsedPropertyHost !== domain.replace(/^www\./, "")) return responseError("Choose a Search Console property for this website.");
   const dimension = ["query", "page", "country", "device", "date"].includes(String(body.dimension)) ? String(body.dimension) : "query";
   const defaults = defaultReportRange(28, 3);
   const startDate = typeof body.startDate === "string" ? body.startDate : defaults.startDate;
@@ -58,8 +68,8 @@ export async function POST(request: Request, context: Context) {
     const endpoint = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(property)}/searchAnalytics/query`;
     const query = async (from: string, to: string) => {
       const response = await fetch(endpoint, { method: "POST", redirect: "manual", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ startDate: from, endDate: to, dimensions: [dimension], rowLimit: 250, dataState: "final" }), cache: "no-store", signal: AbortSignal.timeout(20_000) });
-      const payload = await response.json() as { rows?: Array<{ keys?: string[]; clicks?: number; impressions?: number; ctr?: number; position?: number }> };
-      if (!response.ok) throw new Error("Search Console report request failed. Confirm the property access and API configuration.");
+      const payload = await response.json().catch(() => ({})) as { rows?: Array<{ keys?: string[]; clicks?: number; impressions?: number; ctr?: number; position?: number }>; error?: { message?: string } };
+      if (!response.ok) throw new Error(googleErrorMessage("Search Console report request failed.", payload.error?.message));
       return payload.rows || [];
     };
     const [rows, previousRows] = await Promise.all([query(startDate, endDate), comparisonEnabled ? query(previous.startDate, previous.endDate) : Promise.resolve([])]);

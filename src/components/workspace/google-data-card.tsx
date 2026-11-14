@@ -15,6 +15,8 @@ type BusinessLocation = { name: string; title?: string; storefrontAddress?: { lo
 export function GoogleDataCard({ domain, canConnect }: { domain: string; canConnect: boolean }) {
   const [services, setServices] = useState<Service[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [otherProperties, setOtherProperties] = useState<string[]>([]);
+  const [propertiesLoaded, setPropertiesLoaded] = useState(false);
   const [property, setProperty] = useState("");
   const [dimension, setDimension] = useState("query");
   const [rows, setRows] = useState<SearchRow[]>([]);
@@ -54,10 +56,12 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
         const next = data.properties as Property[];
         if (active) {
           setProperties(next);
+          setOtherProperties((data.otherProperties || []) as string[]);
+          setPropertiesLoaded(true);
           setProperty((current) => current && next.some((item) => item.siteUrl === current) ? current : next[0]?.siteUrl || "");
         }
       })
-      .catch((error) => { if (active) setMessage(error instanceof Error ? error.message : "Could not list Search Console properties."); });
+      .catch((error) => { if (active) { setPropertiesLoaded(true); setMessage(error instanceof Error ? error.message : "Could not list Search Console properties."); } });
     return () => { active = false; };
   }, [services, domain]);
   useEffect(() => {
@@ -122,6 +126,7 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     <div className="google-data-content"><p>Connect Google-owned data for this website. Each connection uses read or service-specific API access approved on Google&apos;s consent screen.</p>
       <div className="google-service-list">{services.map((item) => <article key={item.service}><div><strong>{item.label}</strong><small>{item.status === "connected" ? `Connected${item.providerEmail ? ` as ${item.providerEmail}` : ""}` : "Not connected"}</small></div>{canConnect ? <a href={`/api/integrations/google/${item.service}/authorize?domain=${encodeURIComponent(domain)}`}>{item.status === "connected" ? "Reconnect" : "Connect"} <ExternalLink size={12} /></a> : <small>{item.status === "connected" ? "Available" : "Admin access required"}</small>}</article>)}</div>
       {services.some((item) => item.service === "search_console" && item.status === "connected") && <div className="google-search-report"><div className="google-report-controls"><label>Property<select value={property} onChange={(event) => setProperty(event.target.value)}>{properties.map((item) => <option value={item.siteUrl} key={item.siteUrl}>{item.siteUrl}</option>)}</select></label><label>Group by<select value={dimension} onChange={(event) => setDimension(event.target.value)}>{["query", "page", "country", "device", "date"].map((item) => <option key={item}>{item}</option>)}</select></label><button type="button" disabled={busy || !property} onClick={runReport}>{busy ? <LoaderCircle className="site-spin" size={13} /> : <RefreshCw size={13} />} Run Search Console report</button></div>
+        {propertiesLoaded && !properties.length && <p className="google-data-message">No Search Console property for <strong>{domain}</strong> was found in the connected Google account.{otherProperties.length ? ` This account can see: ${otherProperties.join(", ")}.` : " This account has no verified Search Console properties."} Add and verify {domain} in Google Search Console (or ask its owner to add this account as a user), then reload this page.</p>}
         {searchOpportunityCount > 0 && dimension === "query" && <p className="google-data-message">{searchOpportunityCount} queries have at least 100 impressions and an average position between 4 and 20. Treat these as review candidates, not guaranteed ranking gains.</p>}
         {!!rows.length && <div className="google-report-table-wrap"><table className="google-report-table"><thead><tr><th>{dimension}</th><th>Clicks</th><th>Clicks vs prior</th><th>Impressions</th><th>CTR</th><th>Position</th></tr></thead><tbody>{rows.map((row, index) => { const comparison = searchComparison.find((item) => item.keys.join("\u0000") === (row.keys || []).join("\u0000")); const change = comparison?.clicks.changePercent; return <tr key={`${row.keys?.join("-")}-${index}`}><td>{row.keys?.join(" · ") || "—"}</td><td>{row.clicks ?? "—"}</td><td>{change === null || change === undefined ? "No prior baseline" : `${change > 0 ? "+" : ""}${change.toFixed(1)}%`}</td><td>{row.impressions ?? "—"}</td><td>{typeof row.ctr === "number" ? `${(row.ctr * 100).toFixed(1)}%` : "—"}</td><td>{typeof row.position === "number" ? row.position.toFixed(1) : "—"}</td></tr>; })}</tbody></table></div>}
       </div>}

@@ -7,7 +7,7 @@ import { ProviderAccountAlert, isBlockingIssue, providerActionLabel, type Provid
 import type { SeoTarget } from "@/lib/seo/target";
 import { readJson } from "@/lib/read-json";
 
-type Report = { _id?: string; kind: "keywords" | "questions" | "rank" | "backlinks" | "competitors" | "ai_visibility"; query: string; competitorDomain?: string; locationCode: number; locationName?: string; countryCode?: string; countryName?: string; countryLocationCode?: number; languageCode: string; device?: "desktop" | "mobile"; platform?: "google" | "chat_gpt"; source?: string; fetchedAt: string; providerSummary?: Array<Record<string, unknown>>; result: Array<Record<string, unknown>> };
+type Report = { _id?: string; kind: "keywords" | "questions" | "rank" | "backlinks" | "competitors" | "ai_visibility"; query: string; competitorDomain?: string; locationCode: number; locationName?: string; countryCode?: string; countryName?: string; countryLocationCode?: number; languageCode: string; device?: "desktop" | "mobile"; platform?: "google" | "chat_gpt"; source?: string; fetchedAt: string; provider?: string; searchConsoleConnected?: boolean; providerSummary?: Array<Record<string, unknown>>; result: Array<Record<string, unknown>> };
 type Props = { domain: string; verified: boolean; configured: boolean; competitorDomains: string[]; initialHistory: Report[]; initialTarget: SeoTarget };
 function value(item: Record<string, unknown>, ...keys: string[]) { for (const key of keys) { const v = item[key]; if (v !== undefined && v !== null && typeof v !== "object") return String(v); } return "—"; }
 function nested(item: Record<string, unknown>, parent: string, key: string) { const object = item[parent]; return object && typeof object === "object" ? value(object as Record<string, unknown>, key) : "—"; }
@@ -75,8 +75,8 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
   }
   return <div className="research-layout">
     <section className="research-panel"><div className="research-panel-heading"><span className="research-icon"><Sparkles size={17} /></span><div><p className="workspace-eyebrow">NEW REPORT</p><h2>Configure research</h2></div></div>
-      {!configured && <div className="research-config-alert"><strong>Provider setup required</strong><p>Add <code>DATAFORSEO_LOGIN</code> and <code>DATAFORSEO_PASSWORD</code> to the server environment, then restart the app.</p></div>}
-      {!verified && <div className="research-config-alert"><strong>Website verification required</strong><p>Verify domain ownership on the Websites page before running provider reports.</p></div>}
+      {!configured && (kind === "keywords" || kind === "questions" || kind === "rank" ? <div className="research-config-alert"><strong>Free mode</strong><p>{kind === "rank" ? "Positions come from your Google Search Console data (connect it under Integrations)." : "Ideas come from Google autocomplete, plus your Search Console clicks and positions when connected."} No paid account needed.</p></div> : <div className="research-config-alert"><strong>Paid data source required</strong><p>Backlinks, competitor gaps and AI mentions need a DataForSEO account. Keyword demand, AEO questions and positions work for free.</p></div>)}
+      {!verified && kind !== "keywords" && kind !== "questions" && <div className="research-config-alert"><strong>Website verification required</strong><p>This report looks up data for your domain. Verify ownership on the Websites page first. Keyword demand and AEO questions work without verification.</p></div>}
       {providerIssue && <ProviderAccountAlert issue={providerIssue} checking={checkingProvider} onRecheck={() => void recheckProvider()} />}
       <form className="research-form" onSubmit={run}>
         <label>Report type<select value={kind} onChange={(event) => setKind(event.target.value as Report["kind"])}><option value="keywords">Keyword demand</option><option value="questions">AEO question keywords</option><option value="rank">Live organic positions</option><option value="backlinks">Backlink summary</option><option value="competitors">Competitor keyword gaps</option><option value="ai_visibility">AI search mentions</option></select></label>
@@ -94,7 +94,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
         {error && <p className="research-error" role="alert">{error}</p>}{notice && <p className="research-success" role="status">{notice}</p>}
         <div className={`research-submit-row${blocked ? " is-blocked" : ""}`}>
           {blocked && providerIssue && <a className="research-verify-button" href={providerIssue.actionUrl} target="_blank" rel="noreferrer"><ShieldCheck size={16} aria-hidden="true" /> {providerActionLabel(providerIssue)} <ArrowUpRight size={14} aria-hidden="true" /></a>}
-          <button className="research-submit" type="submit" disabled={loading || blocked || !configured || !verified || ((kind === "keywords" || kind === "questions" || kind === "rank") && !keyList.length) || (kind === "competitors" && !competitorDomain)}>{loading ? <><LoaderCircle size={16} className="research-spinner" /> Running report…</> : <><Search size={16} /> Run report</>}</button>
+          <button className="research-submit" type="submit" disabled={loading || (blocked && kind !== "keywords" && kind !== "questions" && kind !== "rank") || (!configured && kind !== "keywords" && kind !== "questions" && kind !== "rank") || (!verified && kind !== "keywords" && kind !== "questions") || ((kind === "keywords" || kind === "questions" || kind === "rank") && !keyList.length) || (kind === "competitors" && !competitorDomain)}>{loading ? <><LoaderCircle size={16} className="research-spinner" /> Running report…</> : <><Search size={16} /> Run report</>}</button>
         </div>
       </form>
     </section>
@@ -115,6 +115,16 @@ function nestedPath(item: Record<string, unknown>, ...keys: string[]) {
 }
 
 function ResultTable({ report, domain }: { report: Report; domain: string }) {
+  if (report.provider === "Google Autocomplete + Search Console" && report.kind === "keywords") {
+    return <div className="research-table-wrap"><table className="research-table"><thead><tr><th>Keyword</th><th>Impressions</th><th>Clicks</th><th>Avg. position</th><th>Related searches</th></tr></thead><tbody>{report.result.length ? report.result.map((item, index) => {
+      const gsc = item.gsc && typeof item.gsc === "object" ? item.gsc as Record<string, unknown> : null;
+      const suggestions = Array.isArray(item.suggestions) ? item.suggestions.filter((entry): entry is string => typeof entry === "string") : [];
+      return <tr key={`${value(item, "keyword")}-${index}`}><td>{value(item, "keyword")}</td><td>{gsc ? value(gsc, "impressions") : "—"}</td><td>{gsc ? value(gsc, "clicks") : "—"}</td><td>{gsc && Number(gsc.impressions) > 0 ? value(gsc, "position") : "—"}</td><td>{suggestions.length ? suggestions.join(" · ") : "No suggestions returned"}</td></tr>;
+    }) : <tr><td colSpan={5}>No results were returned.</td></tr>}</tbody></table><p className="research-data-note">Related searches come from Google autocomplete. {report.searchConsoleConnected ? "Impressions, clicks and positions are your Search Console data for the last 28 days." : "Connect Search Console to fill in your impressions, clicks and positions."} Search volume needs a paid data source.</p></div>;
+  }
+  if (report.provider === "Google Autocomplete + Search Console" && report.kind === "questions") {
+    return <div className="research-table-wrap"><table className="research-table"><thead><tr><th>Question people search</th><th>Type</th></tr></thead><tbody>{report.result.length ? report.result.map((item, index) => <tr key={`${value(item, "keyword")}-${index}`}><td>{value(item, "keyword")}</td><td>{value(item, "questionType")}</td></tr>) : <tr><td colSpan={2}>No question searches were found. Try a shorter, broader topic.</td></tr>}</tbody></table><p className="research-data-note">Questions come from Google autocomplete for the selected country and language. Use them as headings and FAQ answers on your pages.</p></div>;
+  }
   if (report.kind === "questions") {
     return <div className="research-table-wrap"><table className="research-table"><thead><tr><th>Question query</th><th>Search volume</th><th>Keyword difficulty</th><th>SERP features</th></tr></thead><tbody>{report.result.length ? report.result.slice(0, 100).map((item, index) => {
       const serp = item.serp_info && typeof item.serp_info === "object" ? item.serp_info as Record<string, unknown> : {};

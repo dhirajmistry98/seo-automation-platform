@@ -26,7 +26,11 @@ export function googleClientConfig() {
     if (parsed.username || parsed.password || process.env.NODE_ENV === "production" && parsed.protocol !== "https:") throw new Error("NEXT_PUBLIC_APP_URL must be an HTTPS origin in production.");
     origin = parsed.origin;
   } catch (error) { throw error instanceof Error && error.message.includes("HTTPS") ? error : new Error("NEXT_PUBLIC_APP_URL must be a valid application URL."); }
-  return { clientId, clientSecret, appUrl: origin, redirectUri: `${origin}/api/integrations/google/callback` };
+  // Reuse the Auth.js Google sign-in callback, which is already registered on the OAuth client.
+  // The Auth.js route hands integration callbacks (identified by their stored state) to the
+  // integration handler. Set GOOGLE_OAUTH_REDIRECT_PATH to use a dedicated callback instead.
+  const redirectPath = process.env.GOOGLE_OAUTH_REDIRECT_PATH?.startsWith("/api/") ? process.env.GOOGLE_OAUTH_REDIRECT_PATH : "/api/auth/callback/google";
+  return { clientId, clientSecret, appUrl: origin, redirectUri: `${origin}${redirectPath}` };
 }
 function encryptionKey() {
   const encoded = process.env.GOOGLE_TOKEN_ENCRYPTION_KEY;

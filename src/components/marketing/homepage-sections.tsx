@@ -418,9 +418,10 @@ export function FinalCTA() {
 
 export function SiteFooter() {
   const groups = [
-    { title: "Explore", links: [["Home", "/#home"], ["Features", "/#features"], ["Practical guide", "/guide"], ["Get started", "/guide#first-steps"], ["Marketplace", "/#marketplace"], ["Integrations", "/#integrations"], ["Resources", "/#faq"]] },
-    { title: "Products", links: [["SEO Application", "/#application"], ["WordPress Plugin", "/#wordpress"]] },
-    { title: "Legal", links: [["Terms and Conditions", "/terms"]] },
+    { title: "Explore", links: [["Home", "/#home"], ["Features", "/#features"], ["Marketplace", "/#marketplace"], ["Integrations", "/#integrations"], ["FAQ", "/#faq"]] },
+    { title: "Products", links: [["SEO Application", "/#application"], ["WordPress Plugin", "/#wordpress"], ["Influencer Marketing", "/#marketplace"], ["Expert Services", "/#marketplace"]] },
+    { title: "Learn", links: [["Blog", "/blog"], ["Practical guide", "/guide"], ["Get started", "/guide#first-steps"]] },
+    { title: "Account", links: [["Sign in", ROUTES.signIn], ["Create account", ROUTES.signIn], ["Terms and Conditions", "/terms"]] },
   ];
 
   return (
@@ -441,11 +442,6 @@ export function SiteFooter() {
                 {group.links.map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}
               </div>
             ))}
-            <div className="landing-footer-links">
-              <h2>Workspace</h2>
-              <Link href={ROUTES.signIn}>Sign in</Link>
-              <Link href={ROUTES.signIn}>Get started</Link>
-            </div>
           </div>
         </div>
         <div className="landing-footer-bottom">

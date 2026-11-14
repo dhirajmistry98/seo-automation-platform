@@ -90,7 +90,7 @@ export function SiteHeader({ currentUser = null }: { currentUser?: HeaderUser | 
             </Link>
           </> : <>
             <Link href={ROUTES.signIn} className="nav-link site-sign-in">Sign in</Link>
-            <Link href={ROUTES.signIn} className="button-primary site-header-cta !px-4 !py-2.5 text-[13px]">
+            <Link href={ROUTES.signIn} className="button-primary site-header-cta">
               <span className="site-cta-full">Get started</span><span className="site-cta-short">Start</span>
             </Link>
           </>}

@@ -1347,7 +1347,7 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 .landing-guidance-grid li > a:hover { color:color-mix(in srgb,var(--brand-coral) 72%,var(--brand-cream)); }
 .landing-guidance-note { display:flex; align-items:center; gap:8px; margin-top:14px; color:color-mix(in srgb,var(--brand-cream) 66%,transparent); font-size:10px; line-height:1.55; }
 .landing-guidance-note svg { flex:none; color:var(--brand-coral); }
-.landing-footer-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.landing-footer-nav { grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:clamp(18px,3vw,44px); }
 @media (max-width:900px) { .landing-guidance-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.landing-footer-nav { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:560px) { .landing-guidance-grid { grid-template-columns:1fr; gap:9px; }.landing-guidance-grid li { min-height:0; padding:16px; }.landing-guidance-grid h3 { font-size:14px; } }
 @media (prefers-reduced-motion:reduce) { .landing-guidance-grid li { transition:none; }.landing-guidance-grid li:hover { transform:none; } }
@@ -1513,22 +1513,22 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 
 /* Give the public account actions a clear hierarchy and usable touch targets. */
 .site-header-actions { gap:10px; }
-.site-header-actions .site-sign-in { display:inline-flex; min-height:44px; align-items:center; justify-content:center; border:1px solid rgba(243,239,234,.25); border-radius:999px; background:rgba(8,7,6,.28); padding:0 19px; color:var(--brand-cream); font-size:12px; font-weight:600; text-decoration:none; transition:background .18s,border-color .18s,color .18s,transform .18s; }
+.site-header-actions .site-sign-in { display:inline-flex; height:44px; min-height:44px; box-sizing:border-box; align-items:center; justify-content:center; border:1px solid rgba(243,239,234,.25); border-radius:999px; background:rgba(8,7,6,.28); padding:0 20px; color:var(--brand-cream); font-size:13px; font-weight:600; text-decoration:none; transition:background .18s,border-color .18s,color .18s,transform .18s; }
 .site-header-actions .site-sign-in:hover,.site-header-actions .site-sign-in:focus-visible { transform:translateY(-1px); border-color:rgba(243,239,234,.55); background:rgba(243,239,234,.12); color:var(--brand-cream); }
-.site-header-actions .site-header-cta { display:inline-flex; min-height:48px; align-items:center; justify-content:center; gap:12px; border:1px solid var(--brand-cream); border-radius:999px; background:var(--brand-cream); padding:0 20px !important; color:var(--brand-navy); font-size:13px !important; font-weight:650; box-shadow:0 5px 18px rgba(8,7,6,.14); transition:transform .18s,background .18s,border-color .18s,box-shadow .18s; }
+.site-header-actions .site-header-cta { display:inline-flex; height:44px; min-height:44px; box-sizing:border-box; align-items:center; justify-content:center; gap:12px; border:1px solid var(--brand-cream); border-radius:999px; background:var(--brand-cream); padding:0 20px !important; color:var(--brand-navy); font-size:13px !important; font-weight:650; box-shadow:0 5px 18px rgba(8,7,6,.14); transition:transform .18s,background .18s,border-color .18s,box-shadow .18s; }
 .site-header-actions .site-header-cta:hover,.site-header-actions .site-header-cta:focus-visible { transform:translateY(-1px); border-color:white; background:white; box-shadow:0 8px 24px rgba(8,7,6,.22); color:var(--brand-navy); }
 .site-header-actions .site-header-cta svg { color:#b64c00; transition:transform .18s; }
 .site-header-actions .site-header-cta:hover svg,.site-header-actions .site-header-cta:focus-visible svg { transform:translate(2px,-2px); }
 .site-header-actions .site-sign-in:focus-visible,.site-header-actions .site-header-cta:focus-visible { outline:3px solid #ff8a37; outline-offset:3px; }
 @media (max-width:700px) {
   .site-header-actions { gap:7px; }
-  .site-header-actions .site-sign-in { min-height:38px; padding-inline:12px; font-size:11px; }
-  .site-header-actions .site-header-cta { min-height:38px; gap:7px; padding-inline:12px !important; font-size:11px !important; }
+  .site-header-actions .site-sign-in { height:38px; min-height:38px; padding-inline:12px; font-size:11px; }
+  .site-header-actions .site-header-cta { height:38px; min-height:38px; gap:7px; padding-inline:12px !important; font-size:11px !important; }
 }
 @media (max-width:420px) {
   .site-header-actions { gap:5px; }
-  .site-header-actions .site-sign-in { min-height:34px; padding-inline:9px; font-size:10px; }
-  .site-header-actions .site-header-cta { min-height:34px; gap:5px; padding-inline:9px !important; font-size:10px !important; }
+  .site-header-actions .site-sign-in { height:34px; min-height:34px; padding-inline:9px; font-size:10px; }
+  .site-header-actions .site-header-cta { height:34px; min-height:34px; gap:5px; padding-inline:9px !important; font-size:10px !important; }
 }
 
 /* Public creator marketplace previews use reviewed MongoDB profiles only. */

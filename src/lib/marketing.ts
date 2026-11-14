@@ -14,7 +14,7 @@ export const NAV_ITEMS = [
   { label: "Features", href: "/#features" },
   { label: "SEO Application", href: "/#application" },
   { label: "WordPress Plugin", href: "/#wordpress" },
-  { label: "Marketplace", href: "/#marketplace" },
+  { label: "Influencer", href: "/#marketplace" },
   { label: "Integrations", href: "/#integrations" },
   { label: "Resources", href: "/#faq" },
 ];

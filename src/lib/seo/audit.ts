@@ -21,7 +21,7 @@ export type AuditedPage = {
   wordCount: number;
   internalLinks: string[];
   externalLinks: string[];
-  images: Array<{ src: string; alt: string | null }>;
+  images: Array<{ src: string; alt: string | null; decorative?: boolean }>;
   structuredData: string[];
   searchSignals?: {
     hasOrganizationIdentity: boolean;
@@ -120,7 +120,11 @@ export function auditHtml(url: string, finalUrl: string, status: number, html: s
     try { const link = new URL(href, base); return ["http:", "https:"].includes(link.protocol) && link.hostname !== base.hostname ? [link.href.split("#")[0]] : []; } catch { return []; }
   }))];
   const images = [...html.matchAll(/<img\b[^>]*>/gi)].flatMap(([tag]) => {
-    const src = attr(tag, "src"); return src ? [{ src, alt: attr(tag, "alt") }] : [];
+    const src = attr(tag, "src");
+    const alt = attr(tag, "alt");
+    // alt="" together with aria-hidden or role="presentation"/"none" marks an intentionally decorative image.
+    const decorative = alt !== null && !alt.trim() && (attr(tag, "aria-hidden") === "true" || /^(presentation|none)$/i.test(attr(tag, "role") ?? ""));
+    return src ? [{ src, alt, decorative }] : [];
   });
   const structuredData = [...html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script\s*>/gi)].map(([, json]) => json.trim());
   const schemaNodes: Array<Record<string, unknown>> = [];
@@ -197,7 +201,8 @@ export function auditHtml(url: string, finalUrl: string, status: number, html: s
   if (new Set(h1Names).size < h1Names.length) issues.push(issue("headings.h1_duplicate", "Duplicate H1 text", "notice", "The same H1 text appears more than once on this page.", "Keep the primary heading distinct and review repeated headings for accessibility.", "Repeated H1 text found"));
   if (!headings.some((h) => h.level === 2)) issues.push(issue("headings.h2_missing", "Missing H2 headings", "warning", "The page has no non-empty H2 headings.", "Add section headings where they help readers understand the content structure.", "No non-empty H2 found"));
   if (headings.some((heading, index) => index > 0 && heading.level > headings[index - 1].level + 1)) issues.push(issue("headings.level_skipped", "Heading levels are skipped", "notice", "A heading jumps over one or more levels after the previous heading.", "Use heading levels in order to make the document structure easier to navigate.", "A skipped heading level was found"));
-  if (images.some((img) => img.alt === null || !img.alt.trim())) issues.push(issue("images.alt_missing", "Images with missing or empty alt text", "warning", "Some images have no descriptive alt text.", "Add useful alt text to informative images. Keep decorative images empty intentionally.", `${images.filter((img) => img.alt === null || !img.alt.trim()).length} of ${images.length} images`));
+  const missingAlt = images.filter((img) => !img.decorative && (img.alt === null || !img.alt.trim()));
+  if (missingAlt.length) issues.push(issue("images.alt_missing", "Images with missing or empty alt text", "warning", "Some images have no descriptive alt text.", "Add useful alt text to informative images. Mark decorative images with alt=\"\" and aria-hidden=\"true\".", `${missingAlt.length} of ${images.length} images`));
   const nonemptyAlt = images.map((img) => img.alt?.trim().toLowerCase()).filter((alt): alt is string => Boolean(alt));
   if (new Set(nonemptyAlt).size < nonemptyAlt.length) issues.push(issue("images.alt_duplicate", "Duplicate image alt text", "notice", "Some images share the same non-empty alt text.", "Review repeated alt text and describe each informative image in its context.", "Repeated alt text found"));
   if (/\bnoindex\b/i.test(robots)) issues.push(issue("technical.noindex", "Page is marked noindex", "warning", "A robots directive prevents this page from appearing in search results.", "Confirm this page should remain excluded; otherwise remove the noindex directive.", robots));

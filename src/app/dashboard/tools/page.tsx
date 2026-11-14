@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, BarChart3, FileSearch, Gauge, Link2, ListTodo, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { Activity, BarChart3, FileSearch, Gauge, Link2, ListTodo, ScanSearch, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
@@ -11,6 +11,7 @@ import { hasOrganizationPermission } from "@/lib/organizations";
 export const instant = false;
 
 const liveTools = [
+  { name: "SEO checker", description: "Check any public page live for SEO health, on-page details, issues and AI search readiness.", icon: ScanSearch, state: "Check a page", href: "/dashboard/seo-checker" },
   { name: "Technical site audits", description: "Crawl verified pages for metadata, indexability, schema, errors, and internal links.", icon: FileSearch, state: "Run audit", href: "#website-controls" },
   { name: "PageSpeed reports", description: "Load mobile and desktop Lighthouse scores and performance opportunities.", icon: Gauge, state: "Run PageSpeed", href: "#website-controls" },
   { name: "SEO action plans", description: "Turn open audit findings into trackable tasks for your workspace.", icon: ListTodo, state: "Create plan", href: "#website-controls" },

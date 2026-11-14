@@ -76,14 +76,14 @@ export function SiteHeader({ currentUser = null }: { currentUser?: HeaderUser | 
 
         <nav id="primary-navigation" aria-label="Main navigation" className={`site-header-nav${mobileMenuOpen ? " is-open" : ""}`}>
           {NAV_ITEMS.map((item) => (
-            <Link key={item.href} href={item.href} aria-current={currentActiveNav === item.href ? "location" : undefined} className={`nav-link site-nav-link${currentActiveNav === item.href || pathname === item.href ? " is-active" : ""}`} onClick={() => { setActiveNav(item.href); setMobileMenuOpen(false); }}>{item.label}{item.badge && <span className="site-nav-badge">{item.badge}</span>}</Link>
+            <Link key={item.href} href={item.href} aria-current={currentActiveNav === item.href ? "location" : undefined} className={`nav-link site-nav-link${currentActiveNav === item.href ? " is-active" : ""}`} onClick={() => { setActiveNav(item.href); setMobileMenuOpen(false); }}>{item.label}</Link>
           ))}
-          <Link href="/influencer-marketing" className="nav-link site-nav-link site-nav-influencer-mobile" onClick={() => setMobileMenuOpen(false)}><UsersRound size={15} aria-hidden="true" /> Influencer Marketing</Link>
+          {currentUser && <Link href="/influencer-marketing" className="nav-link site-nav-link site-nav-influencer-mobile" onClick={() => setMobileMenuOpen(false)}><UsersRound size={15} aria-hidden="true" /> Influencer Marketing</Link>}
         </nav>
 
         <div className="site-header-actions">
-          <Link href="/influencer-marketing" className="site-header-influencer" aria-label="Open Influencer Marketing"><UsersRound size={15} aria-hidden="true" /><span className="site-header-influencer-long">Influencer Marketing</span><span className="site-header-influencer-short">Influencer</span></Link>
           {currentUser ? <>
+            <Link href="/influencer-marketing" className="site-header-influencer" aria-label="Open Influencer Marketing"><UsersRound size={15} aria-hidden="true" /><span className="site-header-influencer-long">Influencer Marketing</span><span className="site-header-influencer-short">Influencer</span></Link>
             <Link href="/dashboard" className="site-header-profile" aria-label={`Open the workspace for ${currentUser.name || currentUser.email || "your account"}`}>
               <span className="site-header-profile-avatar" aria-hidden="true">{(currentUser.name?.trim() || currentUser.email || "").charAt(0).toUpperCase() || <UserRound size={15} strokeWidth={2} />}</span>
               <span className="site-header-profile-name">{currentUser.name?.trim() || currentUser.email?.split("@")[0] || "Your profile"}</span>

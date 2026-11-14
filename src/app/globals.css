@@ -1734,9 +1734,6 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 @media (max-width:700px) { .site-nav-influencer-mobile { display:flex!important; } }
 @media (max-width:600px) { .site-header-influencer { width:38px; min-height:38px; padding:0; gap:0; } .site-header-influencer-long,.site-header-influencer-short { display:none; } }
 @media (max-width:420px) { .site-header-influencer { width:34px; min-height:34px; } }
-/* "Free" badge on nav items such as the SEO Checker. */
-.site-nav-badge { margin-left:6px; border-radius:999px; background:var(--brand-coral); padding:2px 6px; color:#fff; font-size:9px; font-weight:700; letter-spacing:.04em; line-height:1.2; text-transform:uppercase; }
-.site-header-nav .site-nav-link.is-active .site-nav-badge { background:#ff5a00; }
 
 /* Refined SEO Studio sign-in: stronger contrast, calmer surfaces and a compact responsive form. */
 .login-shell {

@@ -9,11 +9,12 @@ export const ROUTES = {
   signIn: "/login",
 };
 
-export const NAV_ITEMS: Array<{ label: string; href: string; badge?: string }> = [
+export const NAV_ITEMS = [
   { label: "Home", href: "/#home" },
   { label: "Features", href: "/#features" },
-  { label: "SEO Checker", href: "/seo-checker", badge: "Free" },
-  { label: "WordPress", href: "/#wordpress" },
+  { label: "SEO Application", href: "/#application" },
+  { label: "WordPress Plugin", href: "/#wordpress" },
+  { label: "Influencer", href: "/#marketplace" },
   { label: "Integrations", href: "/#integrations" },
   { label: "Resources", href: "/#faq" },
 ];

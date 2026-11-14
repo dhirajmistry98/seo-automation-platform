@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Boxes, Globe2, LockKeyhole, Search, Settings2, Sparkles } from "lucide-react";
+import { Activity, Boxes, Globe2, LockKeyhole, Search, Settings2, Sparkles, ScanSearch } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: Activity, match: (path: string) => path === "/dashboard" },
   { href: "/dashboard/websites", label: "Websites", icon: Globe2, match: (path: string) => path.startsWith("/dashboard/websites") },
   { href: "/dashboard/tools", label: "SEO tools", icon: Boxes, match: (path: string) => path.startsWith("/dashboard/tools") },
+  { href: "/dashboard/seo-checker", label: "SEO checker", icon: ScanSearch, match: (path: string) => path.startsWith("/dashboard/seo-checker") },
   { href: "/dashboard/research", label: "Research", icon: Search, match: (path: string) => path.startsWith("/dashboard/research") },
   { href: "/dashboard/visibility", label: "Visibility", icon: Sparkles, match: (path: string) => path.startsWith("/dashboard/visibility") },
   { href: "/dashboard/integrations", label: "Integrations", icon: LockKeyhole, match: (path: string) => path.startsWith("/dashboard/integrations") },

@@ -44,3 +44,12 @@ test("Google API errors keep Google's own explanation", async () => {
   assert.match(await googleApiError(new Response(JSON.stringify(disabled), { status: 403 }), "Search Console data could not be read."), /Google said: Merchant API/);
   assert.equal(await googleApiError(new Response("<html>", { status: 500 }), "Failed."), "Failed. (HTTP 500)");
 });
+
+test("Google tag ID is strictly validated before it reaches a script URL", async () => {
+  const { googleTagId } = await import("../src/components/analytics/google-tag-id.ts");
+  assert.equal(googleTagId("GTM-K6328NKS"), "GTM-K6328NKS");
+  assert.equal(googleTagId(undefined), "GTM-K6328NKS");
+  assert.equal(googleTagId(" g-abc123xyz "), "G-ABC123XYZ");
+  assert.equal(googleTagId("off"), null);
+  assert.equal(googleTagId("GTM-1\"><script>"), null);
+});

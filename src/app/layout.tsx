@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ButtonLoadingFeedback } from "@/components/ui/button-loading-feedback";
+import { GoogleTag } from "@/components/analytics/google-tag";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${dmSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}<ButtonLoadingFeedback /></body>
+      <body className="min-h-full flex flex-col">{children}<ButtonLoadingFeedback /><GoogleTag /></body>
     </html>
   );
 }

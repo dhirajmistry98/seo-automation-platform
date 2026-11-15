@@ -10,7 +10,8 @@ export async function GET() {
   if (!session?.user?.id) return Response.redirect(new URL("/login?callbackUrl=%2Finfluencer-marketing%2Fcreator", appUrl));
   const db = (await clientPromise).db(); await ensureMarketplaceIndexes(db);
   const limit = await consumeRateLimit(db, "marketplace-meta-connect", session.user.id, 5, 15 * 60_000);
-  if (!limit.allowed) return Response.json({ error: "Too many connection attempts." }, { status: 429 });
+  // Send people back to the creator studio with a readable message instead of a raw JSON error page.
+  if (!limit.allowed) return Response.redirect(new URL(`/influencer-marketing/creator?meta=too-many-attempts&wait=${Math.max(1, Math.ceil(limit.retryAfterSeconds / 60))}`, appUrl));
   const creator = await db.collection("mp_influencers").findOne({ userId: session.user.id }, { projection: { instagramHandle: 1 } });
   if (!creator) return Response.redirect(new URL("/influencer-marketing/creator?meta=profile-required", appUrl));
   if (!creator.instagramHandle) return Response.redirect(new URL("/influencer-marketing/creator?meta=username-required", appUrl));

@@ -35,6 +35,11 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
   const [businessLocation, setBusinessLocation] = useState("");
   const [businessSeries, setBusinessSeries] = useState<Record<string, unknown> | null>(null);
   const [message, setMessage] = useState("");
+  // Each report section keeps its own message so one service's error never hides another's.
+  const [analyticsMessage, setAnalyticsMessage] = useState("");
+  const [merchantMessage, setMerchantMessage] = useState("");
+  const [merchantNeedsRegistration, setMerchantNeedsRegistration] = useState(false);
+  const [merchantRegisterId, setMerchantRegisterId] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     let active = true;
@@ -75,10 +80,12 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
         const next = (data.properties || []) as AnalyticsProperty[];
         if (active) {
           setAnalyticsProperties(next);
+          const email = services.find((item) => item.service === "analytics")?.providerEmail;
+          setAnalyticsMessage(next.length ? "" : `No GA4 properties were found for ${email || "the connected Google account"}. Create a GA4 property for this website in Google Analytics (or ask its owner to add this account), then reload. You can also type a property ID below.`);
           setAnalyticsPropertyId((current) => current && next.some((item) => item.property === `properties/${current}`) ? current : next[0]?.property.split("/").at(-1) || current);
         }
       })
-      .catch((error) => { if (active) setMessage(error instanceof Error ? error.message : "Could not list GA4 properties."); });
+      .catch((error) => { if (active) setAnalyticsMessage(error instanceof Error ? error.message : "Could not list GA4 properties."); });
     return () => { active = false; };
   }, [services, domain]);
   async function runReport() {
@@ -90,22 +97,37 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     } catch (error) { setMessage(error instanceof Error ? error.message : "Search Console report failed."); } finally { setBusy(false); }
   }
   async function runAnalytics() {
-    setBusy(true); setMessage("");
+    setBusy(true); setAnalyticsMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/analytics`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ propertyId: analyticsPropertyId }) });
       const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Analytics report failed.");
-      setAnalyticsReport(data.report); setMessage(`GA4 Organic Search report loaded for ${data.report.dateRange.startDate} through ${data.report.dateRange.endDate}, compared with the prior period.`);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Analytics report failed."); } finally { setBusy(false); }
+      setAnalyticsReport(data.report); setAnalyticsMessage(`GA4 Organic Search report loaded for ${data.report.dateRange.startDate} through ${data.report.dateRange.endDate}, compared with the prior period.`);
+    } catch (error) { setAnalyticsMessage(error instanceof Error ? error.message : "Analytics report failed."); } finally { setBusy(false); }
   }
   async function loadMerchantAccounts() {
+    setMerchantMessage("");
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { cache: "no-store" }); const data = await readJson(response);
-    if (!response.ok) throw new Error(data.error || "Could not list Merchant Center accounts.");
+    if (!response.ok) {
+      const error = String(data.error || "Could not list Merchant Center accounts.");
+      setMerchantNeedsRegistration(/not registered with the merchant account/i.test(error));
+      throw new Error(error);
+    }
+    setMerchantNeedsRegistration(false);
     setMerchantAccounts(data.accounts || []); setMerchantAccountId((data.accounts || [])[0]?.name?.replace("accounts/", "") || "");
+    if (!(data.accounts || []).length) setMerchantMessage("No Merchant Center accounts were found for the connected Google account.");
+  }
+  async function registerMerchantAccount() {
+    setBusy(true); setMerchantMessage("");
+    try {
+      const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantRegisterId.trim() }) });
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Registration failed.");
+      setMerchantNeedsRegistration(false); setMerchantMessage(data.message || "Registered.");
+    } catch (error) { setMerchantMessage(error instanceof Error ? error.message : "Registration failed."); } finally { setBusy(false); }
   }
   async function runMerchantReport() {
-    setBusy(true); setMessage("");
+    setBusy(true); setMerchantMessage("");
     try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantAccountId }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Merchant report failed."); setMerchantRows(data.report.results || []); setMessage(`Merchant report loaded for ${data.startDate} through ${data.endDate}.`); }
-    catch (error) { setMessage(error instanceof Error ? error.message : "Merchant report failed."); } finally { setBusy(false); }
+    catch (error) { setMerchantMessage(error instanceof Error ? error.message : "Merchant report failed."); } finally { setBusy(false); }
   }
   async function loadBusinessAccounts() {
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { cache: "no-store" }); const data = await readJson(response);
@@ -133,11 +155,12 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
         {!!rows.length && <div className="google-report-table-wrap"><table className="google-report-table"><thead><tr><th>{dimension}</th><th>Clicks</th><th>Clicks vs prior</th><th>Impressions</th><th>CTR</th><th>Position</th></tr></thead><tbody>{rows.map((row, index) => { const comparison = searchComparison.find((item) => item.keys.join("\u0000") === (row.keys || []).join("\u0000")); const change = comparison?.clicks.changePercent; return <tr key={`${row.keys?.join("-")}-${index}`}><td>{row.keys?.join(" · ") || "—"}</td><td>{row.clicks ?? "—"}</td><td>{change === null || change === undefined ? "No prior baseline" : `${change > 0 ? "+" : ""}${change.toFixed(1)}%`}</td><td>{row.impressions ?? "—"}</td><td>{typeof row.ctr === "number" ? `${(row.ctr * 100).toFixed(1)}%` : "—"}</td><td>{typeof row.position === "number" ? row.position.toFixed(1) : "—"}</td></tr>; })}</tbody></table></div>}
       </div>}
       {services.some((item) => item.service === "analytics" && item.status === "connected") && <div className="google-search-report"><div className="google-report-controls"><label>GA4 property{analyticsProperties.length ? <select value={analyticsProperties.find((item) => item.property.endsWith(`/${analyticsPropertyId}`))?.property || ""} onChange={(event) => setAnalyticsPropertyId(event.target.value.split("/").at(-1) || "")}>{analyticsProperties.map((item) => <option value={item.property} key={item.property}>{item.displayName} · {item.property.split("/").at(-1)}</option>)}</select> : <input inputMode="numeric" value={analyticsPropertyId} onChange={(event) => setAnalyticsPropertyId(event.target.value)} placeholder="123456789" />}</label><button type="button" disabled={busy || !analyticsPropertyId} onClick={runAnalytics}>{busy ? <LoaderCircle className="site-spin" size={13} /> : <RefreshCw size={13} />} Run Analytics report</button></div>
+        {analyticsMessage && <p className="google-data-message" role="status">{analyticsMessage}</p>}
         {analyticsReport?.comparison && <div className="google-report-table-wrap"><table className="google-report-table"><thead><tr><th>Organic Search metric</th><th>Current period</th><th>Previous period</th><th>Change</th></tr></thead><tbody>{["sessions", "activeUsers", "screenPageViews", "conversions", "engagedSessions", "engagementRate"].map((metric) => { const item = analyticsReport.comparison?.[metric]; return <tr key={metric}><td>{metric === "activeUsers" ? "Active users" : metric === "screenPageViews" ? "Page views" : metric === "engagedSessions" ? "Engaged sessions" : metric === "engagementRate" ? "Engagement rate" : metric === "conversions" ? "Conversions" : "Sessions"}</td><td>{metric === "engagementRate" ? `${((item?.current || 0) * 100).toFixed(1)}%` : (item?.current ?? "—")}</td><td>{metric === "engagementRate" ? `${((item?.previous || 0) * 100).toFixed(1)}%` : (item?.previous ?? "—")}</td><td>{item?.changePercent === null || item?.changePercent === undefined ? "No prior baseline" : `${item.changePercent > 0 ? "+" : ""}${item.changePercent.toFixed(1)}%`}</td></tr>; })}</tbody></table></div>}
         {analyticsReport?.rows?.length ? <div className="google-report-table-wrap"><table className="google-report-table"><thead><tr><th>Date</th><th>Active users</th><th>Sessions</th><th>Page views</th><th>Conversions</th><th>Engaged sessions</th><th>Engagement rate</th></tr></thead><tbody>{analyticsReport.rows.map((row, index) => <tr key={index}><td>{row.dimensionValues?.[0]?.value || "—"}</td>{row.metricValues?.map((value, metricIndex) => <td key={metricIndex}>{metricIndex === 5 && value.value ? `${(Number(value.value) * 100).toFixed(1)}%` : value.value ?? "—"}</td>)}</tr>)}</tbody></table></div> : null}
         {!!analyticsReport?.landingPages?.length && <div className="google-report-table-wrap"><strong>Organic landing pages</strong><table className="google-report-table"><thead><tr><th>Landing page</th><th>Active users</th><th>Sessions</th><th>Engaged sessions</th><th>Engagement rate</th><th>Conversions</th></tr></thead><tbody>{analyticsReport.landingPages.slice(0, 100).map((row, index) => <tr key={index}><td>{row.dimensionValues?.[0]?.value || "—"}</td>{row.metricValues?.map((value, metricIndex) => <td key={metricIndex}>{metricIndex === 3 && value.value ? `${(Number(value.value) * 100).toFixed(1)}%` : value.value ?? "—"}</td>)}</tr>)}</tbody></table></div>}
       </div>}
-      {services.some((item) => item.service === "merchant_center" && item.status === "connected") && <div className="google-search-report"><div className="google-report-controls"><button type="button" onClick={() => loadMerchantAccounts().catch((error) => setMessage(error.message))}>Load Merchant accounts</button>{!!merchantAccounts.length && <><label>Account<select value={merchantAccountId} onChange={(event) => setMerchantAccountId(event.target.value)}>{merchantAccounts.map((item) => <option key={item.name} value={item.name.replace("accounts/", "")}>{item.accountName || item.name}</option>)}</select></label><button type="button" disabled={busy || !merchantAccountId} onClick={runMerchantReport}>{busy ? "Loading…" : "Run product report"}</button></>}</div>{!!merchantRows.length && <div className="google-report-table-wrap"><table className="google-report-table"><thead><tr><th>Date</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Conversions</th></tr></thead><tbody>{merchantRows.map((item, index) => { const row = item.productPerformanceView || {}; const date = row.date; return <tr key={index}><td>{date ? `${date.year}-${date.month}-${date.day}` : "—"}</td><td>{row.clicks ?? "—"}</td><td>{row.impressions ?? "—"}</td><td>{typeof row.clickThroughRate === "number" ? `${(row.clickThroughRate * 100).toFixed(1)}%` : "—"}</td><td>{row.conversions ?? "—"}</td></tr>; })}</tbody></table></div>}</div>}
+      {services.some((item) => item.service === "merchant_center" && item.status === "connected") && <div className="google-search-report"><div className="google-report-controls"><button type="button" onClick={() => loadMerchantAccounts().catch((error) => setMerchantMessage(error.message))}>Load Merchant accounts</button>{merchantNeedsRegistration && <><label>Merchant Center account ID<input inputMode="numeric" value={merchantRegisterId} onChange={(event) => setMerchantRegisterId(event.target.value)} placeholder="1234567890" /></label><button type="button" disabled={busy || !/^\d{1,30}$/.test(merchantRegisterId.trim())} onClick={registerMerchantAccount}>{busy ? "Registering…" : "Register this app"}</button></>}{!!merchantAccounts.length && <><label>Account<select value={merchantAccountId} onChange={(event) => setMerchantAccountId(event.target.value)}>{merchantAccounts.map((item) => <option key={item.name} value={item.name.replace("accounts/", "")}>{item.accountName || item.name}</option>)}</select></label><button type="button" disabled={busy || !merchantAccountId} onClick={runMerchantReport}>{busy ? "Loading…" : "Run product report"}</button></>}</div>{merchantNeedsRegistration && <p className="google-data-message">Google requires a one-time link between this app and your Merchant Center account. Enter your account ID (top-right of Merchant Center, next to your business name) and click Register this app. You must be an admin of that account.</p>}{merchantMessage && <p className="google-data-message" role="status">{merchantMessage}</p>}{!!merchantRows.length && <div className="google-report-table-wrap"><table className="google-report-table"><thead><tr><th>Date</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Conversions</th></tr></thead><tbody>{merchantRows.map((item, index) => { const row = item.productPerformanceView || {}; const date = row.date; return <tr key={index}><td>{date ? `${date.year}-${date.month}-${date.day}` : "—"}</td><td>{row.clicks ?? "—"}</td><td>{row.impressions ?? "—"}</td><td>{typeof row.clickThroughRate === "number" ? `${(row.clickThroughRate * 100).toFixed(1)}%` : "—"}</td><td>{row.conversions ?? "—"}</td></tr>; })}</tbody></table></div>}</div>}
       {services.some((item) => item.service === "business_profile" && item.status === "connected") && <div className="google-search-report"><div className="google-report-controls"><button type="button" onClick={() => loadBusinessAccounts().catch((error) => setMessage(error.message))}>Load Business Profile accounts</button>{!!businessAccounts.length && <label>Account<select value={businessAccount} onChange={(event) => { setBusinessAccount(event.target.value); loadBusinessLocations(event.target.value).catch((error) => setMessage(error.message)); }}>{businessAccounts.map((item) => <option key={item.name} value={item.name}>{item.accountName || item.name}</option>)}</select></label>} {!!businessLocations.length && <><label>Location<select value={businessLocation} onChange={(event) => setBusinessLocation(event.target.value)}>{businessLocations.map((item) => <option key={item.name} value={item.name}>{item.title || item.name}</option>)}</select></label><button type="button" disabled={busy || !businessLocation} onClick={runBusinessReport}>{busy ? "Loading…" : "Run performance report"}</button></>}</div>{businessSeries && <pre className="google-business-json">{JSON.stringify(businessSeries, null, 2)}</pre>}</div>}
       {message && <p className="google-data-message" role="status">{message}</p>}
     </div>

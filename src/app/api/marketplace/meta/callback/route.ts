@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { ensureMarketplaceIndexes } from "@/lib/marketplace/core";
+import { instagramHandleMatches } from "@/lib/marketplace/instagram-handle";
 import { encryptToken, exchangeInstagramCode, fetchInstagramMedia, fetchInstagramProfile, hashState } from "@/lib/marketplace/meta";
 
 export async function GET(request: Request) {
@@ -17,6 +18,13 @@ export async function GET(request: Request) {
     const exchange = await exchangeInstagramCode(code);
     const profile = await fetchInstagramProfile(exchange.token);
     if (String(profile.user_id || profile.id) !== exchange.userId) return go("identity-mismatch");
+    // The Instagram account Meta logged in as must be the username the creator entered on their profile.
+    const creator = await db.collection("mp_influencers").findOne({ userId: session.user.id }, { projection: { instagramHandle: 1 } });
+    if (!creator?.instagramHandle) return go("username-required");
+    if (!instagramHandleMatches(creator.instagramHandle, profile.username)) {
+      await db.collection("mp_audit").insertOne({ entityId: session.user.id, actorId: session.user.id, action: "instagram.username_mismatch", claimed: creator.instagramHandle, actual: typeof profile.username === "string" ? profile.username.slice(0, 30) : null, createdAt: new Date() });
+      return go("username-mismatch");
+    }
     const recentMedia = await fetchInstagramMedia(exchange.token, exchange.userId).catch(() => []);
     const alreadyLinked = await db.collection("mp_social_connections").findOne({ provider: "instagram", providerUserId: exchange.userId, userId: { $ne: session.user.id } });
     if (alreadyLinked) return go("already-linked");

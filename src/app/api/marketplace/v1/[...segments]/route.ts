@@ -1,4 +1,5 @@
 import { ObjectId, type Db, type Document } from "mongodb";
+import { instagramHandleMatches, normalizeInstagramHandle } from "@/lib/marketplace/instagram-handle";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
@@ -417,8 +418,16 @@ export async function POST(request: Request, context: Context) {
       return title && pricePaise !== null && deliverables && deliveryDays !== undefined ? { title, pricePaise, deliverables, deliveryDays } : null;
     }) : null;
     if (!displayName || bio === null || !categories || !location || ratePaise === null || !portfolio || portfolio.some((item) => !item) || packages === null || packages?.some((item) => !item)) return error("Provide valid creator details, HTTPS portfolio links, and packages with a title, INR price and deliverables.");
+    const instagramHandle = normalizeInstagramHandle(body.instagramHandle);
+    if (!instagramHandle) return error("Enter your Instagram username (letters, numbers, periods and underscores, up to 30 characters).");
+    const current = await db.collection("mp_influencers").findOne({ userId }, { projection: { instagram: 1 } });
+    const verifiedUsername = current?.instagram && typeof current.instagram === "object" ? (current.instagram as { username?: unknown; verifiedAt?: unknown }) : null;
+    // A verified profile cannot quietly switch to another account: the username must be re-proven through Meta.
+    if (verifiedUsername?.verifiedAt && verifiedUsername.username && !instagramHandleMatches(instagramHandle, verifiedUsername.username)) return error(`Your profile is verified as @${String(verifiedUsername.username)}. To use a different Instagram account, connect that account through Meta instead.`, 409);
+    const takenByVerified = await db.collection("mp_influencers").findOne({ userId: { $ne: userId }, "instagram.username": instagramHandle, "instagram.verifiedAt": { $ne: null } }, { projection: { _id: 1 } });
+    if (takenByVerified) return error(`@${instagramHandle} is already verified by another creator. If this is your account, contact support.`, 409);
     const savedPackages = packages as { title: string; pricePaise: number; deliverables: string; deliveryDays: number | null }[] | undefined;
-    const result = await db.collection("mp_influencers").findOneAndUpdate({ userId }, { $set: { displayName, bio, categories, location, ratePaise, portfolio, creatorTrack, currency: "INR", ...(savedPackages ? { packages: savedPackages } : {}), updatedAt: now }, $setOnInsert: { userId, status: "draft", instagram: { verifiedFollowers: null, verifiedAt: null }, createdAt: now } }, { upsert: true, returnDocument: "after" });
+    const result = await db.collection("mp_influencers").findOneAndUpdate({ userId }, { $set: { instagramHandle, displayName, bio, categories, location, ratePaise, portfolio, creatorTrack, currency: "INR", ...(savedPackages ? { packages: savedPackages } : {}), updatedAt: now }, $setOnInsert: { userId, status: "draft", instagram: { verifiedFollowers: null, verifiedAt: null }, createdAt: now } }, { upsert: true, returnDocument: "after" });
     return json({ influencer: record(result), eligibility: creatorTrack === "emerging" ? "Emerging Creator profiles appear in the Emerging directory after approval and current Meta verification, and can be booked, invited and apply to campaigns like standard creators." : "Standard influencer discovery requires approval and at least 5,000 current Meta-verified Instagram followers." }, 201);
   }
   if (path[0] === "brands" && path.length === 1) {

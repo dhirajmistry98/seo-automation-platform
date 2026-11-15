@@ -1,5 +1,5 @@
 import type { Db } from "mongodb";
-import { getGoogleAccessToken } from "@/lib/integrations/google";
+import { getGoogleAccessToken, googleApiError } from "@/lib/integrations/google";
 
 /**
  * Free research sources used when no paid DataForSEO account is available:
@@ -32,18 +32,35 @@ export type GscMetrics = { clicks: number; impressions: number; ctr: number; pos
 
 const bareHost = (host: string) => host.toLowerCase().replace(/^www\./, "");
 
-/** Resolve the Search Console property for this domain, or null when Search Console is not connected or has no matching property. */
-export async function searchConsoleContext(db: Db, organizationId: unknown, domain: string) {
+export type SearchConsoleLookup =
+  | { status: "ok"; context: { accessToken: string; property: string } }
+  | { status: "not_connected" | "no_property" | "api_error"; message: string };
+
+/** Resolve the Search Console property for this domain, explaining why when it cannot be used. */
+export async function searchConsoleLookup(db: Db, organizationId: unknown, domain: string): Promise<SearchConsoleLookup> {
   let accessToken: string;
-  try { accessToken = await getGoogleAccessToken(db, organizationId, domain, "search_console"); } catch { return null; }
-  const response = await fetch("https://searchconsole.googleapis.com/webmasters/v3/sites", { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(12_000) });
-  if (!response.ok) return null;
+  try { accessToken = await getGoogleAccessToken(db, organizationId, domain, "search_console"); }
+  catch (error) {
+    const message = error instanceof Error ? error.message : "Search Console is not connected.";
+    return { status: /not connected/i.test(message) ? "not_connected" : "api_error", message };
+  }
+  let response: Response;
+  try { response = await fetch("https://searchconsole.googleapis.com/webmasters/v3/sites", { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(12_000) }); }
+  catch { return { status: "api_error", message: "Search Console did not respond. Try again shortly." }; }
+  if (!response.ok) return { status: "api_error", message: await googleApiError(response, "Search Console could not list your properties.") };
   const payload = await response.json().catch(() => ({})) as { siteEntry?: Array<{ siteUrl: string; permissionLevel?: string }> };
   const host = (siteUrl: string) => siteUrl.startsWith("sc-domain:") ? siteUrl.slice(10) : (() => { try { return new URL(siteUrl).hostname; } catch { return ""; } })();
   const matches = (payload.siteEntry || []).filter((item) => item.permissionLevel !== "siteUnverifiedUser" && bareHost(host(item.siteUrl)) === bareHost(domain));
   // Prefer a domain property because it covers every protocol and subdomain.
   const property = matches.find((item) => item.siteUrl.startsWith("sc-domain:")) ?? matches[0];
-  return property ? { accessToken, property: property.siteUrl } : null;
+  if (!property) return { status: "no_property", message: `The connected Google account has no verified Search Console property for ${domain}. Add and verify ${domain} in Search Console, then re-check.` };
+  return { status: "ok", context: { accessToken, property: property.siteUrl } };
+}
+
+/** Resolve the Search Console property for this domain, or null when Search Console is not connected or has no matching property. */
+export async function searchConsoleContext(db: Db, organizationId: unknown, domain: string) {
+  const lookup = await searchConsoleLookup(db, organizationId, domain);
+  return lookup.status === "ok" ? lookup.context : null;
 }
 
 function reportDates() {
@@ -52,20 +69,28 @@ function reportDates() {
   return { startDate: start.toISOString().slice(0, 10), endDate: end.toISOString().slice(0, 10) };
 }
 
-export async function queryMetrics(context: { accessToken: string; property: string }, keyword: string): Promise<GscMetrics | null> {
+/** Last-28-day metrics for one query, or the Google error that prevented reading them. */
+export async function fetchKeywordMetrics(context: { accessToken: string; property: string }, keyword: string): Promise<{ metrics: GscMetrics } | { error: string }> {
   const endpoint = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(context.property)}/searchAnalytics/query`;
   const body = { ...reportDates(), dimensions: ["query", "page"], dimensionFilterGroups: [{ filters: [{ dimension: "query", operator: "equals", expression: keyword.toLowerCase() }] }], rowLimit: 10 };
-  const response = await fetch(endpoint, { method: "POST", headers: { Authorization: `Bearer ${context.accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(15_000) });
-  if (!response.ok) return null;
+  let response: Response;
+  try { response = await fetch(endpoint, { method: "POST", headers: { Authorization: `Bearer ${context.accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(15_000) }); }
+  catch { return { error: "Search Console did not respond. Try again shortly." }; }
+  if (!response.ok) return { error: await googleApiError(response, "Search Console data could not be read.") };
   const payload = await response.json().catch(() => ({})) as { rows?: Array<{ keys?: string[]; clicks?: number; impressions?: number; position?: number }> };
   const rows = payload.rows || [];
-  if (!rows.length) return { clicks: 0, impressions: 0, ctr: 0, position: 0, page: null };
+  if (!rows.length) return { metrics: { clicks: 0, impressions: 0, ctr: 0, position: 0, page: null } };
   const clicks = rows.reduce((sum, row) => sum + (row.clicks || 0), 0);
   const impressions = rows.reduce((sum, row) => sum + (row.impressions || 0), 0);
   // Impression-weighted average position across ranking pages; the best page is the one with the most impressions.
   const position = impressions ? rows.reduce((sum, row) => sum + (row.position || 0) * (row.impressions || 0), 0) / impressions : 0;
   const best = [...rows].sort((a, b) => (b.impressions || 0) - (a.impressions || 0))[0];
-  return { clicks, impressions, ctr: impressions ? clicks / impressions : 0, position: Math.round(position * 10) / 10, page: best?.keys?.[1] ?? null };
+  return { metrics: { clicks, impressions, ctr: impressions ? clicks / impressions : 0, position: Math.round(position * 10) / 10, page: best?.keys?.[1] ?? null } };
+}
+
+export async function queryMetrics(context: { accessToken: string; property: string }, keyword: string): Promise<GscMetrics | null> {
+  const result = await fetchKeywordMetrics(context, keyword);
+  return "metrics" in result ? result.metrics : null;
 }
 
 export async function freeKeywordIdeas(db: Db, organizationId: unknown, domain: string, keywords: string[], language: string, country: string) {

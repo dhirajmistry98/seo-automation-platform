@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-import { getGoogleAccessToken } from "@/lib/integrations/google";
+import { getGoogleAccessToken, googlePayloadError } from "@/lib/integrations/google";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 
 type Context = { params: Promise<{ domain: string }> };
@@ -26,7 +26,7 @@ export async function GET(request: Request, context: Context) {
       : "https://mybusinessaccountmanagement.googleapis.com/v1/accounts";
     const response = await fetch(endpoint, { redirect: "manual", headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(15_000) });
     const data = await response.json() as Record<string, unknown>;
-    if (!response.ok) return NextResponse.json({ error: "Business Profile data could not be listed. Confirm API access and account permissions." }, { status: 502 });
+    if (!response.ok) return NextResponse.json({ error: googlePayloadError(data, "Business Profile data could not be listed.") }, { status: 502 });
     return NextResponse.json({ ...data, kind: account ? "locations" : "accounts" }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Business Profile is unavailable." }, { status: 503 }); }
 }
@@ -50,7 +50,7 @@ export async function POST(request: Request, context: Context) {
     const accessToken = await getGoogleAccessToken(site.db, site.website.organizationId, site.domain, "business_profile");
     const response = await fetch(endpoint, { redirect: "manual", headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(20_000) });
     const report = await response.json() as Record<string, unknown>;
-    if (!response.ok) return NextResponse.json({ error: "Business Profile performance report failed. Check listing access and API approval." }, { status: 502 });
+    if (!response.ok) return NextResponse.json({ error: googlePayloadError(report, "Business Profile performance report failed.") }, { status: 502 });
     const saved = { ownerId: site.session.user.id, userId: site.session.user.id, createdBy: site.session.user.id, organizationId: site.website.organizationId, websiteDomain: site.domain, locationName, startDate, endDate, report, source: "Google Business Profile Performance API", generatedAt: new Date() };
     await site.db.collection("google_business_profile_reports").insertOne(saved);
     return NextResponse.json({ ...saved, organizationId: undefined }, { headers: { "Cache-Control": "no-store" } });

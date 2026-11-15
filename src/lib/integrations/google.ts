@@ -93,3 +93,17 @@ export async function googleConnectionHasScope(db: Db, organizationId: unknown, 
   const connection = await db.collection("google_connections").findOne({ organizationId, domain, service, status: "connected" }, { projection: { grantedScopes: 1 } });
   return Array.isArray(connection?.grantedScopes) && connection.grantedScopes.includes(scope);
 }
+
+/** Fallback text plus Google's own error message from an already-parsed error body (for example "API has not been used in project … or it is disabled"). */
+export function googlePayloadError(payload: unknown, fallback: string) {
+  const error = (payload as { error?: unknown } | null)?.error;
+  const message = typeof error === "string" ? error : typeof (error as { message?: unknown } | undefined)?.message === "string" ? (error as { message: string }).message : "";
+  return message ? `${fallback} Google said: ${message.slice(0, 400)}` : fallback;
+}
+
+/** Google's own error text (for example "API has not been used in project … or it is disabled"), trimmed for display. */
+export async function googleApiError(response: Response, fallback: string) {
+  const payload = await response.json().catch(() => null) as { error?: { message?: unknown } | string } | null;
+  const message = typeof payload?.error === "string" ? payload.error : typeof payload?.error?.message === "string" ? payload.error.message : "";
+  return message ? `${fallback} Google said: ${message.slice(0, 400)}` : `${fallback} (HTTP ${response.status})`;
+}

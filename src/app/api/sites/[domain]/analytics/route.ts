@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-import { getGoogleAccessToken } from "@/lib/integrations/google";
+import { getGoogleAccessToken, googlePayloadError } from "@/lib/integrations/google";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { defaultReportRange, percentChange, previousReportRange, reportRangeIsValid } from "@/lib/integrations/google-reports";
 
@@ -61,7 +61,7 @@ export async function POST(request: Request, context: { params: Promise<{ domain
     const runReport = async (requestBody: Record<string, unknown>) => {
       const response = await fetch(endpoint, { method: "POST", redirect: "manual", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(requestBody), cache: "no-store", signal: AbortSignal.timeout(25_000) });
       const payload = await response.json() as Record<string, unknown>;
-      if (!response.ok) throw new Error("Analytics Data API report failed. Check the GA4 property ID, permissions, and API setup.");
+      if (!response.ok) throw new Error(googlePayloadError(payload, "Analytics Data API report failed."));
       return payload;
     };
     const [trend, summary, previousSummary, landingPages] = await Promise.all([

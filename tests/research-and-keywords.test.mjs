@@ -33,3 +33,14 @@ test("decorative images are not reported as missing alt text", () => {
   const audited = auditHtml("https://example.com/", "https://example.com/", 200, html, new Headers());
   assert.ok(!audited.issues.some((issue) => issue.ruleId === "images.alt_missing"));
 });
+
+test("Google API errors keep Google's own explanation", async () => {
+  const { googleApiError, googlePayloadError } = await import("../src/lib/integrations/google.ts");
+  const disabled = { error: { code: 403, message: "Merchant API has not been used in project 123 before or it is disabled." } };
+  assert.match(googlePayloadError(disabled, "Merchant Center accounts could not be listed."), /could not be listed\. Google said: Merchant API has not been used/);
+  assert.equal(googlePayloadError({}, "Fallback."), "Fallback.");
+  assert.equal(googlePayloadError(null, "Fallback."), "Fallback.");
+  assert.ok(googlePayloadError({ error: { message: "x".repeat(2000) } }, "F.").length < 450);
+  assert.match(await googleApiError(new Response(JSON.stringify(disabled), { status: 403 }), "Search Console data could not be read."), /Google said: Merchant API/);
+  assert.equal(await googleApiError(new Response("<html>", { status: 500 }), "Failed."), "Failed. (HTTP 500)");
+});

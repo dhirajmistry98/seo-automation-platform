@@ -843,7 +843,8 @@ a.workspace-tool-card:focus-visible { outline:2px solid #ff6a00; outline-offset:
 .kw-opt-google { display: grid; flex: none; justify-items: center; min-width: 130px; margin-left: auto; border-left: 1px solid #ded8d1; padding-left: 16px; text-align: center; }
 .kw-opt-google small { color: #70675e; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
 .kw-opt-google strong { color: #2b241e; font-size: 26px; line-height: 1.2; }
-.kw-opt-google span { max-width: 150px; color: #70675e; font-size: 10px; line-height: 1.4; }
+.kw-opt-google span { max-width: 240px; color: #70675e; font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+.kw-opt-google strong.kw-opt-google-status { font-size: 14px; line-height: 1.3; }
 .kw-opt-plan { display: grid; gap: 8px; margin: 0; padding-left: 20px; }
 .kw-opt-plan li { padding-left: 4px; }
 .kw-opt-plan li::marker { color: #d85800; font-weight: 700; }

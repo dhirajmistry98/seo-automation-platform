@@ -4,7 +4,7 @@ import clientPromise from "@/lib/mongodb";
 import { auditHtml } from "@/lib/seo/audit";
 import { fetchPublicHtml } from "@/lib/seo/crawler";
 import { analyzeKeywordTargeting } from "@/lib/seo/keyword-optimizer";
-import { QUESTION_PREFIXES, googleSuggest, queryMetrics, searchConsoleContext } from "@/lib/integrations/free-research";
+import { QUESTION_PREFIXES, fetchKeywordMetrics, googleSuggest, searchConsoleLookup } from "@/lib/integrations/free-research";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
@@ -21,6 +21,21 @@ function parseUrl(value: unknown) {
     url.hash = "";
     return url;
   } catch { return null; }
+}
+
+type GoogleStatus = "ranking" | "not_ranking" | "not_connected" | "no_property" | "api_error" | "not_your_site";
+/** Google position for the keyword, with an explicit status so the UI never shows an unexplained blank. */
+async function googleRanking(lookup: Awaited<ReturnType<typeof searchConsoleLookup>> | null, keyword: string, finalUrl: string, host: string) {
+  const empty = { position: null as number | null, impressions: 0, clicks: 0, rankingPage: null as string | null, samePage: null as boolean | null };
+  const result = (status: GoogleStatus, message: string, extra: Partial<typeof empty> = {}) => ({ connected: status === "ranking" || status === "not_ranking", status, message, ...empty, ...extra });
+  if (!lookup) return result("not_your_site", `${host} is not one of your websites. Add and verify it to see its Google position.`);
+  if (lookup.status !== "ok") return result(lookup.status, lookup.message);
+  const fetched = await fetchKeywordMetrics(lookup.context, keyword);
+  if ("error" in fetched) return result("api_error", fetched.error);
+  const google = fetched.metrics;
+  if (!google.impressions) return result("not_ranking", `No Google impressions for “${keyword}” in the last 28 days.`);
+  const samePage = google.page ? new URL(google.page).pathname.replace(/\/+$/, "") === new URL(finalUrl).pathname.replace(/\/+$/, "") : null;
+  return result("ranking", `Average position over the last 28 days.`, { position: google.position, impressions: google.impressions, clicks: google.clicks, rankingPage: google.page, samePage });
 }
 
 /** GET: this user's saved keyword targets with their score/position history. */
@@ -62,23 +77,19 @@ export async function POST(request: Request) {
 
   try {
     const page = auditHtml(url.href, finalUrl, 200, html, headers, { primaryKeywords: [keyword] });
-    const [related, questionBatches, gscContext] = await Promise.all([
+    const [related, questionBatches, gscLookup] = await Promise.all([
       googleSuggest(keyword, language, country),
       Promise.all(QUESTION_PREFIXES.slice(0, 7).map((prefix) => googleSuggest(`${prefix} ${keyword}`, language, country))),
-      site ? searchConsoleContext(db, site.organizationId, String(site.domain)) : Promise.resolve(null),
+      site ? searchConsoleLookup(db, site.organizationId, String(site.domain)) : Promise.resolve(null),
     ]);
     const relatedSearches = [...new Set(related.filter((item) => item.toLowerCase() !== keyword.toLowerCase()))].slice(0, 10);
     const questions = [...new Set(questionBatches.flat().filter((item) => /^(what|how|why|which|where|when|who|can|is|does|should|are)\b/i.test(item)))].slice(0, 10);
     const analysis = analyzeKeywordTargeting(page, html, keyword, relatedSearches, questions);
-    const google = gscContext ? await queryMetrics(gscContext, keyword) : null;
-    const googleResult = google
-      ? { connected: true, position: google.impressions ? google.position : null, impressions: google.impressions, clicks: google.clicks, rankingPage: google.page, samePage: google.page ? new URL(google.page).pathname.replace(/\/+$/, "") === new URL(finalUrl).pathname.replace(/\/+$/, "") : null }
-      : { connected: false, position: null, impressions: 0, clicks: 0, rankingPage: null, samePage: null };
-
+    const googleResult = await googleRanking(gscLookup, keyword, finalUrl, host);
     const now = new Date();
     await db.collection("keyword_targets").updateOne(
       { userId: session.user.id, url: finalUrl, keyword: keyword.toLowerCase() },
-      { $set: { updatedAt: now, organizationId: site?.organizationId ?? null }, $setOnInsert: { createdAt: now }, $push: { history: { $each: [{ at: now, score: analysis.score, position: googleResult.position }], $slice: -60 } } } as never,
+      { $set: { updatedAt: now, organizationId: site?.organizationId ?? null }, $setOnInsert: { createdAt: now }, $push: { history: { $each: [{ at: now, score: analysis.score, position: googleResult.position, googleStatus: googleResult.status, googleMessage: googleResult.message }], $slice: -60 } } } as never,
       { upsert: true },
     );
     return NextResponse.json({ url: finalUrl, keyword, checkedAt: now.toISOString(), market: { language, country }, google: googleResult, relatedSearches, questions, ...analysis }, { headers: noStore });

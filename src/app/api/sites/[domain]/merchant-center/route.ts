@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-import { getGoogleAccessToken } from "@/lib/integrations/google";
+import { getGoogleAccessToken, googlePayloadError } from "@/lib/integrations/google";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 
 type Context = { params: Promise<{ domain: string }> };
@@ -23,7 +23,7 @@ export async function GET(request: Request, context: Context) {
     const accessToken = await getGoogleAccessToken(site.db, site.website.organizationId, site.domain, "merchant_center");
     const response = await fetch("https://merchantapi.googleapis.com/accounts/v1/accounts?pageSize=100", { redirect: "manual", headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(15_000) });
     const payload = await response.json() as { accounts?: Array<Record<string, unknown>> };
-    if (!response.ok) return NextResponse.json({ error: "Merchant Center accounts could not be listed. Check API access and consent." }, { status: 502 });
+    if (!response.ok) return NextResponse.json({ error: googlePayloadError(payload, "Merchant Center accounts could not be listed.") }, { status: 502 });
     return NextResponse.json({ accounts: payload.accounts || [] }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Merchant Center is unavailable." }, { status: 503 }); }
 }
@@ -42,7 +42,7 @@ export async function POST(request: Request, context: Context) {
     const accessToken = await getGoogleAccessToken(site.db, site.website.organizationId, site.domain, "merchant_center");
     const response = await fetch(`https://merchantapi.googleapis.com/reports/v1/accounts/${accountId}/reports:search`, { method: "POST", redirect: "manual", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ query, pageSize: 100 }), cache: "no-store", signal: AbortSignal.timeout(20_000) });
     const report = await response.json() as Record<string, unknown>;
-    if (!response.ok) return NextResponse.json({ error: "Merchant Center report failed. Check account access and API configuration." }, { status: 502 });
+    if (!response.ok) return NextResponse.json({ error: googlePayloadError(report, "Merchant Center report failed.") }, { status: 502 });
     const saved = { ownerId: site.session.user.id, userId: site.session.user.id, createdBy: site.session.user.id, organizationId: site.website.organizationId, websiteDomain: site.domain, accountId, startDate: dateString(start), endDate: dateString(end), report, source: "Google Merchant API Reports", generatedAt: new Date() };
     await site.db.collection("google_merchant_reports").insertOne(saved);
     return NextResponse.json({ ...saved, organizationId: undefined }, { headers: { "Cache-Control": "no-store" } });

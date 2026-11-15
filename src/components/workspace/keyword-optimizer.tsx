@@ -8,10 +8,14 @@ type Check = { id: string; label: string; status: "pass" | "warn" | "fail"; impa
 type Result = {
   url: string; keyword: string; checkedAt: string; score: number; checks: Check[]; plan: Array<{ step: string; fix: string; impact: string }>;
   missingTopics: string[]; unansweredQuestions: string[]; relatedSearches: string[]; questions: string[]; wordCount: number; keywordCount: number;
-  google: { connected: boolean; position: number | null; impressions: number; clicks: number; rankingPage: string | null; samePage: boolean | null };
+  google: { connected: boolean; status?: GoogleStatus; message?: string; position: number | null; impressions: number; clicks: number; rankingPage: string | null; samePage: boolean | null };
   market: { language: string; country: string };
 };
-type Target = { url: string; keyword: string; updatedAt: string; history: Array<{ at: string; score: number; position: number | null }> };
+type Target = { url: string; keyword: string; updatedAt: string; history: Array<{ at: string; score: number; position: number | null; googleStatus?: GoogleStatus; googleMessage?: string }> };
+type GoogleStatus = "ranking" | "not_ranking" | "not_connected" | "no_property" | "api_error" | "not_your_site";
+const GOOGLE_LABEL: Record<GoogleStatus, string> = { ranking: "", not_ranking: "Not ranking yet", not_connected: "Connect Search Console", no_property: "No Search Console property", api_error: "Google error", not_your_site: "Not your website" };
+/** Table cell text: the position, or why there is none (older checks without a status fall back to a dash). */
+function googleCell(position: number | null | undefined, status?: GoogleStatus) { return position ? `#${Math.round(position)}` : status ? GOOGLE_LABEL[status] : "—"; }
 
 const tone = (score: number) => (score >= 80 ? "is-good" : score >= 55 ? "is-fair" : "is-poor");
 const statusIcon = { pass: CheckCircle2, warn: CircleAlert, fail: XCircle };
@@ -68,9 +72,9 @@ export function KeywordOptimizer({ websites }: { websites: Array<{ domain: strin
             </div>
             <div className="kw-opt-google">
               <small>Google position</small>
-              {result.google.connected
-                ? result.google.position ? <><strong>#{Math.round(result.google.position)}</strong><span>{result.google.impressions} impressions · {result.google.clicks} clicks (28 days)</span></> : <><strong>—</strong><span>Not ranking yet in the last 28 days</span></>
-                : <><strong>?</strong><span>Connect Search Console in Integrations to see real positions</span></>}
+              {result.google.position
+                ? <><strong>#{Math.round(result.google.position)}</strong><span>{result.google.impressions} impressions · {result.google.clicks} clicks (28 days)</span></>
+                : <><strong className="kw-opt-google-status">{result.google.status ? GOOGLE_LABEL[result.google.status] : result.google.connected ? "—" : "?"}</strong><span>{result.google.message || (result.google.connected ? "Not ranking yet in the last 28 days" : "Connect Search Console in Integrations to see real positions")}</span></>}
             </div>
           </div>
           {result.google.connected && result.google.samePage === false && result.google.rankingPage && <p className="google-data-message">Google currently ranks a different page for this keyword: <a href={result.google.rankingPage} target="_blank" rel="noreferrer">{result.google.rankingPage}</a>. Either optimize that page instead, or link from it to this one so the two pages do not compete.</p>}
@@ -106,7 +110,7 @@ export function KeywordOptimizer({ websites }: { websites: Array<{ domain: strin
                 <td>{target.keyword}</td>
                 <td className="kw-opt-url">{target.url.replace(/^https?:\/\//, "")}</td>
                 <td>{last?.score ?? "—"}{change ? <small className={change > 0 ? "kw-opt-up" : "kw-opt-down"}> {change > 0 ? "+" : ""}{change}</small> : null}</td>
-                <td>{last?.position ? `#${Math.round(last.position)}` : "—"}</td>
+                <td title={last?.googleMessage}>{googleCell(last?.position, last?.googleStatus)}</td>
                 <td>{new Date(target.updatedAt).toLocaleDateString()}</td>
                 <td><button type="button" className="kw-opt-rerun" disabled={loading} onClick={() => { setUrl(target.url); setKeyword(target.keyword); void run(target.url, target.keyword); }}><RotateCcw size={12} aria-hidden="true" /> Re-check</button></td>
               </tr>

@@ -783,3 +783,15 @@
   .imh-content { padding:24px 16px 60px; }
 }
 @media (max-width:420px) { .imh-brand-text small { display:none; } }
+/* Creator studio: delete creator account */
+.mp-danger-zone { display:grid; gap:14px; margin-top:16px; border-color:#e8c2b4; }
+.mp-danger-zone h3 { margin-top:4px; color:#8a2c14; }
+.mp-danger-zone p { margin-top:6px; max-width:70ch; color:#6b5f56; font-size:13px; line-height:1.6; }
+.mp-danger-zone .marketplace-eyebrow { color:#b03b1c; }
+.mp-danger-form { display:grid; gap:10px; max-width:420px; }
+.mp-danger-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.mp-danger-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; justify-self:start; min-height:42px; border:1px solid #b42318; border-radius:9px; background:#fff; padding:0 16px; color:#b42318; font-weight:650; cursor:pointer; }
+.mp-danger-form .mp-danger-button { background:#b42318; color:#fff; }
+.mp-danger-button:hover { background:#fdf1ee; }
+.mp-danger-form .mp-danger-button:hover { background:#9a1d13; }
+.mp-danger-button:disabled { cursor:not-allowed; opacity:.6; }

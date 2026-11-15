@@ -788,6 +788,7 @@ export async function DELETE(request: Request, context: Context) {
   const session = await auth();
   if (!session?.user?.id) return error("Authentication required.", 401);
   const path = (await context.params).segments;
+  if (path[0] === "influencers" && path[1] === "me" && path.length === 2) return deleteCreatorProfile(request, session.user.id);
   if (path[0] !== "cart" || path.length !== 2) return error("Marketplace endpoint not found.", 404);
   const influencerId = objectId(path[1]);
   if (!influencerId) return error("Choose a valid creator profile.");
@@ -798,4 +799,38 @@ export async function DELETE(request: Request, context: Context) {
   const result = await db.collection("mp_cart_items").deleteOne({ userId: session.user.id, influencerId });
   if (result.deletedCount) await db.collection("mp_audit").insertOne({ entityId: session.user.id, actorId: session.user.id, action: "creator_cart.removed", influencerId, createdAt: new Date() });
   return json({ removed: result.deletedCount > 0 });
+}
+
+/**
+ * DELETE /influencers/me: the creator removes their creator account. The sign-in account, brand profiles and
+ * finished collaborations (the brand's business record) are kept; everything that identifies or lists the
+ * creator is removed. Blocked while a collaboration or payout is still open, so nobody is left mid-deal.
+ */
+async function deleteCreatorProfile(request: Request, userId: string) {
+  const parsed = await readJsonLimited<{ confirm?: unknown }>(request, 1_024);
+  if (!parsed.ok || parsed.value.confirm !== "DELETE") return error("Type DELETE to confirm deleting your creator account.");
+  const db = (await clientPromise).db();
+  await ensureMarketplaceIndexes(db);
+  const limit = await consumeRateLimit(db, "marketplace-creator-delete", userId, 5, 60 * 60_000);
+  if (!limit.allowed) return error("Too many requests. Try again later.", 429);
+  const profile = await db.collection("mp_influencers").findOne({ userId }, { projection: { _id: 1 } });
+  if (!profile) return error("You do not have a creator account.", 404);
+  const collaborations = await db.collection("mp_collaborations").find({ influencerId: userId }, { projection: { _id: 1, status: 1 } }).toArray();
+  const open = collaborations.filter((item) => item.status !== "completed");
+  if (open.length) return error(`Finish or cancel your ${open.length === 1 ? "open collaboration" : `${open.length} open collaborations`} before deleting your creator account.`, 409);
+  const unpaid = collaborations.length ? await db.collection("mp_payout_requests").countDocuments({ collaborationId: { $in: collaborations.map((item) => item._id) }, status: { $ne: "paid" } }) : 0;
+  if (unpaid) return error("You have a payout still in progress. Delete your creator account after it is paid.", 409);
+  const now = new Date();
+  await Promise.all([
+    db.collection("mp_influencers").deleteOne({ _id: profile._id, userId }),
+    db.collection("mp_social_connections").deleteMany({ userId, provider: "instagram" }),
+    db.collection("mp_instagram_insights").deleteMany({ userId }),
+    db.collection("mp_oauth_states").deleteMany({ userId }),
+    db.collection("mp_verification_requests").deleteMany({ userId }),
+    db.collection("mp_cart_items").deleteMany({ influencerId: profile._id }),
+    // Pending applications, invitations and bookings can no longer go ahead.
+    db.collection("mp_applications").updateMany({ influencerId: userId, status: { $in: ["pending", "invited"] } }, { $set: { status: "withdrawn", withdrawnReason: "creator_account_deleted", updatedAt: now } }),
+  ]);
+  await db.collection("mp_audit").insertOne({ entityId: userId, actorId: userId, action: "creator.deleted", retainedCollaborations: collaborations.length, createdAt: now });
+  return json({ deleted: true });
 }

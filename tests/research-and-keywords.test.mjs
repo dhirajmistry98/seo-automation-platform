@@ -48,8 +48,9 @@ test("Google API errors keep Google's own explanation", async () => {
 test("Google tag ID is strictly validated before it reaches a script URL", async () => {
   const { googleTagId } = await import("../src/components/analytics/google-tag-id.ts");
   assert.equal(googleTagId("GTM-K6328NKS"), "GTM-K6328NKS");
-  assert.equal(googleTagId(undefined), "GTM-K6328NKS");
+  assert.equal(googleTagId(undefined), "G-1FYHM8LV25");
   assert.equal(googleTagId(" g-abc123xyz "), "G-ABC123XYZ");
   assert.equal(googleTagId("off"), null);
+  assert.equal(googleTagId("G-1x'+alert(1)+'"), null);
   assert.equal(googleTagId("GTM-1\"><script>"), null);
 });

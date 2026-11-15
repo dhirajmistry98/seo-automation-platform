@@ -18,6 +18,7 @@ const str = (value: unknown): string => typeof value === "string" ? value : "";
 const money = (paise: unknown) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(typeof paise === "number" ? paise / 100 : 0);
 const date = (value: unknown) => value ? new Date(String(value)).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 const listField = (form: FormData, name: string) => String(form.get(name) || "").split(",").map((value) => value.trim()).filter(Boolean);
+const inr = (rupees: number) => `₹${Math.round(rupees).toLocaleString("en-IN")}`;
 type PackageDraft = { key: string; title: string; price: string; deliverables: string; deliveryDays: string };
 const PACKAGE_PRESETS = ["1 Instagram Reel", "1 Instagram Story", "1 Instagram Photo Post", "Reel + 3 Stories", "UGC video (no posting)"];
 const packageField = (form: FormData) => {
@@ -35,25 +36,64 @@ function PackageEditor({ initial }: { initial: unknown }) {
     const saved = Array.isArray(initial) ? initial.map(obj).map((item, index) => ({ key: `saved-${index}`, title: str(item.title), price: typeof item.pricePaise === "number" ? String(item.pricePaise / 100) : "", deliverables: str(item.deliverables), deliveryDays: typeof item.deliveryDays === "number" ? String(item.deliveryDays) : "" })) : [];
     return saved.length ? saved : [{ key: "new-0", title: "1 Instagram Reel", price: "", deliverables: "", deliveryDays: "7" }];
   });
+  const priced = rows.filter((row) => row.price.trim() !== "").map((row) => Number(row.price)).filter((value) => Number.isFinite(value) && value >= 0);
   const update = (key: string, field: keyof Omit<PackageDraft, "key">, value: string) => setRows((current) => current.map((row) => row.key === key ? { ...row, [field]: value } : row));
   return <fieldset className="mp-package-editor">
     <legend>Packages brands can book</legend>
     <p className="marketplace-form-note">Fixed-price packages let brands book you directly from your profile. List up to 10.</p>
     <input type="hidden" name="packagesJson" value={JSON.stringify(rows)} />
-    {rows.map((row, index) => <div className="mp-package-row" key={row.key}>
+    {rows.map((row, index) => { const started = Boolean(row.title.trim() || row.price.trim() || row.deliverables.trim()); return <div className="mp-package-row" key={row.key}>
       <div className="mp-package-row-head"><strong>Package {index + 1}</strong><button type="button" aria-label={`Remove package ${index + 1}`} onClick={() => setRows((current) => current.filter((item) => item.key !== row.key))}><Trash2 size={14} /></button></div>
       <div className="marketplace-form-grid">
-        <label className="marketplace-field"><span>Package name</span><input list="mp-package-presets" value={row.title} onChange={(event) => update(row.key, "title", event.target.value)} placeholder="1 Instagram Reel" maxLength={100} /></label>
-        <label className="marketplace-field"><span>Price (₹)</span><input type="number" min="1" value={row.price} onChange={(event) => update(row.key, "price", event.target.value)} placeholder="8000" /></label>
+        <label className="marketplace-field"><span>Package name</span><input list="mp-package-presets" value={row.title} onChange={(event) => update(row.key, "title", event.target.value)} placeholder="1 Instagram Reel" required={started} minLength={2} maxLength={100} /></label>
+        <label className="marketplace-field"><span>Price (₹)</span><input type="number" min="0" step="1" value={row.price} onChange={(event) => update(row.key, "price", event.target.value)} placeholder="8000" required={started} /></label>
       </div>
       <div className="marketplace-form-grid">
-        <label className="marketplace-field"><span>What’s included</span><input value={row.deliverables} onChange={(event) => update(row.key, "deliverables", event.target.value)} placeholder="One 30–60s edited Reel, brand tag, 30-day usage rights" maxLength={500} /></label>
+        <label className="marketplace-field"><span>What’s included</span><input value={row.deliverables} onChange={(event) => update(row.key, "deliverables", event.target.value)} placeholder="One 30–60s edited Reel, brand tag, 30-day usage rights" required={started} minLength={2} maxLength={500} /></label>
         <label className="marketplace-field"><span>Delivery (days)</span><input type="number" min="1" max="90" value={row.deliveryDays} onChange={(event) => update(row.key, "deliveryDays", event.target.value)} placeholder="7" /></label>
       </div>
-    </div>)}
+    </div>; })}
     <datalist id="mp-package-presets">{PACKAGE_PRESETS.map((preset) => <option key={preset} value={preset} />)}</datalist>
     {rows.length < 10 && <button type="button" className="marketplace-secondary" onClick={() => setRows((current) => [...current, { key: `new-${Date.now()}`, title: "", price: "", deliverables: "", deliveryDays: "7" }])}><Plus size={15} /> Add package</button>}
+    {priced.length > 0 && <div className="mp-package-total" aria-live="polite">
+      <div><span>{priced.length === 1 ? "1 package" : `${priced.length} packages`}</span><small>Starting from {inr(Math.min(...priced))}</small></div>
+      <div><span>Total for all packages</span><strong>{inr(priced.reduce((sum, value) => sum + value, 0))}</strong></div>
+    </div>}
   </fieldset>;
+}
+
+/** Creator studio side card: where the creator stands with Instagram verification, as numbered steps. */
+function CreatorVerificationCard({ influencer, connectAvailable }: { influencer: Item; connectAvailable: boolean }) {
+  const instagram = obj(influencer.instagram);
+  const saved = Boolean(influencer._id);
+  const handle = str(influencer.instagramHandle) || str(instagram.username);
+  const verifiedAt = instagram.verifiedAt ? new Date(str(instagram.verifiedAt)) : null;
+  const verified = Boolean(verifiedAt && str(instagram.username));
+  const approved = str(influencer.status) === "approved";
+  const followers = typeof instagram.verifiedFollowers === "number" ? Number(instagram.verifiedFollowers) : null;
+  const steps = [
+    { done: saved && Boolean(handle), title: "Save your profile", text: handle ? `With Instagram username @${handle}` : "Include your Instagram username" },
+    { done: verified, title: "Verify through Meta", text: verified ? `Verified as @${str(instagram.username)} on ${verifiedAt!.toLocaleDateString("en-IN")}` : "Log in to Instagram with that exact account" },
+    { done: verified && approved, title: "Listed for brands", text: approved ? "Your profile is approved" : "After verification, a quick review" },
+  ];
+  return <aside className="marketplace-panel marketplace-side-panel mp-verify-card" aria-labelledby="mp-verify-title">
+    <div className="mp-verify-head">
+      <span className="mp-verify-icon"><Camera size={20} aria-hidden="true" /></span>
+      <span className={`mp-verify-status ${verified ? "is-verified" : "is-pending"}`}>{verified ? <><BadgeCheck size={14} aria-hidden="true" /> Verified</> : <><Clock3 size={14} aria-hidden="true" /> Not verified</>}</span>
+    </div>
+    <span className="marketplace-eyebrow">INSTAGRAM VERIFICATION</span>
+    <h3 id="mp-verify-title">{verified ? "Your Instagram is verified" : "Verify your Instagram"}</h3>
+    <p>Brands only see creators whose Instagram is confirmed through Meta. Any follower count is welcome.</p>
+    <ol className="mp-verify-steps">{steps.map((step, index) => <li key={step.title} className={step.done ? "is-done" : ""}><span className="mp-verify-step-mark" aria-hidden="true">{step.done ? <BadgeCheck size={14} /> : index + 1}</span><span><strong>{step.title}</strong><small>{step.text}</small></span></li>)}</ol>
+    {saved && connectAvailable && <Link className="marketplace-primary mp-verify-button" href="/api/marketplace/meta/authorize">{verified ? "Re-verify Instagram" : "Verify Instagram through Meta"} <ArrowRight size={16} aria-hidden="true" /></Link>}
+    {!saved && <p className="marketplace-form-note">Save your creator profile first, then verify.</p>}
+    {saved && !connectAvailable && <p className="marketplace-form-note">Instagram verification is temporarily unavailable. Please try again later.</p>}
+    <dl className="mp-verify-facts">
+      <div><dt>Followers</dt><dd>{followers !== null ? followers.toLocaleString("en-IN") : "—"}</dd></div>
+      <div><dt>Creator tier</dt><dd>{str(influencer.tier) || "—"}</dd></div>
+    </dl>
+    {Boolean(instagram.providerUserId) && <><CreatorInstagramPreview instagram={instagram} /><InstagramInsightsPanel /></>}
+  </aside>;
 }
 
 /** Result of the Instagram (Meta) connection, passed back as ?meta=<status>. */
@@ -307,7 +347,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
         <div className="marketplace-two-column"><section className="marketplace-panel"><SectionTitle eyebrow="YOUR PROFILE" title={influencer._id ? "Edit your creator details" : "Create a creator profile"} aside={influencer._id ? <span className="mp-studio-aside"><Link href={`${basePath}/creators/${encodeURIComponent(str(influencer._id))}`}>Preview public profile <ArrowRight size={13} /></Link><Status value={influencer.status} /></span> : null} />
           <form className="marketplace-form" onSubmit={submit("/influencers", (form) => ({ displayName: form.get("displayName"), instagramHandle: form.get("instagramHandle"), bio: form.get("bio"), location: form.get("location"), ratePaise: Math.round(Number(form.get("rateRupees")) * 100), categories: listField(form, "categories"), portfolio: listField(form, "portfolio"), packages: packageField(form) }), "Creator profile saved in the database.")}>
             <Field label="Display name" name="displayName" placeholder="Your creator name" defaultValue={str(influencer.displayName)} /><label className="marketplace-field"><span>Instagram username</span><input name="instagramHandle" required maxLength={80} autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@yourusername" defaultValue={str(influencer.instagramHandle) || str(obj(influencer.instagram).username)} /><small className="marketplace-form-note">{obj(influencer.instagram).verifiedAt && str(obj(influencer.instagram).username) ? <><BadgeCheck size={13} aria-hidden="true" /> Verified as @{str(obj(influencer.instagram).username)} through Meta</> : "Not verified yet. After saving, click Connect Instagram and log in with this exact account to verify it."}</small></label><Textarea label="About you" name="bio" placeholder="Your content style and audience" defaultValue={str(influencer.bio)} required={false} /><div className="marketplace-form-grid"><label className="marketplace-field"><span>Location in India</span><LocationInput key={str(influencer._id) || "new"} name="location" required placeholder="Mumbai, Maharashtra" defaultValue={str(influencer.location)} /></label><Field label="Starting rate (₹)" name="rateRupees" type="number" defaultValue={typeof influencer.ratePaise === "number" ? influencer.ratePaise / 100 : 0} /></div><Field label="Content categories (comma separated)" name="categories" placeholder="Fashion, Lifestyle" defaultValue={Array.isArray(influencer.categories) ? influencer.categories.join(", ") : ""} /><PackageEditor key={str(influencer._id) || "new"} initial={influencer.packages} /><Field label="Portfolio HTTPS links (comma separated)" name="portfolio" required={false} placeholder="https://..." defaultValue={Array.isArray(influencer.portfolio) ? influencer.portfolio.join(", ") : ""} /><button className="marketplace-primary" disabled={busy}>Save creator profile <ArrowRight size={16} /></button>
-          </form></section><aside className="marketplace-panel marketplace-side-panel"><Camera size={28} /><span className="marketplace-eyebrow">VERIFICATION</span><h3>Build trust with verified data</h3><p>Every creator account is verified through Meta: after you save your profile you log in to Instagram, and the account must be the username on your profile. There is no minimum follower count. Profiles are listed for brands only after verification.</p>{Boolean(me.instagramConnectAvailable) && Boolean(influencer._id) && <Link className="marketplace-primary" href="/api/marketplace/meta/authorize">{obj(influencer.instagram).verifiedAt ? "Re-verify Instagram" : "Verify Instagram through Meta"} <ArrowRight size={16} /></Link>}{!me.instagramConnectAvailable && <p className="marketplace-form-note">Meta connection is unavailable until the app owner configures approved Meta credentials.</p>}<div className="marketplace-data-line"><span>Instagram followers</span><strong>{typeof obj(influencer.instagram).verifiedFollowers === "number" ? Number(obj(influencer.instagram).verifiedFollowers).toLocaleString("en-IN") : "Not verified"}</strong></div><div className="marketplace-data-line"><span>Creator tier</span><strong>{str(influencer.tier) || "Pending verification"}</strong></div>{Boolean(obj(influencer.instagram).providerUserId) && <><CreatorInstagramPreview instagram={obj(influencer.instagram)} /><InstagramInsightsPanel /></>}</aside></div>
+          </form></section><CreatorVerificationCard influencer={influencer} connectAvailable={Boolean(me.instagramConnectAvailable)} /></div>
         {Boolean(influencer._id) && <section className="marketplace-panel mp-danger-zone" aria-labelledby="mp-delete-creator-title">
           <div><span className="marketplace-eyebrow">DANGER ZONE</span><h3 id="mp-delete-creator-title">Delete creator account</h3>
           <p>Permanently removes your creator profile, packages, portfolio and Instagram connection, takes you out of the creator directory and withdraws pending applications and bookings. Your sign-in account, brand profiles and finished collaborations are kept. This cannot be undone.</p></div>

@@ -417,7 +417,18 @@ export async function POST(request: Request, context: Context) {
       const deliveryDays = item.deliveryDays == null || item.deliveryDays === "" ? null : Number.isInteger(item.deliveryDays) && Number(item.deliveryDays) >= 1 && Number(item.deliveryDays) <= 90 ? Number(item.deliveryDays) : undefined;
       return title && pricePaise !== null && deliverables && deliveryDays !== undefined ? { title, pricePaise, deliverables, deliveryDays } : null;
     }) : null;
-    if (!displayName || bio === null || !categories || !location || ratePaise === null || !portfolio || portfolio.some((item) => !item) || packages === null || packages?.some((item) => !item)) return error("Provide valid creator details, HTTPS portfolio links, and packages with a title, INR price and deliverables.");
+    // Name the exact field that is wrong, instead of one message for every rule.
+    const problem =
+      !displayName ? "Display name must be 2 to 100 characters."
+      : bio === null ? "About you can be at most 1,500 characters."
+      : !location ? "Add your location (for example Mumbai, Maharashtra)."
+      : ratePaise === null ? "Starting rate must be a whole rupee amount of 0 or more."
+      : !categories ? "Add up to 10 content categories, comma separated, each up to 60 characters."
+      : !portfolio ? "Add up to 10 portfolio links."
+      : portfolio.some((item) => !item) ? "Each portfolio link must be a full https:// address."
+      : packages === null ? "Add up to 10 packages."
+      : packages?.map((item, index) => item ? null : packageProblem(Array.isArray(packageInput) ? packageInput[index] : null, index + 1)).find(Boolean) || null;
+    if (problem) return error(problem);
     const instagramHandle = normalizeInstagramHandle(body.instagramHandle);
     if (!instagramHandle) return error("Enter your Instagram username (letters, numbers, periods and underscores, up to 30 characters).");
     const current = await db.collection("mp_influencers").findOne({ userId }, { projection: { instagram: 1 } });
@@ -836,4 +847,14 @@ async function deleteCreatorProfile(request: Request, userId: string) {
   ]);
   await db.collection("mp_audit").insertOne({ entityId: userId, actorId: userId, action: "creator.deleted", retainedCollaborations: collaborations.length, createdAt: now });
   return json({ deleted: true });
+}
+
+/** Explains what is wrong with one creator package. */
+function packageProblem(value: unknown, number: number) {
+  const item = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const label = `Package ${number}`;
+  if (!cleanText(item.title, 100, 2)) return `${label}: give the package a name (2 to 100 characters).`;
+  if (inrPaise(item.pricePaise) === null) return `${label}: enter a price in rupees.`;
+  if (!cleanText(item.deliverables, 500, 2)) return `${label}: describe what's included (at least 2 characters, up to 500).`;
+  return `${label}: delivery must be between 1 and 90 days.`;
 }

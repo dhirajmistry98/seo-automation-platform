@@ -12,10 +12,10 @@ import { getGoogleAccessToken } from "@/lib/integrations/google";
 export const FREE_RESEARCH_KINDS = ["keywords", "questions", "rank"] as const;
 export const FREE_PROVIDER = "Google Autocomplete + Search Console";
 
-const QUESTION_PREFIXES = ["what", "how", "why", "which", "where", "when", "who", "can", "is", "does", "should", "are"];
+export const QUESTION_PREFIXES = ["what", "how", "why", "which", "where", "when", "who", "can", "is", "does", "should", "are"];
 const QUESTION_PATTERN = /^(who|what|where|when|why|how|which|can|does|do|is|are|should|will|could|would)\b/i;
 
-async function googleSuggest(query: string, language: string, country: string): Promise<string[]> {
+export async function googleSuggest(query: string, language: string, country: string): Promise<string[]> {
   const url = new URL("https://suggestqueries.google.com/complete/search");
   url.search = new URLSearchParams({ client: "firefox", hl: language, gl: country.toLowerCase(), q: query }).toString();
   try {
@@ -28,12 +28,12 @@ async function googleSuggest(query: string, language: string, country: string): 
   }
 }
 
-type GscMetrics = { clicks: number; impressions: number; ctr: number; position: number; page: string | null };
+export type GscMetrics = { clicks: number; impressions: number; ctr: number; position: number; page: string | null };
 
 const bareHost = (host: string) => host.toLowerCase().replace(/^www\./, "");
 
 /** Resolve the Search Console property for this domain, or null when Search Console is not connected or has no matching property. */
-async function searchConsoleContext(db: Db, organizationId: unknown, domain: string) {
+export async function searchConsoleContext(db: Db, organizationId: unknown, domain: string) {
   let accessToken: string;
   try { accessToken = await getGoogleAccessToken(db, organizationId, domain, "search_console"); } catch { return null; }
   const response = await fetch("https://searchconsole.googleapis.com/webmasters/v3/sites", { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(12_000) });
@@ -52,7 +52,7 @@ function reportDates() {
   return { startDate: start.toISOString().slice(0, 10), endDate: end.toISOString().slice(0, 10) };
 }
 
-async function queryMetrics(context: { accessToken: string; property: string }, keyword: string): Promise<GscMetrics | null> {
+export async function queryMetrics(context: { accessToken: string; property: string }, keyword: string): Promise<GscMetrics | null> {
   const endpoint = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(context.property)}/searchAnalytics/query`;
   const body = { ...reportDates(), dimensions: ["query", "page"], dimensionFilterGroups: [{ filters: [{ dimension: "query", operator: "equals", expression: keyword.toLowerCase() }] }], rowLimit: 10 };
   const response = await fetch(endpoint, { method: "POST", headers: { Authorization: `Bearer ${context.accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(15_000) });

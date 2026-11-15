@@ -830,3 +830,45 @@ a.workspace-tool-card:focus-visible { outline:2px solid #ff6a00; outline-offset:
 .google-indexing-result p { color: #625a53; }
 .google-indexing-result a { display: inline-flex; width: max-content; align-items: center; gap: 4px; color: #a8450a; font-weight: 600; }
 @media (max-width: 600px) { .google-indexing-row { flex-direction: column; } .google-indexing-row button { justify-content: center; } .google-indexing-result dl > div { grid-template-columns: 1fr; } }
+
+/* Rank a page (keyword-optimizer.tsx). Reuses seo-check-* cards. */
+.kw-opt { display: grid; gap: 14px; }
+.kw-opt-fields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.kw-opt-fields label { display: grid; gap: 5px; color: #625a53; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.kw-opt-fields input { min-height: 36px; border: 1px solid #cfc7be; background: #fff; padding: 0 10px; color: #2b241e; font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.kw-opt-fields input:focus-visible { outline: 2px solid #d85800; outline-offset: 1px; }
+.kw-opt-fields button { display: inline-flex; min-height: 36px; align-items: center; gap: 7px; border: 0; background: #080706; padding: 0 16px; color: #f3efea; font-size: 11px; font-weight: 600; cursor: pointer; }
+.kw-opt-fields button:disabled { cursor: wait; opacity: .6; }
+.kw-opt-keyword { color: #2b241e; font-size: 14px; }
+.kw-opt-google { display: grid; flex: none; justify-items: center; min-width: 130px; margin-left: auto; border-left: 1px solid #ded8d1; padding-left: 16px; text-align: center; }
+.kw-opt-google small { color: #70675e; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.kw-opt-google strong { color: #2b241e; font-size: 26px; line-height: 1.2; }
+.kw-opt-google span { max-width: 150px; color: #70675e; font-size: 10px; line-height: 1.4; }
+.kw-opt-plan { display: grid; gap: 8px; margin: 0; padding-left: 20px; }
+.kw-opt-plan li { padding-left: 4px; }
+.kw-opt-plan li::marker { color: #d85800; font-weight: 700; }
+.kw-opt-plan strong { font-size: 11px; }
+.kw-opt-plan p { margin-top: 2px; color: #625a53; font-size: 11px; line-height: 1.5; }
+.kw-opt-impact { margin-right: 7px; border-radius: 99px; padding: 1px 7px; font-size: 8px; font-weight: 700; text-transform: uppercase; }
+.kw-opt-impact.is-high { background: #fde4e0; color: #8a1f12; }
+.kw-opt-impact.is-medium { background: #fcefd9; color: #7a4a0c; }
+.kw-opt-impact.is-low { background: #ece8e3; color: #625a53; }
+.kw-opt-ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.kw-opt-ideas p { margin: -4px 0 8px; color: #70675e; font-size: 10px; }
+.kw-opt-ideas ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.kw-opt-ideas li { border: 1px solid #ebe5de; background: #fff; padding: 4px 9px; color: #2b241e; font-size: 10px; }
+.kw-opt-checks { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.kw-opt-checks li { display: flex; align-items: flex-start; gap: 9px; border-top: 1px solid #ebe5de; padding: 7px 0; }
+.kw-opt-checks li:first-child { border-top: 0; padding-top: 0; }
+.kw-opt-checks li > svg { flex: none; margin-top: 1px; }
+.kw-opt-checks li.is-pass > svg { color: #2f7a4b; } .kw-opt-checks li.is-warn > svg { color: #b7791f; } .kw-opt-checks li.is-fail > svg { color: #b42318; }
+.kw-opt-checks strong { font-size: 11px; }
+.kw-opt-checks p { margin-top: 1px; overflow-wrap: anywhere; color: #70675e; font-size: 10px; }
+.kw-opt-url { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kw-opt-up { color: #2f7a4b; font-weight: 600; } .kw-opt-down { color: #b42318; font-weight: 600; }
+.kw-opt-rerun { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #cfc7be; background: #fff; padding: 4px 8px; color: #423b34; font-size: 10px; cursor: pointer; }
+@media (max-width: 760px) {
+  .kw-opt-fields { grid-template-columns: 1fr; }
+  .kw-opt-fields button { justify-content: center; }
+  .kw-opt-google { margin-left: 0; border-left: 0; border-top: 1px solid #ded8d1; padding: 10px 0 0; justify-items: start; text-align: left; }
+}

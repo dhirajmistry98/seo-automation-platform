@@ -872,3 +872,36 @@ a.workspace-tool-card:focus-visible { outline:2px solid #ff6a00; outline-offset:
   .kw-opt-fields button { justify-content: center; }
   .kw-opt-google { margin-left: 0; border-left: 0; border-top: 1px solid #ded8d1; padding: 10px 0 0; justify-items: start; text-align: left; }
 }
+
+/* Branded SEO report (dashboard/report/[domain]) with print-to-PDF layout. */
+.site-report { display: grid; gap: 16px; color: #2b241e; }
+.site-report-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.site-report-toolbar a { display: inline-flex; align-items: center; gap: 5px; color: #625a53; font-size: 11px; }
+.site-report-print { display: inline-flex; min-height: 34px; align-items: center; gap: 7px; border: 0; background: #080706; padding: 0 14px; color: #f3efea; font-size: 11px; font-weight: 600; cursor: pointer; }
+.site-report-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 3px solid #d85800; padding-bottom: 14px; }
+.site-report-head h1 { margin: 4px 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+.site-report-head p { color: #70675e; font-size: 11px; }
+.site-report-brand { color: #d85800; font-size: 13px; letter-spacing: .12em; }
+.site-report-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.site-report-kpis > div { display: grid; align-content: start; gap: 3px; border: 1px solid #ded8d1; background: #faf8f5; padding: 12px 14px; }
+.site-report-kpis small { color: #70675e; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.site-report-kpis strong { font-size: 28px; line-height: 1.1; }
+.site-report-kpis strong span { color: #70675e; font-size: 13px; font-weight: 500; }
+.site-report-kpis em { color: #70675e; font-size: 10px; font-style: normal; }
+.report-spark { width: 100%; max-width: 220px; height: 40px; color: #d85800; }
+.site-report-section { border: 1px solid #ded8d1; background: #faf8f5; padding: 14px 16px; break-inside: avoid; }
+.site-report-section h2 { margin-bottom: 8px; font-size: 13px; font-weight: 650; }
+.site-report-section > p { margin-bottom: 8px; color: #70675e; font-size: 10px; }
+.site-report-section table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.site-report-section th { border-bottom: 1px solid #ded8d1; padding: 6px; color: #70675e; font-weight: 600; text-align: left; }
+.site-report-section td { border-bottom: 1px solid #ebe5de; padding: 6px; overflow-wrap: anywhere; vertical-align: top; }
+.site-report-section ul { display: grid; gap: 4px; padding-left: 16px; list-style: disc; color: #423b34; font-size: 11px; }
+.site-report-foot { color: #8a8078; font-size: 9px; }
+@media (max-width: 760px) { .site-report-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .site-report-head { align-items: flex-start; flex-direction: column; } .site-report-section { overflow-x: auto; } }
+@media print {
+  @page { margin: 14mm; }
+  .workspace-shell .workspace-header, .workspace-shell .workspace-sidebar, .workspace-shell .workspace-footer, .no-print { display: none !important; }
+  .workspace-shell, .workspace-shell .workspace-layout, .workspace-shell .workspace-main-redesign { display: block !important; background: #fff !important; padding: 0 !important; margin: 0 !important; }
+  .site-report-section, .site-report-kpis > div { background: #fff; }
+  .site-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, BarChart3, FileSearch, Gauge, Link2, ListTodo, ScanSearch, Search, ShieldCheck, Sparkles, Target } from "lucide-react";
+import { Activity, BarChart3, FileSearch, Gauge, Link2, ListTodo, ScanSearch, Search, ShieldCheck, Sparkles, Target, FileBarChart } from "lucide-react";
 import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
@@ -12,6 +12,7 @@ export const instant = false;
 
 const liveTools = [
   { name: "Rank a page", description: "Pick a page and a keyword: see your Google position, what is missing, and a step-by-step plan to rank higher.", icon: Target, state: "Optimize a page", href: "/dashboard/rank-a-page" },
+  { name: "Client-ready reports", description: "Branded PDF report per website: health trend, issues, PageSpeed, Search Console, keywords and AI readiness.", icon: FileBarChart, state: "Open reports", href: "/dashboard/report" },
   { name: "SEO checker", description: "Check any public page live for SEO health, on-page details, issues and AI search readiness.", icon: ScanSearch, state: "Check a page", href: "/dashboard/seo-checker" },
   { name: "Technical site audits", description: "Crawl verified pages for metadata, indexability, schema, errors, and internal links.", icon: FileSearch, state: "Run audit", href: "#website-controls" },
   { name: "PageSpeed reports", description: "Load mobile and desktop Lighthouse scores and performance opportunities.", icon: Gauge, state: "Run PageSpeed", href: "#website-controls" },

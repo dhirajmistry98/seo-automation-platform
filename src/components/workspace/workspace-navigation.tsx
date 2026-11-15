@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Boxes, Globe2, LockKeyhole, Search, Settings2, Sparkles, ScanSearch, Target } from "lucide-react";
+import { Activity, Boxes, Globe2, LockKeyhole, Search, Settings2, Sparkles, ScanSearch, Target, FileBarChart } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: Activity, match: (path: string) => path === "/dashboard" },
@@ -12,6 +12,7 @@ const links = [
   { href: "/dashboard/seo-checker", label: "SEO checker", icon: ScanSearch, match: (path: string) => path.startsWith("/dashboard/seo-checker") },
   { href: "/dashboard/research", label: "Research", icon: Search, match: (path: string) => path.startsWith("/dashboard/research") },
   { href: "/dashboard/visibility", label: "Visibility", icon: Sparkles, match: (path: string) => path.startsWith("/dashboard/visibility") },
+  { href: "/dashboard/report", label: "Reports", icon: FileBarChart, match: (path: string) => path.startsWith("/dashboard/report") },
   { href: "/dashboard/integrations", label: "Integrations", icon: LockKeyhole, match: (path: string) => path.startsWith("/dashboard/integrations") },
   { href: "/dashboard/account", label: "Account", icon: Settings2, match: (path: string) => path.startsWith("/dashboard/account") },
 ];

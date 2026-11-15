@@ -47,7 +47,8 @@ async function readLimited(response: Response) {
   return new TextDecoder().decode(joined);
 }
 
-async function safeGet(startUrl: string) {
+/** GET a public URL with DNS pinned per hop and every redirect re-validated (SSRF-safe). */
+export async function safeGet(startUrl: string) {
   let url = startUrl;
   for (let redirects = 0; redirects <= 5; redirects++) {
     const validated = await resolvePublicUrl(url);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
+import { researchSource } from "@/lib/integrations/research-policy";
 import { FREE_PROVIDER, FREE_RESEARCH_KINDS, freeKeywordIdeas, freeQuestionIdeas, freeRankPositions } from "@/lib/integrations/free-research";
 import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice, DATAFORSEO_DASHBOARD_URL, DataForSeoAccountError } from "@/lib/integrations/dataforseo";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
@@ -100,7 +101,9 @@ export async function POST(request: Request, context: Context) {
     let items: Array<Record<string, unknown>> = [];
     let providerSummary: Array<Record<string, unknown>> | undefined;
     let additionalProviderCost = 0;
-    const useFreeNow = freeKind && !paidConfigured;
+    // Paid provider calls are reserved for verified websites: website creation is unlimited, so letting
+    // unverified sites reach DataForSEO would let any account spend the operator's paid quota.
+    const useFreeNow = researchSource(kind, { paidConfigured, verified: Boolean(website.verifiedAt) }) === "free";
     let fellBack = false;
     if (!useFreeNow) {
       try {

@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite, type OrganizationPermission } from "@/lib/organizations";
 import { getGoogleAccessToken, googleConnectionHasScope } from "@/lib/integrations/google";
-import { assertPublicUrl } from "@/lib/seo/crawler";
+import { safeGet } from "@/lib/seo/crawler";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 
 /**
@@ -93,9 +93,10 @@ export async function POST(request: Request, { params }: Context) {
     try { sitemap = new URL(typeof parsed.value.sitemapUrl === "string" && parsed.value.sitemapUrl.trim() ? parsed.value.sitemapUrl.trim() : "/sitemap.xml", fallbackBase); } catch { return fail("Enter a valid sitemap address."); }
     if (!["http:", "https:"].includes(sitemap.protocol) || !urlInProperty(sitemap, property)) return fail("The sitemap must be on this website and inside the selected Search Console property.");
     // Make sure the sitemap exists before telling Google about it.
-    try { await assertPublicUrl(sitemap.href); } catch { return fail("The sitemap address is not a public website."); }
-    const check = await fetch(sitemap, { redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12_000) }).catch(() => null);
-    if (!check?.ok) return fail(`The sitemap could not be loaded at ${sitemap.href}${check ? ` (HTTP ${check.status})` : ""}. Publish a sitemap first or enter its correct address.`, 422);
+    // SSRF-safe fetch: DNS pinned per hop and every redirect re-validated as a public address.
+    let check: Awaited<ReturnType<typeof safeGet>> | null = null;
+    try { check = await safeGet(sitemap.href); } catch (error) { return fail(`The sitemap could not be loaded at ${sitemap.href}: ${error instanceof Error ? error.message : "request failed"}`, 422); }
+    if (!check.response.ok) return fail(`The sitemap could not be loaded at ${sitemap.href} (HTTP ${check.response.status}). Publish a sitemap first or enter its correct address.`, 422);
     const response = await fetch(`${API}/webmasters/v3/sites/${encodeURIComponent(property)}/sitemaps/${encodeURIComponent(sitemap.href)}`, { method: "PUT", headers, cache: "no-store", signal: AbortSignal.timeout(15_000) });
     if (!response.ok) return fail(await googleError(response, "Google did not accept the sitemap."), 502);
     await ctx.db.collection("audit_logs").insertOne({ organizationId: ctx.website.organizationId, websiteDomain: ctx.domain, action: "google.sitemap.submitted", sitemap: sitemap.href, property, createdAt: new Date() });

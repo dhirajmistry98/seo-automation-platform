@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Check } from "lucide-react";
 import { readJson } from "@/lib/read-json";
+import "./workspace-notifications.css";
 
 type Notification = { _id: string; title: string; message: string; websiteDomain?: string; href?: string; createdAt: string; readAt?: string };
 export function WorkspaceNotifications({ scope }: { scope?: "influencer-marketing" } = {}) {

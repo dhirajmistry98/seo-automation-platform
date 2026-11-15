@@ -1917,3 +1917,10 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 .seo-location-selected a { color: #b94b0c; text-decoration: underline; text-underline-offset: 2px; }
 .seo-location-clear { position: absolute; top: 50%; right: 6px; display: inline-grid; width: 22px; height: 22px; place-items: center; transform: translateY(-50%); border-radius: 999px; color: #70675e; }
 .seo-location-clear:hover { background: #f0e1d3; color: #2b241e; }
+
+/* Phones: 16px inputs stop iOS Safari from zooming in when the field is tapped, and give a bigger tap target. */
+@media (max-width:900px) {
+  .otp-input { font-size:16px; min-height:46px; }
+  .otp-send-button,.otp-submit-button { min-height:46px; }
+}
+.login-story-orbit { pointer-events:none; }

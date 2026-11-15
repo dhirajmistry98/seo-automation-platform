@@ -2,8 +2,10 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Db, ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 
-export const EMAIL_OTP_TTL_MS = 30 * 1000;
-// Matches the code lifetime so "Send a new code" works as soon as a code expires.
+// 5 minutes: on a phone, switching to the mail app and back regularly takes longer than 30 seconds.
+// Guessing stays bounded by EMAIL_OTP_MAX_ATTEMPTS per code, and only the newest code is accepted.
+export const EMAIL_OTP_TTL_MS = 5 * 60 * 1000;
+// Cooldown between sends; a new code replaces the previous one.
 export const EMAIL_OTP_RESEND_MS = 30 * 1000;
 export const EMAIL_OTP_MAX_ATTEMPTS = 5;
 export const EMAIL_OTP_COLLECTION = "email_login_otps";

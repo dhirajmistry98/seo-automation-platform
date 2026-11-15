@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { ArrowRight, Mail, RotateCw, ShieldCheck, Timer } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 
-const CODE_LIFETIME_SECONDS = 30;
+const CODE_LIFETIME_SECONDS = 300;
 
 function formatRemaining(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -98,7 +98,7 @@ export function EmailOtpForm({ redirectTo = "/dashboard" }: { redirectTo?: strin
         redirectTo,
       });
       if (!result?.ok || !result.url) {
-        setError("The email code or authenticator code is invalid. Check both codes and try again.");
+        setError(expired ? "That code has expired. Tap “Send a new code” and use the newest email." : "The email code or authenticator code is invalid. Check both codes and try again.");
         return;
       }
       window.location.assign(result.url);
@@ -160,12 +160,12 @@ export function EmailOtpForm({ redirectTo = "/dashboard" }: { redirectTo?: strin
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             placeholder="000000"
             className="otp-input otp-code-input"
-            disabled={expired}
+            autoFocus
           />
           {remainingSeconds !== null && (
             expired ? (
               <div className="otp-timer otp-timer-expired" role="status">
-                <span><Timer size={12} /> Code expired</span>
+                <span><Timer size={12} /> This code may have expired</span>
                 <button type="button" onClick={requestCode} disabled={busy}>
                   <RotateCw size={11} /> {busy ? "Sending…" : "Send a new code"}
                 </button>
@@ -178,13 +178,13 @@ export function EmailOtpForm({ redirectTo = "/dashboard" }: { redirectTo?: strin
           )}
           <label htmlFor="otp-mfa-code" className="otp-label">Authenticator code or recovery code (if enabled)</label>
           <input id="otp-mfa-code" name="mfaCode" type="text" inputMode="text" autoComplete="one-time-code" maxLength={32} value={mfaCode} onChange={(event) => setMfaCode(event.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 32))} placeholder="6-digit code" className="otp-input otp-code-input" />
-          <button type="submit" className="otp-submit-button" disabled={busy || expired || code.length !== 6}>
+          <button type="submit" className="otp-submit-button" disabled={busy || code.length !== 6}>
             {busy ? "Verifying…" : "Verify and sign in"} <ArrowRight size={15} />
           </button>
         </form>
       )}
       <p className="otp-feedback" aria-live="polite">{error || message}</p>
-      <p className="otp-security"><ShieldCheck size={13} /> Codes expire after 30 seconds and can only be used once.</p>
+      <p className="otp-security"><ShieldCheck size={13} /> Codes expire after 5 minutes and can only be used once.</p>
     </section>
   );
 }

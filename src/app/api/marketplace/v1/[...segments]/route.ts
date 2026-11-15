@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
-import { BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, isPublicEmergingCreator, isPublicInfluencer, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
+import { BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
 import { queueMarketplaceEvent, realtimeAvailable } from "@/lib/marketplace/realtime";
 import { getRazorpayConfig, marketplaceCommissionBps, razorpayRequest, RazorpayApiError, verifyRazorpayHmac } from "@/lib/marketplace/razorpay";
 import { recordCapturedCampaignPayment, type CampaignCapturedPayment } from "@/lib/marketplace/campaign-payments";
@@ -108,12 +108,10 @@ export async function GET(request: Request, context: Context) {
     const minRateRupees = params.get("minRate") ? Number(params.get("minRate")) : null;
     const maxRateRupees = params.get("maxRate") ? Number(params.get("maxRate")) : null;
     const skip = Math.min(10_000, Math.max(0, Number.parseInt(params.get("skip") || "0", 10) || 0));
-    const track = params.get("track") === "emerging" ? "emerging" : "standard";
     const filter: Record<string, unknown> = { userId: { $ne: userId }, status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
-    if (track === "emerging") filter.creatorTrack = "emerging";
-    else filter.$and = [{ $or: [{ creatorTrack: "standard" }, { creatorTrack: { $exists: false } }] }];
-    const followerRange: Record<string, number> = track === "emerging" ? { $gte: 0, $lt: 5_000 } : { $gte: 5_000 };
-    if (minFollowers !== null && Number.isSafeInteger(minFollowers) && minFollowers >= 0) followerRange.$gte = Math.max(followerRange.$gte, minFollowers);
+    // No minimum audience: one directory of Meta-verified creators, optionally narrowed by the follower filter.
+    const followerRange: Record<string, number> = { $gte: 0 };
+    if (minFollowers !== null && Number.isSafeInteger(minFollowers) && minFollowers >= 0) followerRange.$gte = minFollowers;
     if (maxFollowers !== null && Number.isSafeInteger(maxFollowers) && maxFollowers > 0) followerRange.$lt = Math.min(followerRange.$lt ?? Number.MAX_SAFE_INTEGER, maxFollowers);
     filter["instagram.verifiedFollowers"] = followerRange;
     if (category) filter.categories = { $regex: `^${category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" };
@@ -127,7 +125,7 @@ export async function GET(request: Request, context: Context) {
     const total = await db.collection("mp_influencers").countDocuments(filter);
     const sort: Record<string, 1 | -1> = sortBy === "rate_asc" ? { ratePaise: 1, _id: 1 } : sortBy === "rate_desc" ? { ratePaise: -1, _id: 1 } : sortBy === "followers_asc" ? { "instagram.verifiedFollowers": 1, _id: 1 } : { "instagram.verifiedFollowers": -1, _id: 1 };
     const items = await db.collection("mp_influencers").find(filter, { projection: { verificationNotes: 0, "instagram.providerUserId": 0 } }).sort(sort).skip(skip).limit(pageSize).toArray();
-    const influencers = await publicCreatorCards(db, items.filter(track === "emerging" ? isPublicEmergingCreator : isPublicInfluencer));
+    const influencers = await publicCreatorCards(db, items.filter(isActiveCreator));
     return json({ influencers, total, hasMore: skip + items.length < total, nextSkip: skip + items.length });
   }
   if (path[0] === "influencers" && path[1] && path.length === 2) {
@@ -136,7 +134,7 @@ export async function GET(request: Request, context: Context) {
     const profile = await db.collection("mp_influencers").findOne({ _id: id });
     if (!profile) return error("Creator profile not found.", 404);
     const owner = profile.userId === userId;
-    if (!owner && !isPublicInfluencer(profile) && !isPublicEmergingCreator(profile)) return error("Creator profile not found.", 404);
+    if (!owner && !isActiveCreator(profile)) return error("Creator profile not found.", 404);
     const instagram = profile.instagram && typeof profile.instagram === "object" ? profile.instagram as Record<string, unknown> : {};
     const creatorUserId = String(profile.userId);
     const completed = await db.collection("mp_collaborations").find({ influencerId: creatorUserId, status: "completed" }, { projection: { _id: 1, brandId: 1 } }).limit(200).toArray();
@@ -149,7 +147,7 @@ export async function GET(request: Request, context: Context) {
     const rating = reviews.length ? { average: Math.round(reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length * 10) / 10, count: reviews.length } : null;
     // Similar creators: same niche, currently public, excluding this creator and the viewer.
     const categories = Array.isArray(profile.categories) ? profile.categories.filter((value: unknown): value is string => typeof value === "string").slice(0, 5) : [];
-    const similarFilter: Record<string, unknown> = { _id: { $ne: profile._id }, userId: { $ne: userId }, status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) }, creatorTrack: profile.creatorTrack === "emerging" ? "emerging" : { $ne: "emerging" } };
+    const similarFilter: Record<string, unknown> = { _id: { $ne: profile._id }, userId: { $ne: userId }, status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
     if (categories.length) similarFilter.categories = { $in: categories.map((category: string) => new RegExp(`^${escapeRegex(category)}$`, "i")) };
     const similarDocs = await db.collection("mp_influencers").find(similarFilter, { projection: { verificationNotes: 0, "instagram.providerUserId": 0 } }).sort({ "instagram.verifiedFollowers": -1 }).limit(8).toArray();
     const similar = (await publicCreatorCards(db, similarDocs.filter(isActiveCreator))).slice(0, 4);
@@ -157,7 +155,7 @@ export async function GET(request: Request, context: Context) {
       _id: String(profile._id), displayName: profile.displayName, bio: profile.bio, categories: profile.categories,
       location: profile.location, ratePaise: profile.ratePaise, currency: profile.currency, portfolio: profile.portfolio,
       packages: profile.packages, status: profile.status, createdAt: profile.createdAt, owner, tier: profileTier(profile),
-      creatorTrack: profile.creatorTrack === "emerging" ? "emerging" : "standard", bookable: !owner && isActiveCreator(profile),
+      bookable: !owner && isActiveCreator(profile),
       fromPricePaise: startingPricePaise(profile), rating, completedCollaborations: completed.length,
       instagram: { username: instagram.username, accountType: instagram.accountType, verifiedFollowers: instagram.verifiedFollowers, mediaCount: instagram.mediaCount, profilePictureUrl: instagram.profilePictureUrl, recentMedia: instagram.recentMedia, mediaFetchedAt: instagram.mediaFetchedAt, verifiedAt: instagram.verifiedAt, source: instagram.source },
     }, reviews, similar });
@@ -402,7 +400,6 @@ export async function POST(request: Request, context: Context) {
 
   if (path[0] === "influencers" && path.length === 1) {
     const displayName = cleanText(body.displayName, 100, 2);
-    const creatorTrack = body.creatorTrack === "emerging" ? "emerging" : "standard";
     const bio = cleanText(body.bio, 1500, 0);
     const categories = cleanList(body.categories);
     const location = cleanText(body.location, 100);
@@ -427,8 +424,9 @@ export async function POST(request: Request, context: Context) {
     const takenByVerified = await db.collection("mp_influencers").findOne({ userId: { $ne: userId }, "instagram.username": instagramHandle, "instagram.verifiedAt": { $ne: null } }, { projection: { _id: 1 } });
     if (takenByVerified) return error(`@${instagramHandle} is already verified by another creator. If this is your account, contact support.`, 409);
     const savedPackages = packages as { title: string; pricePaise: number; deliverables: string; deliveryDays: number | null }[] | undefined;
-    const result = await db.collection("mp_influencers").findOneAndUpdate({ userId }, { $set: { instagramHandle, displayName, bio, categories, location, ratePaise, portfolio, creatorTrack, currency: "INR", ...(savedPackages ? { packages: savedPackages } : {}), updatedAt: now }, $setOnInsert: { userId, status: "draft", instagram: { verifiedFollowers: null, verifiedAt: null }, createdAt: now } }, { upsert: true, returnDocument: "after" });
-    return json({ influencer: record(result), eligibility: creatorTrack === "emerging" ? "Emerging Creator profiles appear in the Emerging directory after approval and current Meta verification, and can be booked, invited and apply to campaigns like standard creators." : "Standard influencer discovery requires approval and at least 5,000 current Meta-verified Instagram followers." }, 201);
+    const result = await db.collection("mp_influencers").findOneAndUpdate({ userId }, { $set: { instagramHandle, displayName, bio, categories, location, ratePaise, portfolio, currency: "INR", ...(savedPackages ? { packages: savedPackages } : {}), updatedAt: now }, $setOnInsert: { userId, status: "draft", instagram: { verifiedFollowers: null, verifiedAt: null }, createdAt: now } }, { upsert: true, returnDocument: "after" });
+    const verifiedNow = Boolean(result && isActiveCreator({ ...result, status: "approved" }));
+    return json({ influencer: record(result), verificationRequired: !verifiedNow, eligibility: verifiedNow ? "Your Instagram is verified through Meta. Your profile is listed once approved." : `Verify @${instagramHandle} through Meta to finish your creator account. Profiles are listed only after Instagram verification.` }, 201);
   }
   if (path[0] === "brands" && path.length === 1) {
     const name = cleanText(body.name, 100, 2);
@@ -677,7 +675,7 @@ export async function POST(request: Request, context: Context) {
     if (!id || !["brand", "influencer"].includes(String(kind)) || !["approved", "rejected", "suspended"].includes(String(decision))) return error("Invalid profile decision.");
     const collection = db.collection(kind === "brand" ? "mp_brands" : "mp_influencers");
     const profile = await collection.findOne({ _id: id }); if (!profile) return error("Profile not found.", 404);
-    if (kind === "influencer" && decision === "approved" && !isPublicInfluencer({ ...profile, status: "approved" }) && !isPublicEmergingCreator({ ...profile, status: "approved" })) return error(profile.creatorTrack === "emerging" ? "Emerging Creator approval requires a current Meta-verified account below 5,000 followers." : "Standard influencer approval requires current Meta verification and at least 5,000 followers.", 409);
+    if (kind === "influencer" && decision === "approved" && !isActiveCreator({ ...profile, status: "approved" })) return error("Creator approval requires a current Meta verification of the Instagram username on the profile.", 409);
     const reason = cleanText(body.reason, 500, decision === "approved" ? 0 : 10); if (reason === null) return error("A decision reason is required for rejection or suspension.");
     await collection.updateOne({ _id: id }, { $set: { status: decision, reviewReason: reason, reviewedBy: userId, reviewedAt: now, updatedAt: now } });
     if (kind === "brand" && decision !== "approved") await db.collection("mp_campaigns").updateMany({ brandId: id, status: "open" }, { $set: { status: "closed", closedReason: `brand_${decision}`, updatedAt: now } });

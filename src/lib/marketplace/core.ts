@@ -1,5 +1,6 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { influencerTier } from "./tiers.ts";
+import { instagramHandleMatches } from "./instagram-handle.ts";
 
 export const BRAND_CATEGORIES = ["startup", "small_business", "local_business", "ecommerce", "established_company", "marketing_agency", "enterprise"] as const;
 export type BrandCategory = typeof BRAND_CATEGORIES[number];
@@ -37,18 +38,21 @@ export function isCurrentMetaVerification(profile: Document) {
   const verifiedAt = stat?.verifiedAt ? new Date(stat.verifiedAt).getTime() : NaN;
   return stat?.source === "meta_api" && Number.isSafeInteger(stat.verifiedFollowers) && Number(stat.verifiedFollowers) >= 0 && Number.isFinite(verifiedAt) && Date.now() - verifiedAt >= 0 && Date.now() - verifiedAt <= 7 * 86_400_000;
 }
-export function isPublicInfluencer(profile: Document) {
-  return profile.status === "approved" && profile.creatorTrack !== "emerging" && isCurrentMetaVerification(profile) && profileTier(profile) !== null;
-}
-export function isPublicEmergingCreator(profile: Document) {
-  return profile.status === "approved" && profile.creatorTrack === "emerging" && isCurrentMetaVerification(profile) && Number((profile.instagram as { verifiedFollowers?: number } | undefined)?.verifiedFollowers) < 5_000;
+/**
+ * The Instagram account verified through Meta is the one the creator claimed on their profile.
+ * Profiles verified before the username field existed have no claim and match on the verified name.
+ */
+export function hasVerifiedInstagramUsername(profile: Document) {
+  const verified = (profile.instagram as { username?: unknown } | undefined)?.username;
+  if (typeof verified !== "string" || !verified) return false;
+  return profile.instagramHandle == null || instagramHandleMatches(profile.instagramHandle, verified);
 }
 /**
- * Any listed creator — standard (5K+) or Emerging — can be saved, invited, booked and
- * can apply to campaigns. The tracks differ only in which directory they appear in.
+ * A creator is listed, bookable and can apply to campaigns when approved and their Instagram username is
+ * currently verified through Meta. There is no minimum follower count.
  */
 export function isActiveCreator(profile: Document) {
-  return isPublicInfluencer(profile) || isPublicEmergingCreator(profile);
+  return profile.status === "approved" && isCurrentMetaVerification(profile) && hasVerifiedInstagramUsername(profile);
 }
 
 const globalIndexes = globalThis as typeof globalThis & { marketplaceIndexes?: Promise<void>; marketplaceCartIndexes?: Promise<void>; marketplaceBookingIndexes?: Promise<void> };

@@ -2,26 +2,30 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { influencerTier } from "../src/lib/marketplace/tiers.ts";
-import { isPublicEmergingCreator, isPublicInfluencer } from "../src/lib/marketplace/core.ts";
+import { isActiveCreator } from "../src/lib/marketplace/core.ts";
 import { createState, decryptToken, encryptToken, hashState } from "../src/lib/marketplace/meta.ts";
 import { collaborationChannel, createCollaborationTokenRequest } from "../src/lib/marketplace/realtime.ts";
 import { matchesFileSignature } from "../src/lib/marketplace/file-types.ts";
 
-test("Instagram eligibility uses precise half-open follower tiers", () => {
-  const cases = [[null, null], [0, null], [4999, null], [5000, "nano"], [9999, "nano"], [10000, "micro"], [49999, "micro"], [50000, "mid"], [99999, "mid"], [100000, "macro"], [499999, "macro"], [500000, "mega"]];
+test("follower tiers are descriptive with no minimum audience", () => {
+  const cases = [[null, null], [-1, null], [0, "nano"], [4999, "nano"], [9999, "nano"], [10000, "micro"], [49999, "micro"], [50000, "mid"], [99999, "mid"], [100000, "macro"], [499999, "macro"], [500000, "mega"]];
   for (const [followers, tier] of cases) assert.equal(influencerTier(followers), tier, String(followers));
   assert.equal(influencerTier(5000.5), null);
   assert.equal(influencerTier(Number.MAX_SAFE_INTEGER + 1), null);
 });
 
-test("standard and emerging Instagram profiles remain separate eligibility tracks", () => {
-  const verified = (followers, creatorTrack = "standard") => ({ status: "approved", creatorTrack, instagram: { source: "meta_api", verifiedFollowers: followers, verifiedAt: new Date() } });
-  assert.equal(isPublicInfluencer(verified(4999)), false);
-  assert.equal(isPublicInfluencer(verified(5000)), true);
-  assert.equal(isPublicEmergingCreator(verified(4999, "emerging")), true);
-  assert.equal(isPublicEmergingCreator(verified(5000, "emerging")), false);
-  assert.equal(isPublicInfluencer(verified(4999, "emerging")), false);
-  assert.equal(isPublicEmergingCreator(verified(5000)), false);
+test("any audience size is listed, but only with a current Meta verification of the claimed username", () => {
+  const creator = (followers, overrides = {}) => ({ status: "approved", instagramHandle: "dhiraj.creates", instagram: { source: "meta_api", username: "dhiraj.creates", verifiedFollowers: followers, verifiedAt: new Date() }, ...overrides });
+  for (const followers of [0, 120, 4999, 5000, 2_000_000]) assert.equal(isActiveCreator(creator(followers)), true, String(followers));
+  // Not verified through Meta, stale verification, or not approved.
+  assert.equal(isActiveCreator(creator(900, { instagram: { verifiedFollowers: 900, verifiedAt: null } })), false);
+  assert.equal(isActiveCreator(creator(900, { instagram: { source: "meta_api", username: "dhiraj.creates", verifiedFollowers: 900, verifiedAt: new Date(Date.now() - 8 * 86_400_000) } })), false);
+  assert.equal(isActiveCreator(creator(900, { status: "draft" })), false);
+  // Meta verified a different account than the username on the profile.
+  assert.equal(isActiveCreator(creator(900, { instagramHandle: "someone.else" })), false);
+  // Verified before the username field existed: matches on the verified username.
+  assert.equal(isActiveCreator(creator(900, { instagramHandle: undefined })), true);
+  assert.equal(isActiveCreator(creator(900, { instagram: { source: "meta_api", verifiedFollowers: 900, verifiedAt: new Date() } })), false);
 });
 
 test("realtime token grants only private conversation read and presence capabilities", async () => {

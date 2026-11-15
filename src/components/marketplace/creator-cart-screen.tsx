@@ -72,7 +72,7 @@ export function CreatorCartScreen() {
         return <article className="creator-cart-card" key={str(cartItem.id)}>
           <div className="creator-cart-card-profile">
             {str(instagram.profilePictureUrl) ? <Image className="marketplace-creator-avatar" src={str(instagram.profilePictureUrl)} alt="" width={60} height={60} unoptimized /> : <span className="marketplace-creator-avatar marketplace-creator-avatar-empty"><UserRound size={22} /></span>}
-            <div><span className="marketplace-card-meta"><BadgeCheck size={14} /> Meta verified · {str(creator.tier) || "Emerging Creator"}</span><h2>{str(creator.displayName)}</h2><small>{username ? "@" + username : "Instagram creator"}</small></div>
+            <div><span className="marketplace-card-meta"><BadgeCheck size={14} /> Meta verified · {str(creator.tier) || "Verified creator"}</span><h2>{str(creator.displayName)}</h2><small>{username ? "@" + username : "Instagram creator"}</small></div>
             <button type="button" className="creator-cart-remove" disabled={busyId === creatorId} onClick={() => void removeCreator(creatorId)}><Trash2 size={15} /><span>Remove</span></button>
           </div>
           <div className="creator-cart-facts"><span><Camera size={15} /> {Number(instagram.verifiedFollowers || 0).toLocaleString("en-IN")} verified followers</span><span><MapPin size={15} /> {str(creator.location) || "Location not listed"}</span><strong>Starting rate · {money(creator.ratePaise)}</strong></div>

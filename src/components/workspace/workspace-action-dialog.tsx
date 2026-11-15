@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
-import { ArrowRight, LoaderCircle, ShieldAlert, Sparkles, X } from "lucide-react";
+import { ArrowRight, Info, LoaderCircle, ShieldAlert, X } from "lucide-react";
 
 type ReviewItem = { label: string; before?: string; after?: string; value?: string };
 
@@ -85,7 +85,7 @@ export function WorkspaceActionDialog({
     >
       <div className="workspace-action-dialog-inner">
         <div className="workspace-action-dialog-topline">
-          <span className="workspace-action-dialog-icon">{destructive ? <ShieldAlert size={19} /> : <Sparkles size={18} />}</span>
+          <span className="workspace-action-dialog-icon">{destructive ? <ShieldAlert size={19} /> : <Info size={18} />}</span>
           <button className="workspace-action-dialog-close" type="button" onClick={dismiss} disabled={pending} aria-label="Close dialog"><X size={17} /></button>
         </div>
         <p className="workspace-action-dialog-eyebrow">{eyebrow}</p>

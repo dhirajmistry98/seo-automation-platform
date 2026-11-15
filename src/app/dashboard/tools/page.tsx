@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, BarChart3, FileSearch, Gauge, Link2, ListTodo, ScanSearch, Search, ShieldCheck, Sparkles, Target, FileBarChart } from "lucide-react";
+import { Activity, BarChart3, FileBarChart, FileSearch, Gauge, Link2, ListTodo, Radar, ScanSearch, Search, ShieldCheck, Target } from "lucide-react";
 import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
@@ -19,7 +19,7 @@ const liveTools = [
   { name: "SEO action plans", description: "Turn open audit findings into trackable tasks for your workspace.", icon: ListTodo, state: "Create plan", href: "#website-controls" },
   { name: "Search Console & GA4", description: "Review verified search performance and authorized traffic reports.", icon: BarChart3, state: "Connect Google", href: "/dashboard/integrations" },
   { name: "SEO Authority Index", description: "Calculate a versioned authority estimate from saved backlink, Search Console and crawl evidence.", icon: Activity, state: "Open research", href: "/dashboard/research" },
-  { name: "GEO, AEO & LLMO readiness", description: "Review first-party content and technical signals from the latest site crawl.", icon: Sparkles, state: "Open readiness", href: "/dashboard/visibility" },
+  { name: "GEO, AEO & LLMO readiness", description: "Review first-party content and technical signals from the latest site crawl.", icon: Radar, state: "Open readiness", href: "/dashboard/visibility" },
 ];
 const plannedTools = [
   { name: "Content and internal link opportunities", description: "Deeper clustering and recommendations need broader crawl and content analysis.", icon: Link2 },

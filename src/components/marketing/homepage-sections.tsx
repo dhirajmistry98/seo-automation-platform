@@ -1,29 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Activity,
-  ArrowDown,
-  ArrowRight,
-  BadgeCheck,
-  BarChart3,
-  Blocks,
-  Bot,
-  ChartNoAxesCombined,
-  Check,
-  ChevronDown,
-  FileCheck2,
-  Building2,
-  Camera,
-  LockKeyhole,
-  MapPin,
-  Search,
-  SearchCheck,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-  UsersRound,
-  Waypoints,
-} from "lucide-react";
+import { Activity, ArrowDown, ArrowRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, Check, ChevronDown, FileCheck2, Info, LockKeyhole, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { BRAND, ROUTES } from "@/lib/marketing";
 import clientPromise from "@/lib/mongodb";
 import { profileTier } from "@/lib/marketplace/core";
@@ -37,7 +14,7 @@ const capabilities = [
   { icon: BarChart3, title: "Organic search performance", text: "Bring authorized Search Console clicks, impressions, CTR and position reports into your workspace." },
   { icon: MapPin, title: "Local SEO and rank tracking", text: "Set a supported country, city or region and language for location-aware keyword and rank research." },
   { icon: Waypoints, title: "Keyword, competitor and backlink research", text: "Use connected provider data to explore demand, competitor gaps and backlink summaries." },
-  { icon: Sparkles, title: "GEO, AEO and LLMO readiness", text: "Check crawl-based structure signals for generative search, answer engines and language-model discovery." },
+  { icon: Radar, title: "GEO, AEO and LLMO readiness", text: "Check crawl-based structure signals for generative search, answer engines and language-model discovery." },
   { icon: Bot, title: "AI search visibility research", text: "Run provider-backed AI mention reports where platform, language and country coverage is available." },
   { icon: Blocks, title: "WordPress SEO management", text: "Connect the separate plugin to manage supported metadata and technical settings with a review history." },
   { icon: FileCheck2, title: "Reports and progress", text: "Keep audits, research snapshots, tasks and approved improvements in one place." },
@@ -333,7 +310,7 @@ export function FeaturesSection() {
             </article>
           ))}
         </div>
-        <p className="landing-footnote"><Sparkles size={14} /> SEO Health and SEO Authority are separate measures, with different purposes and methods.</p>
+        <p className="landing-footnote"><Info size={14} /> SEO Health and SEO Authority are separate measures, with different purposes and methods.</p>
       </div>
     </section>
   );

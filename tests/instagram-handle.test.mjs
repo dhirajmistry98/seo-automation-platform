@@ -21,3 +21,12 @@ test("verification only passes when Meta's account is the claimed username", () 
   assert.equal(instagramHandleMatches("", "dhiraj"), false);
   assert.equal(instagramHandleMatches("dhiraj", undefined), false);
 });
+
+test("location search matches on the city part", async () => {
+  const { INDIA_CITIES, locationSearchTerm } = await import("../src/lib/marketplace/india-cities.ts");
+  assert.equal(locationSearchTerm("Mumbai, Maharashtra"), "Mumbai");
+  assert.equal(locationSearchTerm("  Pune "), "Pune");
+  assert.equal(locationSearchTerm(""), "");
+  assert.equal(new Set(INDIA_CITIES).size, INDIA_CITIES.length, "no duplicate cities");
+  assert.ok(INDIA_CITIES.every((city) => /^[A-Za-z .]+, [A-Za-z ]+$/.test(city)), "every entry is City, State");
+});

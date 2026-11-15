@@ -795,3 +795,15 @@
 .mp-danger-button:hover { background:#fdf1ee; }
 .mp-danger-form .mp-danger-button:hover { background:#9a1d13; }
 .mp-danger-button:disabled { cursor:not-allowed; opacity:.6; }
+/* Location field: city suggestions + "use my current location" */
+.mp-location-input { display:grid; gap:4px; min-width:0; width:100%; }
+.mp-location-row { display:flex; align-items:center; gap:6px; min-width:0; }
+.mp-location-row input { flex:1 1 auto; min-width:0; width:100%; }
+.mp-locate-button { display:inline-flex; flex:none; align-items:center; justify-content:center; width:34px; height:34px; border:1px solid #e3d9cf; border-radius:8px; background:#fff; color:#c8582a; cursor:pointer; }
+.mp-locate-button:hover { border-color:#c8582a; background:#fff5ef; }
+.mp-locate-button:focus-visible { outline:2px solid #c8582a; outline-offset:2px; }
+.mp-locate-button:disabled { cursor:progress; opacity:.7; }
+.mp-locate-button .site-spin { animation:mp-locate-spin .9s linear infinite; }
+@keyframes mp-locate-spin { to { transform:rotate(360deg); } }
+.mp-location-hint { color:#9a3412; font-size:11px; line-height:1.4; }
+.mp-home-search-field .mp-locate-button { width:32px; height:32px; }

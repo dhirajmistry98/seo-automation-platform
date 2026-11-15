@@ -3,7 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BadgeCheck, BriefcaseBusiness, CircleAlert, Clapperboard, Dumbbell, Gem, Home, Laptop, MapPin, Megaphone, MessageSquareText, Plane, Search, ShieldCheck, Shirt, Sparkles, UserRound, UtensilsCrossed, WandSparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, BriefcaseBusiness, Brush, CircleAlert, Clapperboard, Dumbbell, Gem, Home, Laptop, LayoutGrid, MapPin, Megaphone, MessageSquareText, Plane, Search, ShieldCheck, Shirt, UserRound, UsersRound, UtensilsCrossed } from "lucide-react";
+import { LocationInput } from "@/components/marketplace/location-input";
 import { CreatorTile } from "./creator-tile";
 import { readJson } from "@/lib/read-json";
 
@@ -14,7 +15,7 @@ const arr = (value: unknown): Item[] => Array.isArray(value) ? value.map(obj) : 
 const str = (value: unknown): string => typeof value === "string" ? value : "";
 
 export const CREATOR_CATEGORIES = [
-  { label: "Beauty", icon: WandSparkles },
+  { label: "Beauty", icon: Brush },
   { label: "Fashion", icon: Shirt },
   { label: "Lifestyle", icon: Gem },
   { label: "Food", icon: UtensilsCrossed },
@@ -89,8 +90,8 @@ export function InfluencerMarketingHome({ basePath = "/influencer-marketing" }: 
       <p>Browse creators with Meta-verified follower data, book a fixed-price package or post a campaign, and manage content approvals in one place.</p>
       <form className="mp-home-search" onSubmit={search} role="search">
         <label className="mp-home-search-field is-wide"><Search size={18} aria-hidden="true" /><span><small>Keyword</small><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Creator, niche or keyword" maxLength={80} /></span></label>
-        <label className="mp-home-search-field"><Sparkles size={17} aria-hidden="true" /><span><small>Category</small><select value={category} onChange={(event) => setCategory(event.target.value)}><option value="">All categories</option>{CREATOR_CATEGORIES.map((item) => <option key={item.label} value={item.label}>{item.label}</option>)}</select></span></label>
-        <label className="mp-home-search-field"><MapPin size={17} aria-hidden="true" /><span><small>Location</small><input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Any city" maxLength={80} /></span></label>
+        <label className="mp-home-search-field"><LayoutGrid size={17} aria-hidden="true" /><span><small>Category</small><select value={category} onChange={(event) => setCategory(event.target.value)}><option value="">All categories</option>{CREATOR_CATEGORIES.map((item) => <option key={item.label} value={item.label}>{item.label}</option>)}</select></span></label>
+        <label className="mp-home-search-field"><MapPin size={17} aria-hidden="true" /><span><small>Location</small><LocationInput value={location} onChange={setLocation} placeholder="Any city" /></span></label>
         <button type="submit" aria-label="Search creators"><Search size={18} /><span>Search</span></button>
       </form>
       <div className="mp-home-trust"><span><BadgeCheck size={15} /> Meta-verified followers</span><span><ShieldCheck size={15} /> Brands reviewed before posting</span><span><MessageSquareText size={15} /> Private collaboration workspace</span></div>
@@ -112,7 +113,7 @@ export function InfluencerMarketingHome({ basePath = "/influencer-marketing" }: 
 
     <section aria-labelledby="mp-home-featured">
       <div className="marketplace-section-title"><div><span className="marketplace-eyebrow">FEATURED</span><h2 id="mp-home-featured">Top verified creators</h2></div>{total > 0 && <Link className="mp-home-see-all" href={`${basePath}/discover`}>See all {total} <ArrowRight size={14} /></Link>}</div>
-      {loading ? <div className="marketplace-loading" role="status">Loading creators…</div> : featured.length ? <div className="mp-creator-tile-grid">{featured.map((creator) => <CreatorTile key={str(creator._id)} creator={creator} basePath={basePath} />)}</div> : <div className="marketplace-empty"><Sparkles size={22} /><strong>No verified creators listed yet</strong><p>Creators appear here after connecting Instagram through Meta and passing marketplace review.</p><Link className="marketplace-primary" href={`${basePath}/creator`}>Join as a creator <ArrowRight size={15} /></Link></div>}
+      {loading ? <div className="marketplace-loading" role="status">Loading creators…</div> : featured.length ? <div className="mp-creator-tile-grid">{featured.map((creator) => <CreatorTile key={str(creator._id)} creator={creator} basePath={basePath} />)}</div> : <div className="marketplace-empty"><UsersRound size={22} /><strong>No verified creators listed yet</strong><p>Creators appear here after connecting Instagram through Meta and passing marketplace review.</p><Link className="marketplace-primary" href={`${basePath}/creator`}>Join as a creator <ArrowRight size={15} /></Link></div>}
     </section>
 
     {risingOnly.length > 0 && <section aria-labelledby="mp-home-rising">

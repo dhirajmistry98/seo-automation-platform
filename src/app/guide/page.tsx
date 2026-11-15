@@ -2,20 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-  ArrowRight,
-  BarChart3,
-  Blocks,
-  Check,
-  Globe2,
-  MapPin,
-  Search,
-  SearchCheck,
-  ShieldCheck,
-  Sparkles,
-  UsersRound,
-  Waypoints,
-} from "lucide-react";
+import { ArrowRight, BarChart3, Blocks, Check, Globe2, Info, MapPin, Search, SearchCheck, ShieldCheck, UsersRound, Waypoints } from "lucide-react";
 import { auth } from "@/auth";
 import { SiteFooter } from "@/components/marketing/homepage-sections";
 import { SiteHeader } from "@/components/marketing/site-header";
@@ -146,7 +133,7 @@ export default async function GuidePage() {
               <ol className="marketing-guide-growth-list">
                 {growthSteps.map(({ title, text }, index) => <li key={title}><span>0{index + 1}</span><div><h3>{title}</h3><p>{text}</p></div></li>)}
               </ol>
-              <p className="marketing-guide-callout"><span><Sparkles size={15} aria-hidden="true" /></span> Treat every score as a way to organize work, not as a promise of rankings, traffic or AI citations.</p>
+              <p className="marketing-guide-callout"><span><Info size={15} aria-hidden="true" /></span> Treat every score as a way to organize work, not as a promise of rankings, traffic or AI citations.</p>
             </GuideChapter>
 
             <GuideChapter id="local-ai-search" number="04" eyebrow="Local and AI search" title="Choose where you want to be found" intro="The platform supports location-aware research for markets around the world when a connected data provider covers the selected place and language.">

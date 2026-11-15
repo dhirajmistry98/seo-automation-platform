@@ -1,6 +1,6 @@
 import { BRAND } from "@/lib/marketing";
 import { BrandLogo } from "./brand-logo";
-import { Activity, Check, CircleHelp, Globe2, LayoutDashboard, MousePointerClick, Search, Sparkles } from "lucide-react";
+import { Activity, Check, CircleHelp, Globe2, LayoutDashboard, Lightbulb, MousePointerClick, Search } from "lucide-react";
 
 export function DashboardPreview() {
   return (
@@ -28,7 +28,7 @@ export function DashboardPreview() {
             <div className="mt-1 flex justify-between text-[8px] text-brand-cream"><span>Performance data appears here after connection</span></div>
           </div>
           <div className="preview-panel recommendation-panel">
-            <div className="flex items-center gap-2"><span className="ai-icon"><Sparkles size={13} /></span><p className="text-[11px] font-semibold text-brand-cream">Recommendations</p></div>
+            <div className="flex items-center gap-2"><span className="ai-icon"><Lightbulb size={13} /></span><p className="text-[11px] font-semibold text-brand-cream">Recommendations</p></div>
             <p className="mt-3 text-[10px] font-semibold leading-4 text-brand-cream">Your next steps will appear here</p>
             <p className="mt-1.5 text-[9px] leading-[1.6] text-brand-cream">Connect a website and complete an audit to see recommendations based on its data.</p>
             <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-brand-navy px-2 py-1 text-[8px] font-medium text-brand-cream"><span className="h-1 w-1 rounded-full bg-brand-coral" />Awaiting website</span>
@@ -47,7 +47,7 @@ export function ApplicationPreview() {
       <div className="rounded-xl border border-brand-cream bg-brand-cream p-3"><p className="text-[9px] text-brand-cream">Health score</p><div className="mx-auto mt-3 flex h-[76px] w-[76px] items-center justify-center rounded-full border-[7px] border-brand-cream text-xl font-semibold text-brand-cream">—</div><p className="mt-2 text-center text-[8px] text-brand-cream">Available after an audit</p></div>
       <div className="rounded-xl border border-brand-cream bg-brand-cream p-3"><p className="text-[9px] font-medium text-brand-cream">Audit summary</p><div className="mt-3 space-y-2.5">{[["Technical", "Awaiting crawl"], ["On-page", "Awaiting crawl"], ["Content", "Awaiting crawl"]].map(([a,b])=><div key={a} className="flex items-center justify-between text-[9px]"><span className="text-brand-cream">{a}</span><span className="rounded-full bg-brand-navy px-2 py-1 text-brand-cream">{b}</span></div>)}</div></div>
     </div>
-    <div className="mx-4 mb-4 flex items-center gap-2 rounded-xl border border-brand-navy bg-brand-navy p-3"><span className="ai-icon"><Sparkles size={12}/></span><span className="text-[9px] leading-4 text-brand-cream">Evidence-based recommendations appear after your first audit.</span></div>
+    <div className="mx-4 mb-4 flex items-center gap-2 rounded-xl border border-brand-navy bg-brand-navy p-3"><span className="ai-icon"><Lightbulb size={12}/></span><span className="text-[9px] leading-4 text-brand-cream">Evidence-based recommendations appear after your first audit.</span></div>
   </div>;
 }
 

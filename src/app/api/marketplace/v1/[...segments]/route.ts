@@ -1,4 +1,5 @@
 import { ObjectId, type Db, type Document } from "mongodb";
+import { locationSearchTerm } from "@/lib/marketplace/india-cities";
 import { instagramHandleMatches, normalizeInstagramHandle } from "@/lib/marketplace/instagram-handle";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
@@ -115,7 +116,9 @@ export async function GET(request: Request, context: Context) {
     if (maxFollowers !== null && Number.isSafeInteger(maxFollowers) && maxFollowers > 0) followerRange.$lt = Math.min(followerRange.$lt ?? Number.MAX_SAFE_INTEGER, maxFollowers);
     filter["instagram.verifiedFollowers"] = followerRange;
     if (category) filter.categories = { $regex: `^${category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" };
-    if (location) filter.location = { $regex: location.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+    // Match on the city so "Mumbai, Maharashtra" also finds profiles that only say "Mumbai".
+    const city = location ? locationSearchTerm(location) : "";
+    if (city) filter.location = { $regex: city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
     if (minRateRupees !== null && Number.isFinite(minRateRupees) && minRateRupees >= 0 && minRateRupees <= 10_000_000) filter.ratePaise = { ...((filter.ratePaise as Record<string, unknown> | undefined) || {}), $gte: Math.round(minRateRupees * 100) };
     if (maxRateRupees !== null && Number.isFinite(maxRateRupees) && maxRateRupees >= 0 && maxRateRupees <= 10_000_000) filter.ratePaise = { ...((filter.ratePaise as Record<string, unknown> | undefined) || {}), $lte: Math.round(maxRateRupees * 100) };
     if (query) {

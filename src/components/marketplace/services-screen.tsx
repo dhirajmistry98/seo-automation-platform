@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { BadgeCheck, BriefcaseBusiness, Clock3, ExternalLink, MapPin, Search, Send, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, Clock3, Database, ExternalLink, MapPin, Search, Send, ShieldCheck, WalletCards } from "lucide-react";
 import { SERVICE_SPECIALTIES } from "@/lib/marketplace/services";
 import { readJson } from "@/lib/read-json";
 
@@ -116,7 +116,7 @@ export function ServicesMarketplaceScreen() {
     <section className="service-marketplace-intro" aria-label="Marketplace principles">
       <div><span className="service-marketplace-icon"><ShieldCheck size={19} /></span><strong>Reviewed profiles</strong><small>Experts and service listings require admin approval.</small></div>
       <div><span className="service-marketplace-icon"><WalletCards size={19} /></span><strong>Clear INR proposals</strong><small>Price and delivery terms stay visible before acceptance.</small></div>
-      <div><span className="service-marketplace-icon"><Sparkles size={19} /></span><strong>Real project data</strong><small>Only published MongoDB listings appear here.</small></div>
+      <div><span className="service-marketplace-icon"><Database size={19} /></span><strong>Real project data</strong><small>Only published MongoDB listings appear here.</small></div>
     </section>
 
     <section className="marketplace-section-title service-marketplace-section-head">

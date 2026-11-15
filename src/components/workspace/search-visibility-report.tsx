@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, LoaderCircle, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Radar, RefreshCw, ScanSearch } from "lucide-react";
 import type { SearchVisibilityReport } from "@/lib/seo/search-visibility";
 import { readJson } from "@/lib/read-json";
 
@@ -49,7 +49,7 @@ export function SearchVisibilityReportCard({ domain, initialReports, hasCrawl, c
       <div className="workspace-section-heading"><div><p className="workspace-eyebrow">FIRST-PARTY CRAWL SIGNALS</p><h2 id="visibility-report-title">Search experience readiness</h2><p>Scores summarize page-level signals from your most recent crawl. They are not search rankings or measurements of AI citations.</p></div>
         {canRun && <button type="button" className="visibility-run-button" onClick={analyze} disabled={busy || !hasCrawl}>{busy ? <LoaderCircle size={15} className="research-spinner" /> : <RefreshCw size={15} />}{busy ? "Analyzing…" : latest ? "Analyze latest crawl" : "Run analysis"}</button>}
       </div>
-      {!hasCrawl ? <div className="visibility-empty"><Sparkles size={19} /><div><strong>Run a website crawl first</strong><p>GEO, AEO and LLMO signals are calculated from pages you have verified and crawled. No example data is shown.</p><Link href="/dashboard/tools">Open SEO tools</Link></div></div> : latest ? <>
+      {!hasCrawl ? <div className="visibility-empty"><ScanSearch size={19} /><div><strong>Run a website crawl first</strong><p>GEO, AEO and LLMO signals are calculated from pages you have verified and crawled. No example data is shown.</p><Link href="/dashboard/tools">Open SEO tools</Link></div></div> : latest ? <>
         <div className="visibility-score-grid">
           {dimensions.map(({ key, label, title, description }) => {
             const score = latest.scores[key];
@@ -84,7 +84,7 @@ export function SearchVisibilityReportCard({ domain, initialReports, hasCrawl, c
         {latest.recommendations.length > 0 && <div className="visibility-recommendations"><h3>Review these opportunities</h3><ul>{latest.recommendations.map((item) => <li key={item}>{item}</li>)}</ul></div>}
         <div className="visibility-limitations"><strong>How to read this report</strong><ul>{latest.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
         {reports.length > 1 && <div className="visibility-history"><h3>Previous analyses</h3><ol>{reports.slice(1, 7).map((report, index) => <li key={`${report.calculatedAt}-${index}`}><time>{new Date(report.calculatedAt).toLocaleDateString()}</time><span>GEO {report.scores.geo}</span><span>AEO {report.scores.aeo}</span><span>LLMO {report.scores.llmo}</span><small>{report.pageCount} pages</small></li>)}</ol></div>}
-      </> : <div className="visibility-empty"><Sparkles size={19} /><div><strong>No analysis has been saved yet</strong><p>Generate a readiness report from the latest completed crawl. The analysis uses first-party heuristics and makes no provider calls.</p>{canRun && <button type="button" onClick={analyze} disabled={busy}>{busy ? "Analyzing…" : "Analyze latest crawl"}</button>}</div></div>}
+      </> : <div className="visibility-empty"><Radar size={19} /><div><strong>No analysis has been saved yet</strong><p>Generate a readiness report from the latest completed crawl. The analysis uses first-party heuristics and makes no provider calls.</p>{canRun && <button type="button" onClick={analyze} disabled={busy}>{busy ? "Analyzing…" : "Analyze latest crawl"}</button>}</div></div>}
       {message && <p className={message.startsWith("Analysis saved") ? "research-success" : "research-error"} role={message.startsWith("Analysis saved") ? "status" : "alert"}>{message}</p>}
     </section>
   </>;

@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, Clock3, Compass, Heart, Link2, Megaphone, Share2, ShoppingCart, Sparkles, Star, Timer, UsersRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, Clock3, Compass, Heart, Link2, Megaphone, Package, Share2, ShoppingCart, Star, Timer, UsersRound } from "lucide-react";
 import { CreatorTile, RatingBadge, StarRow } from "./creator-tile";
 import { readJson } from "@/lib/read-json";
 
@@ -167,7 +167,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
 
       <aside className="creator-marketplace-sidebar">
         <section className="creator-marketplace-packages">
-          <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">COLLABORATION RATES</span><h2>Packages</h2></div><Sparkles size={19} /></div>
+          <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">COLLABORATION RATES</span><h2>Packages</h2></div><Package size={19} /></div>
           {packages.length ? <div className="creator-marketplace-package-list mp-package-picker" role="radiogroup" aria-label="Choose a package">{packages.map((item, index) => <label key={`${str(item.title)}-${index}`} className={selectedPackage === index ? "is-selected" : ""}><input type="radio" name="package" checked={selectedPackage === index} onChange={() => setSelectedPackage(index)} /><div><span>{str(item.title)}</span><strong>{money(item.pricePaise)}</strong></div><p>{str(item.deliverables)}</p>{typeof item.deliveryDays === "number" && <small><Timer size={12} /> {item.deliveryDays}-day delivery</small>}</label>)}</div> : <div className="creator-marketplace-starting-rate"><span>Starting collaboration rate</span><strong>{money(creator.ratePaise)}</strong><small>This creator has not listed fixed packages yet. Invite them to a campaign to agree a price.</small></div>}
 
           {bookable && !bookingOpen && <button type="button" className="creator-marketplace-add-cart mp-book-button" onClick={() => setBookingOpen(true)}>Continue · {money(activePackage.pricePaise)}<ArrowRight size={17} /></button>}

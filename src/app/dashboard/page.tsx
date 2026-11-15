@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, ArrowRight, BarChart3, CheckCircle2, FileText, Globe2, ListTodo, LockKeyhole, MapPin, Sparkles } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, CheckCircle2, FileText, Globe2, ListTodo, LockKeyhole, MapPin, Radar } from "lucide-react";
 import { getWorkspaceData } from "@/lib/workspace-data";
 import { OverviewSearchRefresh } from "@/components/workspace/overview-search-refresh";
 
@@ -107,8 +107,8 @@ export default async function DashboardOverview() {
         <p className="workspace-insight-footnote">Search Console data is refreshed when a report is run and may be delayed by Google; it is not minute-by-minute analytics.</p>
       </article>
       <article className="workspace-insight-card workspace-ai-card">
-        <header><div><p className="workspace-eyebrow"><Sparkles size={13} /> GEO · AEO · LLMO</p><h2>AI Visibility</h2><p>Provider mentions and crawl-based readiness</p></div><Link href="/dashboard/research" aria-label="Open AI visibility research">Open</Link></header>
-        {latestAiReport ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Sparkles size={18} /></span><div><strong>{metric(aiResultCount)}</strong><p>matching rows in the latest {latestAiReport.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"} provider report</p><small>{latestAiReport.websiteDomain} · {latestAiReport.countryName || latestAiReport.locationName || "saved market"} · {reportTime(latestAiReport.fetchedAt)}</small></div></div> : <div className="workspace-insight-empty workspace-ai-empty"><span><Sparkles size={18} /></span><div><strong>No AI mention report yet</strong><p>Run an AI visibility report for a connected market to see provider observations here.</p><Link href="/dashboard/research">Run AI visibility research <ArrowRight size={13} /></Link></div></div>}
+        <header><div><p className="workspace-eyebrow"><Radar size={13} /> GEO · AEO · LLMO</p><h2>AI Visibility</h2><p>Provider mentions and crawl-based readiness</p></div><Link href="/dashboard/research" aria-label="Open AI visibility research">Open</Link></header>
+        {latestAiReport ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Radar size={18} /></span><div><strong>{metric(aiResultCount)}</strong><p>matching rows in the latest {latestAiReport.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"} provider report</p><small>{latestAiReport.websiteDomain} · {latestAiReport.countryName || latestAiReport.locationName || "saved market"} · {reportTime(latestAiReport.fetchedAt)}</small></div></div> : <div className="workspace-insight-empty workspace-ai-empty"><span><Radar size={18} /></span><div><strong>No AI mention report yet</strong><p>Run an AI visibility report for a connected market to see provider observations here.</p><Link href="/dashboard/research">Run AI visibility research <ArrowRight size={13} /></Link></div></div>}
         <div className="workspace-readiness-heading"><strong>Latest crawl-based readiness</strong>{latestReadinessReport && <small>{latestReadinessReport.websiteDomain} · {reportTime(latestReadinessReport.calculatedAt)}</small>}</div>
         <div className="workspace-readiness-list">{(["geo", "aeo", "llmo"] as const).map((key) => {
           const score = scoreValue(latestReadinessReport?.scores?.[key]);
@@ -128,7 +128,7 @@ export default async function DashboardOverview() {
         <Link href="/dashboard/websites"><span><Globe2 size={17} /></span><strong>Manage websites</strong><small>Add domains, run audits, and follow issues.</small><ArrowRight size={15} /></Link>
         <Link href="/dashboard/tools"><span><ListTodo size={17} /></span><strong>SEO audits & technical fixes</strong><small>Audit pages, prioritize findings, and work through fixes.</small><ArrowRight size={15} /></Link>
         <Link href="/dashboard/research"><span><MapPin size={17} /></span><strong>Local SEO & rank tracking</strong><small>Target supported countries, cities, and regions in search research.</small><ArrowRight size={15} /></Link>
-        <Link href="/dashboard/visibility"><span><Sparkles size={17} /></span><strong>GEO, AEO & LLMO</strong><small>Review generative search, answer readiness, and AI visibility signals.</small><ArrowRight size={15} /></Link>
+        <Link href="/dashboard/visibility"><span><Radar size={17} /></span><strong>GEO, AEO & LLMO</strong><small>Review generative search, answer readiness, and AI visibility signals.</small><ArrowRight size={15} /></Link>
         <Link href="/dashboard/integrations"><span><LockKeyhole size={17} /></span><strong>Google & WordPress data</strong><small>Connect reporting sources and your WordPress site.</small><ArrowRight size={15} /></Link>
         <Link href="/dashboard/account"><span><CheckCircle2 size={17} /></span><strong>Account & team</strong><small>Manage workspace roles and account security.</small><ArrowRight size={15} /></Link>
         <Link href="/dashboard/websites"><span><FileText size={17} /></span><strong>Content & website setup</strong><small>Manage site settings, keywords, and publishing connections.</small><ArrowRight size={15} /></Link>

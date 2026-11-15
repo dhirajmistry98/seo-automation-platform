@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Bot, CheckCircle2, Clock3, FileText, Info, LoaderCircle, ScanSearch, Sparkles } from "lucide-react";
+import { AlertTriangle, Bot, CheckCircle2, Clock3, FileText, Info, LoaderCircle, Radar, ScanSearch } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 
 type Issue = { ruleId: string; title: string; severity: "critical" | "warning" | "notice"; recommendation: string; evidence: string };
@@ -96,7 +96,7 @@ export function SeoChecker({ websites }: { websites: Array<{ domain: string; url
           </section>
 
           <section className="seo-check-panel">
-            <h3><Sparkles size={15} aria-hidden="true" /> AI search readiness</h3>
+            <h3><Radar size={15} aria-hidden="true" /> AI search readiness</h3>
             <div className="seo-check-bars">
               {(["geo", "aeo", "llmo"] as const).map((key) => (
                 <div key={key}><span>{key.toUpperCase()}</span><div className="seo-check-bar"><i className={tone(result.ai.scores[key])} style={{ width: `${result.ai.scores[key]}%` }} /></div><b>{result.ai.scores[key]}</b></div>

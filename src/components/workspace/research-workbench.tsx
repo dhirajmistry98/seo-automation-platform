@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, ArrowUpRight, LoaderCircle, MapPinned, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { Activity, ArrowUpRight, LoaderCircle, MapPinned, Search, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { SeoLocationSelector } from "@/components/workspace/seo-location-selector";
 import { ProviderAccountAlert, isBlockingIssue, providerActionLabel, type ProviderIssue } from "@/components/workspace/provider-account-alert";
 import type { SeoTarget } from "@/lib/seo/target";
@@ -74,7 +74,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
     finally { setLoading(false); }
   }
   return <div className="research-layout">
-    <section className="research-panel"><div className="research-panel-heading"><span className="research-icon"><Sparkles size={17} /></span><div><p className="workspace-eyebrow">NEW REPORT</p><h2>Configure research</h2></div></div>
+    <section className="research-panel"><div className="research-panel-heading"><span className="research-icon"><SlidersHorizontal size={17} /></span><div><p className="workspace-eyebrow">NEW REPORT</p><h2>Configure research</h2></div></div>
       {!configured && (kind === "keywords" || kind === "questions" || kind === "rank" ? <div className="research-config-alert"><strong>Free mode</strong><p>{kind === "rank" ? "Positions come from your Google Search Console data (connect it under Integrations)." : "Ideas come from Google autocomplete, plus your Search Console clicks and positions when connected."} No paid account needed.</p></div> : <div className="research-config-alert"><strong>Paid data source required</strong><p>Backlinks, competitor gaps and AI mentions need a DataForSEO account. Keyword demand, AEO questions and positions work for free.</p></div>)}
       {!verified && kind !== "keywords" && kind !== "questions" && <div className="research-config-alert"><strong>Website verification required</strong><p>This report looks up data for your domain. Verify ownership on the Websites page first. Keyword demand and AEO questions work without verification.</p></div>}
       {providerIssue && <ProviderAccountAlert issue={providerIssue} checking={checkingProvider} onRecheck={() => void recheckProvider()} />}

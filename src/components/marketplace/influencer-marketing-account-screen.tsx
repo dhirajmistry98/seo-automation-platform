@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, BriefcaseBusiness, Camera, CircleUserRound, Compass, Megaphone, MessageSquareText, ShoppingBag, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, BadgeCheck, BriefcaseBusiness, Camera, CircleUserRound, Compass, Megaphone, MessageSquareText, ShieldCheck, ShoppingBag, Store, UsersRound } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 
 type RecordValue = Record<string, unknown>;
@@ -125,7 +125,7 @@ export function InfluencerMarketingAccountScreen({ identity }: { identity: Ident
 
         <section className="marketplace-panel">
           <div className="influencer-account-section-head"><span className="influencer-account-icon"><BriefcaseBusiness size={20} /></span><div><span className="marketplace-eyebrow">BRAND WORKSPACES</span><h2>Your brand accounts</h2></div></div>
-          {brands.length ? <div className="influencer-account-brand-list">{brands.slice(0, 4).map((brand) => <article key={String(brand._id)}><span className="influencer-account-brand-symbol"><BriefcaseBusiness size={17} /></span><span><strong>{string(brand.name) || "Brand profile"}</strong><small>{[string(brand.category).replaceAll("_", " "), string(brand.location)].filter(Boolean).join(" · ") || "Brand profile details"}</small></span><StatusPill value={brand.status} /></article>)}</div> : <div className="influencer-account-brand-empty"><Sparkles size={19} /><p>Create a brand profile to publish campaign briefs and invite creators.</p></div>}
+          {brands.length ? <div className="influencer-account-brand-list">{brands.slice(0, 4).map((brand) => <article key={String(brand._id)}><span className="influencer-account-brand-symbol"><BriefcaseBusiness size={17} /></span><span><strong>{string(brand.name) || "Brand profile"}</strong><small>{[string(brand.category).replaceAll("_", " "), string(brand.location)].filter(Boolean).join(" · ") || "Brand profile details"}</small></span><StatusPill value={brand.status} /></article>)}</div> : <div className="influencer-account-brand-empty"><Store size={19} /><p>Create a brand profile to publish campaign briefs and invite creators.</p></div>}
           <Link className="marketplace-secondary" href="/influencer-marketing/brand">{brands.length ? "Manage brand profiles" : "Create brand profile"}<ArrowRight size={15} /></Link>
         </section>
       </div>

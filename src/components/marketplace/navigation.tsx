@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Handshake } from "lucide-react";
 
 const links = [
-  { href: "/marketplace/services", label: "Expert services", icon: Sparkles },
+  { href: "/marketplace/services", label: "Expert services", icon: Handshake },
 ];
 
 export function MarketplaceNavigation() {

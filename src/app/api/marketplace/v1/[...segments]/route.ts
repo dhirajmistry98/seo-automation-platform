@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
-import { LISTABLE_CREATOR_STATUS, BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
+import { LISTABLE_CREATOR_STATUS, isCurrentMetaVerification, BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
 import { queueMarketplaceEvent, realtimeAvailable } from "@/lib/marketplace/realtime";
 import { getRazorpayConfig, marketplaceCommissionBps, razorpayRequest, RazorpayApiError, verifyRazorpayHmac } from "@/lib/marketplace/razorpay";
 import { recordCapturedCampaignPayment, type CampaignCapturedPayment } from "@/lib/marketplace/campaign-payments";
@@ -94,7 +94,7 @@ export async function GET(request: Request, context: Context) {
       const creator = creatorById.get(String(item.influencerId));
       return { ...record(item), influencerId: item.influencerId, campaignTitle: campaign?.title || "", isBooking: campaign?.kind === PACKAGE_BOOKING_KIND, campaignDeadline: campaign?.deadline || null, brandName: brandNameById.get(String(item.brandId)) || "", creatorName: creator?.name || "", creatorProfileId: creator?.profileId || "" };
     };
-    return json({ userId, influencer: influencer ? { ...record(influencer), tier: profileTier(influencer), listed: isActiveCreator(influencer), paused: ["rejected", "suspended"].includes(String(influencer.status)) } : null, brands: records(brands), memberships: records(memberships), applications: applications.map(describe), collaborations: collaborations.map(describe), sentBookings: sentBookings.map(describe), admin: admin(session.user.email), realtimeAvailable: realtimeAvailable(), instagramConnectAvailable: !!(process.env.META_INSTAGRAM_APP_ID && process.env.META_INSTAGRAM_APP_SECRET && process.env.META_GRAPH_API_VERSION && process.env.META_TOKEN_ENCRYPTION_KEY), marketplacePaymentCheckoutAvailable: marketplacePaymentsEnabled() });
+    return json({ userId, influencer: influencer ? { ...record(influencer), tier: profileTier(influencer), listed: isActiveCreator(influencer), verificationCurrent: isCurrentMetaVerification(influencer), paused: ["rejected", "suspended"].includes(String(influencer.status)) } : null, brands: records(brands), memberships: records(memberships), applications: applications.map(describe), collaborations: collaborations.map(describe), sentBookings: sentBookings.map(describe), admin: admin(session.user.email), realtimeAvailable: realtimeAvailable(), instagramConnectAvailable: !!(process.env.META_INSTAGRAM_APP_ID && process.env.META_INSTAGRAM_APP_SECRET && process.env.META_GRAPH_API_VERSION && process.env.META_TOKEN_ENCRYPTION_KEY), marketplacePaymentCheckoutAvailable: marketplacePaymentsEnabled() });
   }
   if (path[0] === "influencers" && path.length === 1) {
     const params = new URL(request.url).searchParams;
@@ -129,7 +129,8 @@ export async function GET(request: Request, context: Context) {
     const total = await db.collection("mp_influencers").countDocuments(filter);
     const sort: Record<string, 1 | -1> = sortBy === "rate_asc" ? { ratePaise: 1, _id: 1 } : sortBy === "rate_desc" ? { ratePaise: -1, _id: 1 } : sortBy === "followers_asc" ? { "instagram.verifiedFollowers": 1, _id: 1 } : { "instagram.verifiedFollowers": -1, _id: 1 };
     const items = await db.collection("mp_influencers").find(filter, { projection: { verificationNotes: 0, "instagram.providerUserId": 0 } }).sort(sort).skip(skip).limit(pageSize).toArray();
-    const influencers = await publicCreatorCards(db, items.filter(isActiveCreator));
+    const ownIds = new Set(items.filter((item) => item.userId === userId).map((item) => String(item._id)));
+    const influencers = (await publicCreatorCards(db, items.filter(isActiveCreator))).map((card) => ({ ...card, isOwn: ownIds.has(String(card._id)) }));
     return json({ influencers, total, hasMore: skip + items.length < total, nextSkip: skip + items.length });
   }
   if (path[0] === "influencers" && path[1] && path.length === 2) {

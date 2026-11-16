@@ -852,3 +852,21 @@
 .mp-consent-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
 .mp-consent-actions .is-disabled { cursor:not-allowed; opacity:.45; }
 @media (max-width:560px) { .mp-consent { padding:18px; } .mp-consent-grid { grid-template-columns:1fr; } .mp-consent-actions > * { flex:1 1 100%; justify-content:center; } }
+/* Verification: automatic, no re-verify button while connected */
+.mp-verify-auto { display:flex; gap:8px; align-items:flex-start; border:1px solid #cfe5d6; border-radius:10px; background:#f3faf5; padding:10px 12px; color:#236640 !important; font-size:12px !important; line-height:1.5; }
+.mp-verify-auto svg { flex:none; margin-top:2px; }
+/* Creator card (Discover) */
+.mp-own-badge { border-radius:99px; background:#fff1e8; padding:2px 8px; color:#a84616; font-size:9px; font-weight:700; letter-spacing:.02em; }
+.mp-creator-facts { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:12px; color:#6b5f56; font-size:11px; }
+.mp-creator-facts span { display:inline-flex; align-items:center; gap:5px; }
+.mp-creator-facts svg { color:var(--mp-orange); }
+.mp-creator-price { display:flex; align-items:baseline; gap:6px; margin-top:auto; border-top:1px solid var(--mp-line); padding-top:12px; }
+.mp-creator-price span, .mp-creator-price small { color:#7a6f66; font-size:11px; }
+.mp-creator-price strong { color:#15110e; font-size:20px; }
+.mp-creator-price small { margin-left:auto; }
+.mp-creator-card-actions { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:12px; }
+.mp-creator-card-actions > a, .mp-creator-card-actions > button { display:inline-flex; justify-content:center; align-items:center; gap:6px; min-height:42px; }
+.mp-save-button.is-saved { border-color:#cfe5d6; background:#f3faf5; color:#236640; opacity:1; }
+.mp-instagram-icon { width:42px; border:1px solid var(--mp-line); border-radius:9px; background:#fff; color:#3d352e; }
+.mp-instagram-icon:hover { border-color:var(--mp-orange); color:var(--mp-orange); }
+@media (max-width:420px) { .mp-creator-card-actions { grid-template-columns:1fr auto; } .mp-creator-card-actions > :first-child { grid-column:1 / -1; } }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BadgeCheck, BriefcaseBusiness, Camera, CircleAlert, Clock3, Inbox, MapPin, Megaphone, MessageSquareText, Package, Plus, RefreshCw, Search, Send, ShieldCheck, ShoppingCart, Trash2, UserRound, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, Bookmark, BriefcaseBusiness, Camera, CircleAlert, Clock3, Inbox, MapPin, Megaphone, MessageSquareText, Package, Plus, RefreshCw, Search, Send, ShieldCheck, ShoppingCart, Trash2, UserRound, X } from "lucide-react";
 import { LocationInput } from "@/components/marketplace/location-input";
 import { RatingBadge } from "./creator-tile";
 import { readJson } from "@/lib/read-json";
@@ -12,6 +12,10 @@ type View = "overview" | "influencer" | "brand" | "discover" | "campaigns" | "ca
 type Item = Record<string, unknown>;
 type Data = Record<string, unknown>;
 const api = "/api/marketplace/v1";
+/** Instagram glyph for "open on Instagram" links (lucide no longer ships brand icons). */
+function InstagramGlyph() {
+  return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4.2" /><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" /></svg>;
+}
 /** Creator state shown in the UI: listed after Meta verification, paused only by moderation. */
 const creatorStateLabel = (influencer: Item) => !influencer._id ? "Not created" : influencer.listed ? "Listed" : influencer.paused ? "Paused" : "Not verified";
 const obj = (value: unknown): Item => value && typeof value === "object" && !Array.isArray(value) ? value as Item : {};
@@ -79,6 +83,8 @@ function CreatorVerificationCard({ influencer, connectAvailable }: { influencer:
   const handle = str(influencer.instagramHandle) || str(instagram.username);
   const verifiedAt = instagram.verifiedAt ? new Date(str(instagram.verifiedAt)) : null;
   const verified = Boolean(verifiedAt && str(instagram.username));
+  // Verification refreshes automatically every day; it only lapses if Meta access was removed or expired.
+  const current = verified && influencer.verificationCurrent === true;
   const approved = influencer.listed === true;
   const followers = typeof instagram.verifiedFollowers === "number" ? Number(instagram.verifiedFollowers) : null;
   const steps = [
@@ -95,7 +101,9 @@ function CreatorVerificationCard({ influencer, connectAvailable }: { influencer:
     <h3 id="mp-verify-title">{verified ? "Your Instagram is verified" : "Verify your Instagram"}</h3>
     <p>Brands only see creators whose Instagram is confirmed through Meta. Any follower count is welcome.</p>
     <ol className="mp-verify-steps">{steps.map((step, index) => <li key={step.title} className={step.done ? "is-done" : ""}><span className="mp-verify-step-mark" aria-hidden="true">{step.done ? <BadgeCheck size={14} /> : index + 1}</span><span><strong>{step.title}</strong><small>{step.text}</small></span></li>)}</ol>
-    {saved && connectAvailable && <button type="button" className="marketplace-primary mp-verify-button" onClick={() => { setAgreed(false); setAsking(true); }}>{verified ? "Re-verify Instagram" : "Verify Instagram through Meta"} <ArrowRight size={16} aria-hidden="true" /></button>}
+    {saved && current && <p className="mp-verify-auto"><BadgeCheck size={15} aria-hidden="true" /> Connected to Instagram. Your followers and posts update automatically every day.</p>}
+    {saved && connectAvailable && !current && <button type="button" className="marketplace-primary mp-verify-button" onClick={() => { setAgreed(false); setAsking(true); }}>{verified ? "Reconnect Instagram" : "Verify Instagram through Meta"} <ArrowRight size={16} aria-hidden="true" /></button>}
+    {saved && verified && !current && <p className="marketplace-form-note">Your Instagram connection lapsed, so your profile is hidden from brands. Reconnect to list it again.</p>}
     {asking && <div className="mp-consent-overlay" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setAsking(false); }}>
       <div className="mp-consent" role="dialog" aria-modal="true" aria-labelledby="mp-consent-title">
         <div className="mp-consent-head"><span className="mp-verify-icon"><ShieldCheck size={20} aria-hidden="true" /></span><button type="button" className="mp-consent-close" aria-label="Close" onClick={() => setAsking(false)}><X size={18} /></button></div>
@@ -414,7 +422,6 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
           {discoveredInfluencers.length ? <div className="marketplace-card-grid">{discoveredInfluencers.map((item) => {
             const instagram = obj(item.instagram);
             const instagramUrl = str(item.instagramUsername).replace(/^@/, "");
-            const portfolio = Array.isArray(item.portfolio) ? item.portfolio.filter((link): link is string => typeof link === "string" && link.startsWith("https://")).slice(0, 3) : [];
             const recentMedia = arr(instagram.recentMedia).slice(0, 4);
             const picture = str(instagram.profilePictureUrl);
             const alreadyInCart = cartIds.includes(str(item._id));
@@ -430,16 +437,23 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
               <div className="marketplace-creator-card-body">
                 <div className="marketplace-creator-person">
                   {picture ? <Image className="marketplace-creator-avatar" src={picture} alt="" width={48} height={48} unoptimized /> : <span className="marketplace-creator-avatar marketplace-creator-avatar-empty"><UserRound size={20} /></span>}
-                  <div><div className="marketplace-creator-name-line"><h3>{str(item.displayName)}</h3><BadgeCheck size={16} aria-label="Instagram verified" /><RatingBadge rating={item.rating} /></div><small>{instagramUrl ? `@${instagramUrl}` : "Instagram creator"} · {str(item.tier) ? `${str(item.tier)} tier` : "Verified creator"}</small></div>
+                  <div><div className="marketplace-creator-name-line"><h3>{str(item.displayName)}</h3><BadgeCheck size={16} aria-label={`Instagram verified through Meta${instagram.verifiedAt ? `, checked ${date(instagram.verifiedAt)}` : ""}`}><title>{`Verified through Meta${instagram.verifiedAt ? ` · checked ${date(instagram.verifiedAt)}` : ""}`}</title></BadgeCheck><RatingBadge rating={item.rating} />{item.isOwn ? <span className="mp-own-badge">Your profile</span> : null}</div><small>{instagramUrl ? `@${instagramUrl}` : "Instagram creator"}{str(item.tier) ? ` · ${str(item.tier)} creator` : ""}</small></div>
                 </div>
-                <p>{str(item.bio) || "Creator profile"}</p>
-                <div className="marketplace-chip-row">{Array.isArray(item.categories) && item.categories.slice(0, 4).map((category) => <span key={String(category)}>{String(category)}</span>)}</div>
-                <div className="marketplace-creator-details"><span><MapPin size={14} /> {str(item.location) || "Location not specified"}</span><span>{typeof instagram.mediaCount === "number" ? `${instagram.mediaCount.toLocaleString("en-IN")} posts` : "Verified account"}</span><span>Checked {date(instagram.verifiedAt)}</span></div>
-                {portfolio.length > 0 && <div className="marketplace-profile-links">{portfolio.map((link, index) => <a key={link} href={link} target="_blank" rel="noopener noreferrer">Portfolio {index + 1} <ArrowRight size={13} /></a>)}</div>}
-                <footer><span>{Array.isArray(item.packages) && item.packages.length ? `${item.packages.length} package${item.packages.length === 1 ? "" : "s"} · from` : "Starting collaboration"}</span><strong>{money(typeof item.fromPricePaise === "number" ? item.fromPricePaise : item.ratePaise)}</strong></footer>
-                <div className="marketplace-creator-actions"><button type="button" className="marketplace-secondary" onClick={() => setSelectedCreator(item)}>View profile</button><button type="button" className="marketplace-primary" disabled={cartBusyId === str(item._id) || alreadyInCart} onClick={() => void addCreatorToCart(str(item._id))}>{cartBusyId === str(item._id) ? "Adding…" : alreadyInCart ? "In your cart" : "Add to cart"}<ShoppingCart size={15} /></button></div>
-                {instagramUrl && <a className="marketplace-creator-instagram-link" href={`https://www.instagram.com/${encodeURIComponent(instagramUrl)}/`} target="_blank" rel="noopener noreferrer">Open Instagram profile <ArrowRight size={13} /></a>}
-                <Link className="marketplace-creator-full-profile" href={`${basePath}/creators/${encodeURIComponent(str(item._id))}`}>Open full creator profile <ArrowRight size={14} /></Link>
+                {str(item.bio) && <p>{str(item.bio)}</p>}
+                <div className="mp-creator-facts">
+                  {str(item.location) && <span><MapPin size={13} aria-hidden="true" /> {str(item.location).split(",")[0]}</span>}
+                  <span><UserRound size={13} aria-hidden="true" /> {Number(instagram.verifiedFollowers || 0).toLocaleString("en-IN")} followers</span>
+                  {typeof instagram.mediaCount === "number" && instagram.mediaCount > 0 && <span><Camera size={13} aria-hidden="true" /> {instagram.mediaCount.toLocaleString("en-IN")} posts</span>}
+                </div>
+                {Array.isArray(item.categories) && item.categories.length > 0 && <div className="marketplace-chip-row">{item.categories.slice(0, 4).map((category) => <span key={String(category)}>{String(category)}</span>)}</div>}
+                <footer className="mp-creator-price"><span>From</span><strong>{money(typeof item.fromPricePaise === "number" ? item.fromPricePaise : item.ratePaise)}</strong><small>{Array.isArray(item.packages) && item.packages.length ? `${item.packages.length} package${item.packages.length === 1 ? "" : "s"}` : "Custom collaboration"}</small></footer>
+                <div className="mp-creator-card-actions">
+                  <Link className="marketplace-primary" href={`${basePath}/creators/${encodeURIComponent(str(item._id))}`}>View profile <ArrowRight size={15} aria-hidden="true" /></Link>
+                  {item.isOwn
+                    ? <Link className="marketplace-secondary" href={`${basePath}/creator`}>Edit profile</Link>
+                    : <button type="button" className={`marketplace-secondary mp-save-button${alreadyInCart ? " is-saved" : ""}`} disabled={cartBusyId === str(item._id) || alreadyInCart} onClick={() => void addCreatorToCart(str(item._id))} aria-label={alreadyInCart ? "Saved" : `Save ${str(item.displayName)}`}><Bookmark size={15} aria-hidden="true" />{cartBusyId === str(item._id) ? "Saving…" : alreadyInCart ? "Saved" : "Save"}</button>}
+                  {instagramUrl && <a className="mp-instagram-icon" href={`https://www.instagram.com/${encodeURIComponent(instagramUrl)}/`} target="_blank" rel="noopener noreferrer" aria-label={`Open @${instagramUrl} on Instagram`} title="Open on Instagram"><InstagramGlyph /></a>}
+                </div>
               {openBrandCampaigns.length > 0 && <form className="marketplace-form" onSubmit={async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); const campaignId = str(form.get("campaignId")); if (campaignId) await mutate(`/campaigns/${campaignId}/invite`, { influencerProfileId: item._id, message: form.get("message") }, "Invitation sent. The creator can respond in their inbox."); }}>
                 <label className="marketplace-field"><span>Invite through a campaign</span><select name="campaignId">{openBrandCampaigns.map((campaign) => <option key={str(campaign._id)} value={str(campaign._id)}>{str(campaign.title)}</option>)}</select></label>
                 <Field label="Invitation note" name="message" placeholder="Why this creator fits your brief" />

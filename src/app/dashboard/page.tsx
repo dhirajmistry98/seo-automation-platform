@@ -15,6 +15,7 @@ type StoredAiReport = { websiteDomain: string; organizationId?: unknown; kind: s
 type StoredReadinessReport = { websiteDomain: string; organizationId?: unknown; calculatedAt: Date | string; scores?: { geo?: number; aeo?: number; llmo?: number } };
 
 function metric(value: number) { return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value); }
+type StoredAnswerReport = { websiteDomain: string; brand: string; createdAt: Date; summary: { answered: number; mentioned: number; cited: number; platforms: Array<{ label: string }> } };
 function reportTime(value: Date | string) {
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? "Time unavailable" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date);
@@ -34,6 +35,7 @@ export default async function DashboardOverview() {
   let connectedCount = 0;
   let latestSearchReport: StoredSearchReport | null = null;
   let latestAiReport: StoredAiReport | null = null;
+  let latestAnswers: StoredAnswerReport | null = null;
   let latestReadinessReport: StoredReadinessReport | null = null;
   let ready = false;
   try {
@@ -44,11 +46,13 @@ export default async function DashboardOverview() {
       openTaskCount = await workspace.db.collection("seo_tasks").countDocuments({ organizationId: { $in: workspace.organizationIds }, status: { $ne: "done" } });
       connectedCount = await workspace.db.collection("google_connections").countDocuments({ organizationId: { $in: workspace.organizationIds }, status: "connected" });
       const overviewScope = { organizationId: { $in: workspace.organizationIds }, websiteDomain: { $in: websites.map((site) => site.domain) } };
-      const [searchReports, aiReports, readinessReports] = await Promise.all([
+      const [searchReports, aiReports, readinessReports, answerReports] = await Promise.all([
         workspace.db.collection<StoredSearchReport>("google_search_console_reports").find(overviewScope).sort({ generatedAt: -1 }).limit(50).toArray(),
         workspace.db.collection<StoredAiReport>("seo_research_reports").find({ ...overviewScope, kind: "ai_visibility" }).sort({ fetchedAt: -1 }).limit(20).toArray(),
         workspace.db.collection<StoredReadinessReport>("seo_visibility_reports").find(overviewScope).sort({ calculatedAt: -1 }).limit(20).toArray(),
+        workspace.db.collection("ai_answer_reports").find(overviewScope, { projection: { websiteDomain: 1, brand: 1, createdAt: 1, summary: 1 } }).sort({ createdAt: -1 }).limit(1).toArray(),
       ]);
+      latestAnswers = (answerReports[0] as unknown as StoredAnswerReport | undefined) ?? null;
       latestSearchReport = searchReports[0] || null;
       latestAiReport = aiReports[0] || null;
       latestReadinessReport = readinessReports[0] || null;
@@ -108,7 +112,7 @@ export default async function DashboardOverview() {
       </article>
       <article className="workspace-insight-card workspace-ai-card">
         <header><div><p className="workspace-eyebrow"><Radar size={13} /> GEO · AEO · LLMO</p><h2>AI Visibility</h2><p>Provider mentions and crawl-based readiness</p></div><Link href="/dashboard/research" aria-label="Open AI visibility research">Open</Link></header>
-        {latestAiReport ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Radar size={18} /></span><div><strong>{metric(aiResultCount)}</strong><p>matching rows in the latest {latestAiReport.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"} provider report</p><small>{latestAiReport.websiteDomain} · {latestAiReport.countryName || latestAiReport.locationName || "saved market"} · {reportTime(latestAiReport.fetchedAt)}</small></div></div> : <div className="workspace-insight-empty workspace-ai-empty"><span><Radar size={18} /></span><div><strong>No AI mention report yet</strong><p>Run an AI visibility report for a connected market to see provider observations here.</p><Link href="/dashboard/research">Run AI visibility research <ArrowRight size={13} /></Link></div></div>}
+        {latestAnswers ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Radar size={18} /></span><div><strong>{latestAnswers.summary.mentioned}/{latestAnswers.summary.answered}</strong><p>AI answers mention “{latestAnswers.brand}” · {latestAnswers.summary.cited} cite {latestAnswers.websiteDomain}</p><small>{latestAnswers.summary.platforms.map((item) => item.label).join(", ")} · {reportTime(latestAnswers.createdAt)}</small><Link href={`/dashboard/visibility/${encodeURIComponent(latestAnswers.websiteDomain)}#ai-answers`}>Check AI answers again <ArrowRight size={13} /></Link></div></div> : latestAiReport ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Radar size={18} /></span><div><strong>{metric(aiResultCount)}</strong><p>matching rows in the latest {latestAiReport.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"} provider report</p><small>{latestAiReport.websiteDomain} · {latestAiReport.countryName || latestAiReport.locationName || "saved market"} · {reportTime(latestAiReport.fetchedAt)}</small></div></div> : <div className="workspace-insight-empty workspace-ai-empty"><span><Radar size={18} /></span><div><strong>No AI answers checked yet</strong><p>Ask ChatGPT, Claude, Gemini and Perplexity your customers’ questions and see whether they mention or cite you.</p><Link href={websites[0] ? `/dashboard/visibility/${encodeURIComponent(websites[0].domain)}#ai-answers` : "/dashboard/visibility"}>Check AI answers <ArrowRight size={13} /></Link></div></div>}
         <div className="workspace-readiness-heading"><strong>Latest crawl-based readiness</strong>{latestReadinessReport && <small>{latestReadinessReport.websiteDomain} · {reportTime(latestReadinessReport.calculatedAt)}</small>}</div>
         <div className="workspace-readiness-list">{(["geo", "aeo", "llmo"] as const).map((key) => {
           const score = scoreValue(latestReadinessReport?.scores?.[key]);

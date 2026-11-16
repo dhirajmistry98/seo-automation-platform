@@ -913,3 +913,49 @@ a.workspace-tool-card:focus-visible { outline:2px solid #ff6a00; outline-offset:
 .kw-serp-table td.kw-serp-behind { color: #b42318; font-weight: 650; }
 .kw-serp-topics > div { display: flex; flex-wrap: wrap; gap: 6px; }
 .kw-serp-topics span { border: 1px solid #e6ddd3; border-radius: 99px; background: #fff; padding: 4px 10px; color: #423b34; font-size: 10px; }
+/* AI answers: does AI recommend you? */
+.ai-answers { display: grid; gap: 14px; margin-bottom: 16px; }
+.ai-answers-head { display: flex; gap: 12px; align-items: flex-start; }
+.ai-answers-head h2 { margin: 2px 0 4px; color: #211e1a; font-size: 18px; }
+.ai-answers-head p:not(.workspace-eyebrow) { max-width: 72ch; color: #625a53; font-size: 11px; line-height: 1.55; }
+.ai-answers-icon { display: inline-flex; flex: none; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 10px; background: #fff1e8; color: #c8582a; }
+.ai-answers-note { display: flex; gap: 6px; align-items: center; color: #8a3722; font-size: 11px; }
+.ai-answers-form { display: grid; gap: 10px; border: 1px solid #e6ddd3; border-radius: 12px; background: #fff; padding: 14px; }
+.ai-answers-form > label { display: grid; gap: 5px; }
+.ai-answers-form > label > span, .ai-answers-form legend { color: #625a53; font-size: 10px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; }
+.ai-answers-form input[type="text"], .ai-answers-form input:not([type]), .ai-answers-form textarea { width: 100%; border: 1px solid #ded8d1; border-radius: 8px; background: #fffdfa; padding: 9px 10px; color: #211e1a; font: inherit; font-size: 12px; }
+.ai-answers-form fieldset { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0; border: 0; padding: 0; }
+.ai-answers-form legend { width: 100%; margin-bottom: 6px; }
+.ai-answers-check { display: inline-flex; gap: 6px; align-items: center; color: #2b241e; font-size: 12px; }
+.ai-answers-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ai-answers-actions button { display: inline-flex; gap: 7px; align-items: center; min-height: 38px; border: 0; border-radius: 9px; background: #211e1a; padding: 0 16px; color: #fff; font-size: 12px; font-weight: 650; cursor: pointer; }
+.ai-answers-actions button:disabled { cursor: progress; opacity: .6; }
+.ai-answers-actions small { color: #70675e; font-size: 10px; }
+.ai-answers-summary { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.ai-answers-summary > div { display: grid; }
+.ai-answers-summary strong { color: #211e1a; font-size: 26px; line-height: 1.1; }
+.ai-answers-summary span, .ai-answers-summary small { color: #70675e; font-size: 10px; }
+.ai-answers-platforms { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.ai-answers-platforms > div { display: grid; gap: 2px; border: 1px solid #ece7e1; border-radius: 10px; background: #fff; padding: 10px 12px; font-size: 10px; color: #625a53; }
+.ai-answers-platforms strong { color: #211e1a; font-size: 12px; }
+.ai-answers-domains h3, .ai-answers-prompt h3 { margin: 6px 0; color: #2b241e; font-size: 12px; }
+.ai-answers-domains > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-answers-domains span { border: 1px solid #e6ddd3; border-radius: 99px; background: #fff; padding: 4px 10px; color: #423b34; font-size: 10px; }
+.ai-answers-domains span.is-yours { border-color: #2c8051; background: #e8f5ec; color: #236640; }
+.ai-answers-prompt { display: grid; gap: 6px; }
+.ai-answers-row { display: grid; gap: 6px; border: 1px solid #ece7e1; border-left: 3px solid #d9cfc4; border-radius: 10px; background: #fff; padding: 10px 12px; }
+.ai-answers-row.is-mentioned { border-left-color: #2c8051; }
+.ai-answers-row.is-error { border-left-color: #b42318; }
+.ai-answers-row header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 12px; }
+.ai-answers-row > p { color: #423b34; font-size: 11px; line-height: 1.55; }
+.ai-answers-badges { display: inline-flex; gap: 6px; }
+.ai-answers-badges span { display: inline-flex; gap: 4px; align-items: center; border-radius: 99px; padding: 3px 8px; font-size: 10px; font-weight: 650; }
+.ai-answers-badges .is-yes { background: #e8f5ec; color: #236640; }
+.ai-answers-badges .is-no { background: #f6efe8; color: #8a5a3b; }
+.ai-answers-error { color: #b42318; font-size: 10px; }
+.ai-answers-toggle { justify-self: start; border: 0; background: none; padding: 0; color: #b4471b; font-size: 10px; font-weight: 650; cursor: pointer; }
+.ai-answers-full { display: grid; gap: 6px; border-top: 1px solid #ece7e1; padding-top: 8px; }
+.ai-answers-full p { white-space: pre-wrap; color: #423b34; font-size: 11px; line-height: 1.55; }
+.ai-answers-full ul { display: grid; gap: 3px; margin: 0; padding-left: 16px; }
+.ai-answers-full a { color: #b4471b; font-size: 10px; overflow-wrap: anywhere; }
+.ai-answers-full small { color: #8a8178; font-size: 9px; }

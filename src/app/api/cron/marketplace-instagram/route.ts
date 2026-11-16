@@ -1,6 +1,6 @@
 import clientPromise from "@/lib/mongodb";
 import { ensureMarketplaceIndexes } from "@/lib/marketplace/core";
-import { decryptToken, encryptToken, fetchInstagramInsights, fetchInstagramMedia, fetchInstagramProfile, refreshInstagramToken } from "@/lib/marketplace/meta";
+import { decryptToken, encryptToken, fetchInstagramAnalytics, fetchInstagramInsights, fetchInstagramMedia, fetchInstagramProfile, refreshInstagramToken } from "@/lib/marketplace/meta";
 
 export async function POST(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -32,6 +32,8 @@ export async function POST(request: Request) {
     const mediaSnapshot = recentMedia === null ? { ...(Array.isArray(oldInstagram.recentMedia) ? { recentMedia: oldInstagram.recentMedia } : {}), ...(oldInstagram.mediaFetchedAt ? { mediaFetchedAt: oldInstagram.mediaFetchedAt } : {}) } : { recentMedia, mediaFetchedAt: now };
     await db.collection("mp_influencers").updateOne({ userId: connection.userId }, { $set: { instagram: { providerUserId: connection.providerUserId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: profile.profile_picture_url || null, ...mediaSnapshot, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: previous?.status || "draft", updatedAt: now } });
     await db.collection("mp_social_connections").updateOne({ _id: connection._id }, { $set: { username: profile.username, accessTokenEncrypted: encryptToken(token), expiresAt, nextCheckAt: new Date(now.getTime() + 86_400_000), lastCheckedAt: now, lastError: null, updatedAt: now }, $unset: { lockUntil: "" } });
+    const analytics = await fetchInstagramAnalytics(token, connection.providerUserId, api).catch(() => null);
+    if (analytics) await db.collection("mp_influencers").updateOne({ userId: connection.userId }, { $set: { "instagram.analytics": analytics } });
     // Follower verification must succeed independently from Insights permission.
     // Once per day, persist authorized account metrics when Meta grants the scope.
     const lastInsightsAt = connection.lastInsightsAt instanceof Date ? connection.lastInsightsAt : connection.lastInsightsAt ? new Date(connection.lastInsightsAt) : null;

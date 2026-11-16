@@ -49,4 +49,5 @@ jobs:
           run_job /api/cron/scheduled-rank-tracking 10
           run_job /api/cron/marketplace-instagram 25   # refreshes creators' Meta verification before it expires
           run_job /api/cron/marketplace-realtime 50    # delivers queued realtime chat events
+          run_job /api/cron/marketplace-expiry 1       # declines requests not answered within 72 hours
           if [ "$failures" -gt 0 ]; then echo "::error::${failures} job(s) failed"; exit 1; fi

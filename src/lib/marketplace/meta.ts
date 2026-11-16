@@ -1,3 +1,4 @@
+import { ageShares, averageViews, breakdownCounts, topShares, type InstagramAnalytics } from "./instagram-analytics.ts";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 type TokenResponse = { access_token?: string; token_type?: string; expires_in?: number; user_id?: number | string; error?: unknown };
@@ -169,4 +170,36 @@ export async function refreshInstagramToken(token: string) {
   const response = await jsonResponse<TokenResponse>(await fetch(url, { redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12_000) }));
   if (!response.access_token || !Number.isFinite(response.expires_in) || Number(response.expires_in) < 86_400) throw new Error("Instagram token refresh failed.");
   return { token: response.access_token, expiresAt: new Date(Date.now() + Number(response.expires_in) * 1000) };
+}
+
+/**
+ * Best-effort public analytics for a verified creator: average views of recent Reels and aggregated audience
+ * location and age. Any part Meta does not provide (permission, <100 followers) is simply left empty.
+ */
+export async function fetchInstagramAnalytics(token: string, userId: string, api: InstagramApi = "instagram"): Promise<InstagramAnalytics> {
+  if (!/^[0-9]+$/.test(userId)) throw new Error("Instagram account identity is invalid.");
+  const config = metaConfig();
+  const host = `${graphHost(api)}/${config.version}`;
+  const get = async (url: URL) => { const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12_000) }); if (!response.ok) throw new Error("Meta did not provide this data."); return response.json() as Promise<unknown>; };
+  const demographics = async (breakdown: "country" | "age") => {
+    const url = new URL(`${host}/${userId}/insights`);
+    url.search = new URLSearchParams({ metric: "follower_demographics", period: "lifetime", metric_type: "total_value", breakdown, timeframe: "this_month" }).toString();
+    return breakdownCounts(await get(url));
+  };
+  const reelViews = async () => {
+    const url = new URL(`${host}/${userId}/media`);
+    url.search = new URLSearchParams({ fields: "id,media_product_type", limit: "25" }).toString();
+    const media = ((await get(url)) as { data?: Array<{ id?: unknown; media_product_type?: unknown }> }).data ?? [];
+    const reels = media.filter((item) => typeof item.id === "string" && /^[0-9]+$/.test(item.id) && item.media_product_type === "REELS").slice(0, 10);
+    const views = await Promise.all(reels.map(async (reel) => {
+      const insightUrl = new URL(`${host}/${String(reel.id)}/insights`);
+      insightUrl.searchParams.set("metric", "views");
+      const body = await get(insightUrl).catch(() => null) as { data?: Array<{ values?: Array<{ value?: unknown }>; total_value?: { value?: unknown } }> } | null;
+      const raw = body?.data?.[0]?.total_value?.value ?? body?.data?.[0]?.values?.[0]?.value;
+      return typeof raw === "number" ? raw : NaN;
+    }));
+    return { average: averageViews(views), sampled: views.filter(Number.isFinite).length };
+  };
+  const [countries, ages, reels] = await Promise.all([demographics("country").catch(() => new Map<string, number>()), demographics("age").catch(() => new Map<string, number>()), reelViews().catch(() => ({ average: null, sampled: 0 }))]);
+  return { avgReelViews: reels.average, reelsSampled: reels.sampled, countries: topShares(countries), ages: ageShares(ages), fetchedAt: new Date() };
 }

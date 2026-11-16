@@ -3,12 +3,20 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, Clock3, Compass, Heart, Link2, Megaphone, Package, Share2, ShoppingCart, Star, Timer, UsersRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, CircleCheck, Clock3, Compass, Eye, Heart, Link2, Megaphone, MessageCircle, Package, Share2, ShoppingCart, Star, Timer, UserPlus, UsersRound } from "lucide-react";
+import { RESPONSE_WINDOW_HOURS, USAGE_RIGHTS, USAGE_RIGHTS_LABEL } from "@/lib/marketplace/booking-cart";
 import { CreatorTile, RatingBadge, StarRow } from "./creator-tile";
 import { readJson } from "@/lib/read-json";
 
 type Item = Record<string, unknown>;
 const api = "/api/marketplace/v1";
+const compact = (value: number) => new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+/** Country name and flag from an ISO code (flag built from regional indicator letters). */
+function countryLabel(code: string) {
+  if (code === "Other" || !/^[A-Z]{2}$/.test(code)) return { name: code, flag: "" };
+  let name = code; try { name = new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code; } catch { /* keep the code */ }
+  return { name, flag: String.fromCodePoint(...[...code].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65)) };
+}
 const obj = (value: unknown): Item => value && typeof value === "object" && !Array.isArray(value) ? value as Item : {};
 const arr = (value: unknown): Item[] => Array.isArray(value) ? value.map(obj) : [];
 const str = (value: unknown) => typeof value === "string" ? value : "";
@@ -68,6 +76,15 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     return payload;
   }
 
+  const [cartAdded, setCartAdded] = useState(false);
+  async function addPackageToCart() {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await post("/booking-cart", { influencerProfileId: creatorId, packageIndex: selectedPackage });
+      setCartAdded(true); setMessage("Package added to your cart.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "The package could not be added to your cart."); }
+    finally { setBusy(false); }
+  }
   async function saveCreator() {
     setBusy(true); setError(""); setMessage("");
     try {
@@ -97,7 +114,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     const data = new FormData(form);
     setBusy(true); setError(""); setMessage("");
     try {
-      await post(`/influencers/${encodeURIComponent(creatorId)}/bookings`, { brandId: data.get("brandId"), packageIndex: selectedPackage, brief: data.get("brief"), deadline: data.get("deadline") });
+      await post(`/influencers/${encodeURIComponent(creatorId)}/bookings`, { brandId: data.get("brandId"), packageIndex: selectedPackage, brief: data.get("brief"), deadline: data.get("deadline"), usageRights: data.get("usageRights"), message: data.get("message") });
       setMessage("Booking request sent. When the creator accepts, the package price and scope become the agreed terms and a private collaboration opens in your inbox. No payment is taken.");
       setBookingOpen(false);
       form.reset();
@@ -154,13 +171,24 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
         {portfolio.length > 0 && <section className="creator-marketplace-portfolio-links"><h3>Portfolio links</h3>{portfolio.map((url, index) => <a key={url} href={url} target="_blank" rel="noopener noreferrer"><Link2 size={14} /> Portfolio {index + 1}<ArrowRight size={13} /></a>)}</section>}
 
         <section className="creator-marketplace-analytics" id="creator-analytics">
-          <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">CONNECTED ACCOUNT SNAPSHOT</span><h2>Verified Instagram details</h2></div><Camera size={20} /></div>
-          <div className="creator-marketplace-metrics"><div><strong>{typeof instagram.verifiedFollowers === "number" ? instagram.verifiedFollowers.toLocaleString("en-IN") : "—"}</strong><span>Followers</span></div><div><strong>{typeof instagram.mediaCount === "number" ? instagram.mediaCount.toLocaleString("en-IN") : "—"}</strong><span>Published posts</span></div><div><strong>{str(creator.tier) || "—"}</strong><span>Creator tier</span></div></div>
-          <div className="creator-marketplace-source-note"><Clock3 size={14} /><span>Fetched from Meta on {date(instagram.verifiedAt)}. Audience reach, demographics and engagement insights are private to the connected creator account and are not inferred for public profiles.</span></div>
+          <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">VERIFIED THROUGH META</span><h2>Analytics</h2></div><Camera size={20} /></div>
+          {(() => { const analytics = obj(instagram.analytics); const countries = arr(analytics.countries); const ages = arr(analytics.ages); const avgViews = typeof analytics.avgReelViews === "number" ? analytics.avgReelViews : null; return <>
+            <div className="mp-analytics-stats">
+              <div><span className="mp-analytics-icon"><UserPlus size={20} aria-hidden="true" /></span><div><strong>{typeof instagram.verifiedFollowers === "number" ? compact(instagram.verifiedFollowers) : "—"}</strong><small>Followers</small></div></div>
+              <div><span className="mp-analytics-icon"><Eye size={20} aria-hidden="true" /></span><div><strong>{avgViews !== null ? compact(avgViews) : "—"}</strong><small title={avgViews !== null ? `Average over the last ${String(analytics.reelsSampled)} Reels` : "Shown when Meta provides Reel views"}>Avg. Reels views</small></div></div>
+              <div><span className="mp-analytics-icon"><Camera size={20} aria-hidden="true" /></span><div><strong>{typeof instagram.mediaCount === "number" ? compact(instagram.mediaCount) : "—"}</strong><small>Posts</small></div></div>
+            </div>
+            {(countries.length > 0 || ages.length > 0) ? <div className="mp-analytics-grid">
+              {countries.length > 0 && <div className="mp-analytics-card"><h3>Audience location</h3>{countries.map((row) => { const label = countryLabel(str(row.key)); return <div key={str(row.key)} className="mp-analytics-row"><div><span>{label.flag && <span aria-hidden="true">{label.flag} </span>}{label.name}</span><strong>{Number(row.percent)}%</strong></div><span className="mp-analytics-bar"><i style={{ width: `${Number(row.percent)}%` }} /></span></div>; })}</div>}
+              {ages.length > 0 && <div className="mp-analytics-card"><h3>Audience age</h3><p>By age group</p><div className="mp-analytics-ages">{ages.map((row) => <div key={str(row.key)}><strong>{Number(row.percent)}%</strong><span className="mp-analytics-column"><i style={{ height: `${Math.max(2, Number(row.percent))}%` }} /></span><small>{str(row.key)}</small></div>)}</div></div>}
+            </div> : <p className="marketplace-muted mp-analytics-note">Audience location and age appear once Meta provides them (Instagram accounts with 100+ followers).</p>}
+            <div className="creator-marketplace-source-note"><Clock3 size={14} /><span>From Meta{analytics.fetchedAt ? `, updated ${date(analytics.fetchedAt)}` : instagram.verifiedAt ? `, verified ${date(instagram.verifiedAt)}` : ""}. Audience data is aggregated and shared with the creator&apos;s permission.</span></div>
+          </>; })()}
         </section>
 
         <section className="mp-profile-reviews" aria-labelledby="mp-profile-reviews-title">
-          <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">BRAND FEEDBACK</span><h2 id="mp-profile-reviews-title">{typeof rating.count === "number" ? <>Reviews <span className="mp-profile-review-score"><Star size={16} fill="currentColor" /> {Number(rating.average).toFixed(1)} · {Number(rating.count)}</span></> : "Reviews"}</h2></div></div>
+          <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">BRAND FEEDBACK</span><h2 id="mp-profile-reviews-title">{typeof rating.count === "number" ? <>{Number(rating.count)} {Number(rating.count) === 1 ? "Review" : "Reviews"} <span className="mp-profile-review-score">· <Star size={18} fill="currentColor" aria-hidden="true" /> {Number(rating.average).toFixed(1)}</span></> : "Reviews"}</h2></div></div>
+          {typeof rating.communication === "number" && <div className="mp-review-scores">{[["Communication", rating.communication, MessageCircle], ["Timeliness", rating.timeliness, Clock3], ["Satisfaction", rating.satisfaction, CircleCheck]].map(([label, value, Icon]) => { const IconComponent = Icon as typeof MessageCircle; return <div key={String(label)}><IconComponent size={26} aria-hidden="true" /><span><small>{String(label)}</small><strong>{Number(value).toFixed(1)}</strong></span></div>; })}</div>}
           {reviews.length ? <div className="mp-profile-review-list">{reviews.map((review) => <article key={str(review._id)}><div><strong>{str(review.brandName)}</strong><StarRow rating={Number(review.rating || 0)} /></div><p>{str(review.comment)}</p><small>{date(review.createdAt)}</small></article>)}</div> : <p className="marketplace-muted">No reviews yet. Reviews appear after a brand completes a collaboration with this creator.</p>}
         </section>
       </div>
@@ -170,16 +198,18 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
           <div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">COLLABORATION RATES</span><h2>Packages</h2></div><Package size={19} /></div>
           {packages.length ? <div className="creator-marketplace-package-list mp-package-picker" role="radiogroup" aria-label="Choose a package">{packages.map((item, index) => <label key={`${str(item.title)}-${index}`} className={selectedPackage === index ? "is-selected" : ""}><input type="radio" name="package" checked={selectedPackage === index} onChange={() => setSelectedPackage(index)} /><div><span>{str(item.title)}</span><strong>{money(item.pricePaise)}</strong></div><p>{str(item.deliverables)}</p>{typeof item.deliveryDays === "number" && <small><Timer size={12} /> {item.deliveryDays}-day delivery</small>}</label>)}</div> : <div className="creator-marketplace-starting-rate"><span>Starting collaboration rate</span><strong>{money(creator.ratePaise)}</strong><small>This creator has not listed fixed packages yet. Invite them to a campaign to agree a price.</small></div>}
 
-          {bookable && !bookingOpen && <button type="button" className="creator-marketplace-add-cart mp-book-button" onClick={() => setBookingOpen(true)}>Continue · {money(activePackage.pricePaise)}<ArrowRight size={17} /></button>}
+          {bookable && !bookingOpen && <div className="mp-package-actions"><button type="button" className="creator-marketplace-add-cart mp-book-button" disabled={busy} onClick={() => void addPackageToCart()}><ShoppingCart size={17} aria-hidden="true" /> Add to cart · {money(activePackage.pricePaise)}</button><button type="button" className="marketplace-secondary" onClick={() => setBookingOpen(true)}>Book only this creator <ArrowRight size={15} /></button>{cartAdded && <Link className="mp-view-cart" href={`${basePath}/checkout`}>View cart and check out <ArrowRight size={14} /></Link>}</div>}
           {bookable && bookingOpen && (brands.length ? <form className="marketplace-form mp-booking-form" onSubmit={(event) => void requestBooking(event)}>
             <div className="mp-booking-summary"><span>{str(activePackage.title)}</span><strong>{money(activePackage.pricePaise)}</strong></div>
             <label className="marketplace-field"><span>Booking as</span><select name="brandId" required>{brands.map((brand) => <option key={str(brand._id)} value={str(brand._id)}>{str(brand.name)}</option>)}</select></label>
             <label className="marketplace-field"><span>Brief for the creator</span><textarea name="brief" required minLength={20} maxLength={4000} rows={4} placeholder="Your product, key message, do’s and don’ts, and where the content will be used" /></label>
             <label className="marketplace-field"><span>Content needed by</span><input name="deadline" type="date" required min={isoDateInDays(1)} defaultValue={isoDateInDays(minDeliveryDays + 2)} /></label>
+            <label className="marketplace-field"><span>Usage rights</span><select name="usageRights" defaultValue="none">{USAGE_RIGHTS.map((value) => <option key={value} value={value}>{USAGE_RIGHTS_LABEL[value]}</option>)}</select></label>
+            <label className="marketplace-field"><span>Message (optional)</span><textarea name="message" maxLength={1000} rows={2} placeholder="Anything else the creator should know" /></label>
             <div className="marketplace-actions"><button type="button" onClick={() => setBookingOpen(false)}>Cancel</button><button className="marketplace-primary" disabled={busy}>{busy ? "Sending…" : "Send booking request"}</button></div>
-            <small className="marketplace-form-note">No payment is taken. Online checkout is not enabled yet; the agreed price is recorded for both sides.</small>
+            <small className="marketplace-form-note">The creator has {RESPONSE_WINDOW_HOURS} hours to accept, or the request expires. No payment is taken yet; the agreed price is recorded for both sides.</small>
           </form> : <div className="mp-booking-needs-brand"><p>Create a brand profile to book creators. It takes a minute.</p><Link className="marketplace-secondary" href={`${basePath}/brand`}>Create a brand profile <ArrowRight size={14} /></Link></div>)}
-          {!creator.owner && <button type="button" className="mp-save-button" disabled={busy || saved} onClick={() => void saveCreator()}><ShoppingCart size={15} />{saved ? "Saved to your shortlist" : busy ? "Saving…" : "Save to creator cart"}</button>}
+          {!creator.owner && <button type="button" className="mp-save-button" disabled={busy || saved} onClick={() => void saveCreator()}><Heart size={15} fill={saved ? "currentColor" : "none"} />{saved ? "Saved" : busy ? "Saving…" : "Save creator"}</button>}
           {Boolean(creator.owner) && <p className="creator-marketplace-cart-note">This is how brands see your profile. <Link href={`${basePath}/creator`}>Edit packages</Link></p>}
         </section>
         {campaigns.length > 0 && <section className="marketplace-panel creator-marketplace-invite"><div className="creator-marketplace-section-heading"><div><span className="marketplace-eyebrow">FOR BRAND ACCOUNTS</span><h2>Invite to campaign</h2></div><Megaphone size={19} /></div><form className="marketplace-form" onSubmit={(event) => void inviteToCampaign(event)}><label className="marketplace-field"><span>Open campaign</span><select name="campaignId" required>{campaigns.map((campaign) => <option key={str(campaign._id)} value={str(campaign._id)}>{str(campaign.title)}</option>)}</select></label><label className="marketplace-field"><span>Invitation note</span><textarea name="message" minLength={10} maxLength={1000} required rows={3} placeholder="Why would this creator fit your brief?" /></label><button className="marketplace-primary" disabled={busy}>Send invitation <ArrowRight size={15} /></button></form></section>}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, BriefcaseBusiness, ChevronDown, Compass, Heart, LayoutDashboard, LogOut, Megaphone, MessageSquareText, Plus, Settings2, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, ChevronDown, Compass, Heart, LayoutDashboard, LogOut, Megaphone, MessageSquareText, Plus, Settings2, ShieldCheck, ShoppingCart, UserRound } from "lucide-react";
 import { BrandLogo } from "@/components/marketing/brand-logo";
 import { WorkspaceNotifications } from "@/components/workspace/workspace-notifications";
 import { signOutAction } from "@/app/login/action";
@@ -15,6 +15,7 @@ const primaryLinks = [
   { href: `${base}/campaigns`, label: "Campaigns", icon: Megaphone },
   { href: `${base}/inbox`, label: "Inbox", icon: MessageSquareText },
   { href: `${base}/cart`, label: "Saved", icon: Heart },
+  { href: `${base}/checkout`, label: "Cart", icon: ShoppingCart },
 ];
 
 function initials(name: string) {

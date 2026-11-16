@@ -1,6 +1,7 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { influencerTier } from "./tiers.ts";
 import { instagramHandleMatches } from "./instagram-handle.ts";
+import { RESPONSE_WINDOW_HOURS } from "./booking-cart.ts";
 
 export const BRAND_CATEGORIES = ["startup", "small_business", "local_business", "ecommerce", "established_company", "marketing_agency", "enterprise"] as const;
 export type BrandCategory = typeof BRAND_CATEGORIES[number];
@@ -166,4 +167,17 @@ export function startingPricePaise(profile: Document): number | null {
 /** Status after a successful Meta verification: listed straight away, unless an admin rejected or suspended the profile. */
 export function statusAfterVerification(current: unknown) {
   return current === "rejected" || current === "suspended" ? current : "approved";
+}
+
+/** Declines bookings and invitations nobody answered within RESPONSE_WINDOW_HOURS, and tells both sides. */
+export async function expireOverdueRequests(db: Db, now = new Date()) {
+  const overdue = await db.collection("mp_applications").find({ status: "invited", respondBy: { $lte: now } }).limit(200).toArray();
+  for (const request of overdue) {
+    const updated = await db.collection("mp_applications").updateOne({ _id: request._id, status: "invited" }, { $set: { status: "declined", declineReason: "no_response", decidedAt: now, updatedAt: now } });
+    if (!updated.modifiedCount) continue;
+    const what = request.type === "booking" ? `booking “${String(request.packageTitle || "package")}”` : "campaign invitation";
+    await notify(db, String(request.createdBy), "Request expired", `The creator did not respond to your ${what} within ${RESPONSE_WINDOW_HOURS} hours. You can book another creator.`, "/influencer-marketing/inbox");
+    await notify(db, String(request.influencerId), "Request expired", `A ${what} expired because it was not answered within ${RESPONSE_WINDOW_HOURS} hours.`, "/influencer-marketing/inbox");
+  }
+  return overdue.length;
 }

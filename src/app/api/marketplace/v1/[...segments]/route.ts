@@ -1,12 +1,13 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { locationSearchTerm } from "@/lib/marketplace/india-cities";
+import { MAX_CART_ITEMS, RESPONSE_WINDOW_HOURS, isResponseOverdue, parseUsageRights, respondByFrom, summarizeCart, type CartPackage } from "@/lib/marketplace/booking-cart";
 import { CAMPAIGN_CATEGORIES, COMPENSATION_TYPES, meetsFollowerMinimum, parseCampaign, parseProposedPrice } from "@/lib/marketplace/campaigns";
 import { instagramHandleMatches, normalizeInstagramHandle } from "@/lib/marketplace/instagram-handle";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
-import { LISTABLE_CREATOR_STATUS, isCurrentMetaVerification, BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
+import { LISTABLE_CREATOR_STATUS, expireOverdueRequests, isCurrentMetaVerification, BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
 import { queueMarketplaceEvent, realtimeAvailable } from "@/lib/marketplace/realtime";
 import { getRazorpayConfig, marketplaceCommissionBps, razorpayRequest, RazorpayApiError, verifyRazorpayHmac } from "@/lib/marketplace/razorpay";
 import { recordCapturedCampaignPayment, type CampaignCapturedPayment } from "@/lib/marketplace/campaign-payments";
@@ -63,6 +64,7 @@ export async function GET(request: Request, context: Context) {
   const db = (await clientPromise).db();
   await ensureMarketplaceIndexes(db);
   if (path[0] === "me" && path.length === 1) {
+    await expireOverdueRequests(db);
     const [influencer, ownedBrands, memberships, applications] = await Promise.all([
       db.collection("mp_influencers").findOne({ userId }),
       db.collection("mp_brands").find({ ownerId: userId }).limit(20).toArray(),
@@ -149,8 +151,8 @@ export async function GET(request: Request, context: Context) {
     const reviewBrandIds = [...new Map(reviewDocs.map((review) => { const brandId = brandIdByCollaboration.get(String(review.collaborationId)); return [String(brandId), brandId]; })).values()].filter((value): value is ObjectId => value instanceof ObjectId);
     const reviewBrands = reviewBrandIds.length ? await db.collection("mp_brands").find({ _id: { $in: reviewBrandIds } }, { projection: { name: 1 } }).toArray() : [];
     const reviewBrandName = new Map(reviewBrands.map((brand) => [String(brand._id), String(brand.name || "")]));
-    const reviews = reviewDocs.map((review) => ({ _id: String(review._id), rating: review.rating, comment: review.comment, createdAt: review.createdAt, brandName: reviewBrandName.get(String(brandIdByCollaboration.get(String(review.collaborationId)))) || "Verified brand" }));
-    const rating = reviews.length ? { average: Math.round(reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length * 10) / 10, count: reviews.length } : null;
+    const reviews = reviewDocs.map((review) => ({ _id: String(review._id), rating: review.rating, ...(review.scores ? { scores: review.scores } : {}), comment: review.comment, createdAt: review.createdAt, brandName: reviewBrandName.get(String(brandIdByCollaboration.get(String(review.collaborationId)))) || "Verified brand" }));
+    const rating = reviews.length ? { average: Math.round(reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length * 10) / 10, count: reviews.length, ...reviewScoreAverages(reviewDocs) } : null;
     // Similar creators: same niche, currently public, excluding this creator and the viewer.
     const categories = Array.isArray(profile.categories) ? profile.categories.filter((value: unknown): value is string => typeof value === "string").slice(0, 5) : [];
     const similarFilter: Record<string, unknown> = { _id: { $ne: profile._id }, userId: { $ne: userId }, status: LISTABLE_CREATOR_STATUS, "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
@@ -163,8 +165,22 @@ export async function GET(request: Request, context: Context) {
       packages: profile.packages, status: profile.status, createdAt: profile.createdAt, owner, tier: profileTier(profile),
       bookable: !owner && isActiveCreator(profile),
       fromPricePaise: startingPricePaise(profile), rating, completedCollaborations: completed.length,
-      instagram: { username: instagram.username, accountType: instagram.accountType, verifiedFollowers: instagram.verifiedFollowers, mediaCount: instagram.mediaCount, profilePictureUrl: instagram.profilePictureUrl, recentMedia: instagram.recentMedia, mediaFetchedAt: instagram.mediaFetchedAt, verifiedAt: instagram.verifiedAt, source: instagram.source },
+      instagram: { username: instagram.username, accountType: instagram.accountType, verifiedFollowers: instagram.verifiedFollowers, analytics: instagram.analytics ?? null, mediaCount: instagram.mediaCount, profilePictureUrl: instagram.profilePictureUrl, recentMedia: instagram.recentMedia, mediaFetchedAt: instagram.mediaFetchedAt, verifiedAt: instagram.verifiedAt, source: instagram.source },
     }, reviews, similar });
+  }
+  if (path[0] === "booking-cart" && path.length === 1) {
+    const items = await db.collection("mp_booking_cart").find({ userId }).sort({ createdAt: 1 }).limit(MAX_CART_ITEMS).toArray();
+    const profiles = items.length ? new Map((await db.collection("mp_influencers").find({ _id: { $in: [...new Set(items.map((item) => String(item.influencerProfileId)))].map((value) => new ObjectId(value)) } }).toArray()).map((profile) => [String(profile._id), profile])) : new Map<string, Document>();
+    const packages: CartPackage[] = []; const unavailable: string[] = [];
+    for (const item of items) {
+      const profile = profiles.get(String(item.influencerProfileId)); const selected = profile && Array.isArray(profile.packages) ? (profile.packages as Document[])[Number(item.packageIndex)] : null; const price = inrPaise(selected?.pricePaise);
+      if (!profile || !selected || price === null || price < 100 || !isActiveCreator(profile)) { unavailable.push(String(item._id)); continue; }
+      packages.push({ itemId: String(item._id), creatorId: String(profile._id), creatorName: String(profile.displayName || "Creator"), packageIndex: Number(item.packageIndex), title: String(selected.title || "Package"), pricePaise: price, deliveryDays: Number.isInteger(selected.deliveryDays) ? Number(selected.deliveryDays) : null });
+    }
+    if (unavailable.length) await db.collection("mp_booking_cart").deleteMany({ userId, _id: { $in: unavailable.map((value) => new ObjectId(value)) } });
+    const pictures = new Map([...profiles.values()].map((profile) => [String(profile._id), String((profile.instagram as { profilePictureUrl?: unknown } | undefined)?.profilePictureUrl || "")]));
+    const summary = summarizeCart(packages);
+    return json({ ...summary, creators: summary.creators.map((group) => ({ ...group, picture: pictures.get(group.creatorId) || null })), removedUnavailable: unavailable.length, respondWithinHours: RESPONSE_WINDOW_HOURS });
   }
   if (path[0] === "saved-campaigns" && path.length === 1) {
     const saved = await db.collection("mp_saved_campaigns").find({ userId }).sort({ createdAt: -1 }).limit(100).toArray();
@@ -273,7 +289,7 @@ export async function GET(request: Request, context: Context) {
       db.collection("mp_agreements").findOne({ collaborationId: id }),
       db.collection("mp_orders").findOne({ collaborationId: id }, { projection: { _id: 1, amountPaise: 1, currency: 1, commissionBps: 1, paymentStatus: 1, checkoutState: 1, payoutStatus: 1, paidAt: 1, completedAt: 1 } }),
     ]);
-    return json({ collaboration: record(access.collaboration), offers: records(offers), deliverables: records(deliverables), reviews: records(reviews), agreement: record(agreement), order: record(order) });
+    return json({ collaboration: record(access.collaboration), viewerRole: access.role, offers: records(offers), deliverables: records(deliverables), reviews: records(reviews), agreement: record(agreement), order: record(order) });
   }
   if (path[0] === "admin" && path.length === 1) {
     if (!admin(session.user.email)) return error("Admin access required.", 403);
@@ -315,6 +331,31 @@ export async function POST(request: Request, context: Context) {
   if (!limit.allowed) return error("Too many requests. Try again shortly.", 429);
   const now = new Date();
 
+  if (path[0] === "booking-cart" && path.length === 1) {
+    const influencerProfileId = objectId(body.influencerProfileId); if (!influencerProfileId) return error("Choose a creator package.");
+    const packageIndex = body.packageIndex;
+    const influencer = await db.collection("mp_influencers").findOne({ _id: influencerProfileId });
+    if (!influencer || influencer.userId === userId || !isActiveCreator(influencer)) return error("This creator is not available for booking.", 409);
+    const packages = Array.isArray(influencer.packages) ? influencer.packages as Document[] : [];
+    if (!Number.isInteger(packageIndex) || Number(packageIndex) < 0 || Number(packageIndex) >= packages.length || (inrPaise(packages[Number(packageIndex)]?.pricePaise) ?? 0) < 100) return error("Choose one of the creator's packages.");
+    if (await db.collection("mp_booking_cart").countDocuments({ userId }) >= MAX_CART_ITEMS) return error(`Your cart holds up to ${MAX_CART_ITEMS} packages. Check out or remove some first.`, 409);
+    const result = await db.collection("mp_booking_cart").updateOne({ userId, influencerProfileId, packageIndex: Number(packageIndex) }, { $setOnInsert: { userId, influencerProfileId, packageIndex: Number(packageIndex), createdAt: now } }, { upsert: true });
+    return json({ added: result.upsertedCount > 0, count: await db.collection("mp_booking_cart").countDocuments({ userId }) }, 201);
+  }
+  if (path[0] === "booking-cart" && path[1] === "checkout" && path.length === 2) {
+    const items = await db.collection("mp_booking_cart").find({ userId }).sort({ createdAt: 1 }).toArray();
+    if (!items.length) return error("Your cart is empty.");
+    const byCreator = new Map<string, { influencerProfileId: ObjectId; packageIndexes: number[]; itemIds: ObjectId[] }>();
+    for (const item of items) { const key = String(item.influencerProfileId); const group: { influencerProfileId: ObjectId; packageIndexes: number[]; itemIds: ObjectId[] } = byCreator.get(key) ?? { influencerProfileId: item.influencerProfileId, packageIndexes: [], itemIds: [] }; group.packageIndexes.push(Number(item.packageIndex)); group.itemIds.push(item._id); byCreator.set(key, group); }
+    const sent: Array<Record<string, unknown>> = []; const failed: Array<{ creator: string; error: string }> = [];
+    for (const group of byCreator.values()) {
+      const result = await createPackageBooking(db, { userId, brandId: body.brandId, influencerProfileId: group.influencerProfileId, packageIndexes: group.packageIndexes, brief: body.brief, deadline: body.deadline, usageRights: body.usageRights, message: body.message, now });
+      if ("error" in result) { if (result.status === 400 || result.status === 403) return error(result.error, result.status); failed.push({ creator: result.creatorName || "A creator", error: result.error }); continue; }
+      sent.push(record(result.booking) ?? {});
+      await db.collection("mp_booking_cart").deleteMany({ userId, _id: { $in: group.itemIds } });
+    }
+    return json({ sent, failed, respondWithinHours: RESPONSE_WINDOW_HOURS }, sent.length ? 201 : 409);
+  }
   if (path[0] === "saved-campaigns" && path.length === 1) {
     const campaignId = objectId(body.campaignId); if (!campaignId) return error("Choose a valid campaign.");
     const campaign = await db.collection("mp_campaigns").findOne({ _id: campaignId, ...notBooking }, { projection: { _id: 1 } });
@@ -338,32 +379,9 @@ export async function POST(request: Request, context: Context) {
   if (path[0] === "influencers" && path[1] && path[2] === "bookings" && path.length === 3) {
     // Direct package booking: the brand picks a creator package and sends a brief.
     const influencerProfileId = objectId(path[1]); if (!influencerProfileId) return error("Invalid creator profile ID.");
-    const brandId = objectId(body.brandId); if (!brandId) return error("Choose the brand making this booking.");
-    const member = await brandMembership(db, brandId, userId);
-    if (!member || !["owner", "admin", "editor"].includes(member.role)) return error("Brand edit access is required to book creators.", 403);
-    const brand = await db.collection("mp_brands").findOne({ _id: brandId, status: LISTABLE_CREATOR_STATUS });
-    if (!brand) return error("Your brand must be approved before it can book creators.", 409);
-    const influencer = await db.collection("mp_influencers").findOne({ _id: influencerProfileId });
-    if (!influencer || influencer.userId === userId || !isActiveCreator(influencer)) return error("This creator is not available for booking.", 409);
-    const packages = Array.isArray(influencer.packages) ? influencer.packages as Document[] : [];
-    const packageIndex = body.packageIndex;
-    if (!Number.isInteger(packageIndex) || Number(packageIndex) < 0 || Number(packageIndex) >= packages.length) return error("Choose one of the creator's packages.");
-    const selected = packages[Number(packageIndex)];
-    const pricePaise = inrPaise(selected?.pricePaise);
-    if (!selected || pricePaise === null || pricePaise < 100) return error("This package does not have a bookable price.", 409);
-    const brief = cleanText(body.brief, 4000, 20); if (!brief) return error("Write a brief of at least 20 characters describing your product and what you need.");
-    const deadline = typeof body.deadline === "string" ? new Date(body.deadline) : new Date(NaN);
-    if (!Number.isFinite(deadline.getTime()) || deadline <= now || deadline.getTime() > now.getTime() + 365 * 86_400_000) return error("Choose a delivery date within the next year.");
-    const pending = await db.collection("mp_applications").countDocuments({ brandId, influencerId: String(influencer.userId), type: "booking", status: "invited" });
-    if (pending) return error("You already have a pending booking with this creator. Wait for a response or withdraw it first.", 409);
-    const campaignId = new ObjectId();
-    const packageSnapshot = { index: Number(packageIndex), title: String(selected.title || "Package"), deliverables: String(selected.deliverables || ""), pricePaise, deliveryDays: Number.isInteger(selected.deliveryDays) ? selected.deliveryDays : null };
-    await db.collection("mp_campaigns").insertOne({ _id: campaignId, kind: PACKAGE_BOOKING_KIND, brandId, influencerProfileId, title: `${packageSnapshot.title} · ${String(influencer.displayName)}`, brief, deliverables: [packageSnapshot.deliverables.slice(0, 60) || packageSnapshot.title], targetAudience: "Direct package booking", budgetPaise: pricePaise, deadline, packageSnapshot, status: "open", currency: "INR", createdBy: userId, createdAt: now, updatedAt: now });
-    const booking = { _id: new ObjectId(), campaignId, brandId, influencerId: String(influencer.userId), type: "booking", status: "invited", pitch: brief, packageTitle: packageSnapshot.title, amountPaise: pricePaise, createdBy: userId, createdAt: now, updatedAt: now };
-    await db.collection("mp_applications").insertOne(booking);
-    await db.collection("mp_audit").insertOne({ entityId: campaignId, actorId: userId, action: "package_booking.requested", influencerProfileId, amountPaise: pricePaise, createdAt: now });
-    await notify(db, String(influencer.userId), "New package booking", `${String(brand.name)} requested “${packageSnapshot.title}”.`, "/influencer-marketing/inbox");
-    return json({ booking: record(booking) }, 201);
+    const result = await createPackageBooking(db, { userId, brandId: body.brandId, influencerProfileId, packageIndexes: [body.packageIndex], brief: body.brief, deadline: body.deadline, usageRights: body.usageRights, message: body.message, now });
+    if ("error" in result) return error(result.error, result.status);
+    return json({ booking: record(result.booking) }, 201);
   }
 
   if (path[0] === "applications" && path[1] && path[2] === "withdraw") {
@@ -536,7 +554,7 @@ export async function POST(request: Request, context: Context) {
     const influencerId = String(influencer.userId);
     const message = cleanText(body.message, 1000, 10); if (!message) return error("Write an invitation message.");
     try {
-      const invitation = { _id: new ObjectId(), campaignId, brandId: campaign.brandId, influencerId, type: "invitation", status: "invited", pitch: message, createdBy: userId, createdAt: now, updatedAt: now };
+      const invitation = { _id: new ObjectId(), campaignId, brandId: campaign.brandId, influencerId, type: "invitation", status: "invited", pitch: message, respondBy: respondByFrom(now), createdBy: userId, createdAt: now, updatedAt: now };
       await db.collection("mp_applications").insertOne(invitation);
       await notify(db, influencerId!, "Campaign invitation", `You were invited to ${campaign.title}.`, "/influencer-marketing/inbox");
       return json({ invitation: record(invitation) }, 201);
@@ -549,6 +567,7 @@ export async function POST(request: Request, context: Context) {
     const member = await brandMembership(db, application.brandId, userId);
     const brandSide = !!member && ["owner", "admin", "editor"].includes(member.role);
     if (application.type === "application" ? !brandSide : application.influencerId !== userId) return error("This decision belongs to the other party.", 403);
+    if (isResponseOverdue(application, now)) { await expireOverdueRequests(db, now); return error(`This request expired: it was not answered within ${RESPONSE_WINDOW_HOURS} hours.`, 409); }
     if (path[2] === "accept") {
       const campaign = await db.collection("mp_campaigns").findOne({ _id: application.campaignId, status: "open" });
       const brand = await db.collection("mp_brands").findOne({ _id: application.brandId, status: LISTABLE_CREATOR_STATUS });
@@ -641,9 +660,13 @@ export async function POST(request: Request, context: Context) {
     if (path[2] === "reviews") {
       if (access.collaboration.status !== "completed") return error("Complete the collaboration before reviewing.", 409);
       if (access.role === "brand" && !["owner", "admin"].includes(String(access.member?.role))) return error("Brand owner or administrator approval is required for reviews.", 403);
-      const rating = body.rating; const comment = cleanText(body.comment, 1000, 10);
-      if (!Number.isInteger(rating) || Number(rating) < 1 || Number(rating) > 5 || !comment) return error("Give a rating from 1 to 5 and a comment.");
-      try { const review = { _id: new ObjectId(), collaborationId: id, reviewerId: userId, reviewedRole: access.role === "brand" ? "influencer" : "brand", rating, comment, createdAt: now }; await db.collection("mp_reviews").insertOne(review); return json({ review: record(review) }, 201); }
+      const comment = cleanText(body.comment, 1000, 10);
+      // Brands rate creators on communication, timeliness and satisfaction; the overall rating is their average.
+      const scores = access.role === "brand" ? parseReviewScores(body) : null;
+      if (access.role === "brand" && !scores) return error("Rate communication, timeliness and satisfaction from 1 to 5.");
+      const rating = scores ? Math.round((scores.communication + scores.timeliness + scores.satisfaction) / 3) : body.rating;
+      if (!Number.isInteger(rating) || Number(rating) < 1 || Number(rating) > 5 || !comment) return error("Give a rating from 1 to 5 and a comment of at least 10 characters.");
+      try { const review = { _id: new ObjectId(), collaborationId: id, reviewerId: userId, reviewedRole: access.role === "brand" ? "influencer" : "brand", rating, ...(scores ? { scores } : {}), comment, createdAt: now }; await db.collection("mp_reviews").insertOne(review); return json({ review: record(review) }, 201); }
       catch (caught) { if (typeof caught === "object" && caught && "code" in caught && caught.code === 11000) return error("You already reviewed this collaboration.", 409); throw caught; }
     }
     if (path[2] === "disputes") {
@@ -844,6 +867,12 @@ export async function DELETE(request: Request, context: Context) {
   if (!session?.user?.id) return error("Authentication required.", 401);
   const path = (await context.params).segments;
   if (path[0] === "influencers" && path[1] === "me" && path.length === 2) return deleteCreatorProfile(request, session.user.id);
+  if (path[0] === "booking-cart" && path.length === 2) {
+    const itemId = objectId(path[1]); if (!itemId) return error("Choose a cart item.");
+    const db = (await clientPromise).db();
+    const result = await db.collection("mp_booking_cart").deleteOne({ userId: session.user.id, _id: itemId });
+    return json({ removed: result.deletedCount > 0 });
+  }
   if (path[0] === "saved-campaigns" && path.length === 2) {
     const campaignId = objectId(path[1]); if (!campaignId) return error("Choose a valid campaign.");
     const db = (await clientPromise).db();
@@ -904,4 +933,60 @@ function packageProblem(value: unknown, number: number) {
   if (inrPaise(item.pricePaise) === null) return `${label}: enter a price in rupees.`;
   if (!cleanText(item.deliverables, 500, 2)) return `${label}: describe what's included (at least 2 characters, up to 500).`;
   return `${label}: delivery must be between 1 and 90 days.`;
+}
+
+/**
+ * Creates one package booking request (one or more packages from the same creator), shared by "Book now" and
+ * cart checkout. The creator has RESPONSE_WINDOW_HOURS to accept before the request expires.
+ */
+async function createPackageBooking(db: Db, input: { userId: string; brandId: unknown; influencerProfileId: ObjectId; packageIndexes: unknown[]; brief: unknown; deadline: unknown; usageRights: unknown; message: unknown; now: Date }): Promise<{ booking: Document } | { error: string; status: number; creatorName?: string }> {
+  const { userId, now } = input;
+  const brandId = objectId(input.brandId); if (!brandId) return { error: "Choose the brand making this booking.", status: 400 };
+  const member = await brandMembership(db, brandId, userId);
+  if (!member || !["owner", "admin", "editor"].includes(member.role)) return { error: "Brand edit access is required to book creators.", status: 403 };
+  const brand = await db.collection("mp_brands").findOne({ _id: brandId, status: LISTABLE_CREATOR_STATUS });
+  if (!brand) return { error: "This brand profile is paused and cannot book creators.", status: 403 };
+  const brief = cleanText(input.brief, 4000, 20); if (!brief) return { error: "Write a brief of at least 20 characters describing your product and what you need.", status: 400 };
+  const deadline = typeof input.deadline === "string" ? new Date(input.deadline) : new Date(NaN);
+  if (!Number.isFinite(deadline.getTime()) || deadline <= now || deadline.getTime() > now.getTime() + 365 * 86_400_000) return { error: "Choose a delivery date within the next year.", status: 400 };
+  const message = input.message == null || input.message === "" ? "" : cleanText(input.message, 1000, 0);
+  if (message === null) return { error: "Keep the message under 1,000 characters.", status: 400 };
+  const usageRights = parseUsageRights(input.usageRights);
+  const influencer = await db.collection("mp_influencers").findOne({ _id: input.influencerProfileId });
+  const creatorName = influencer ? String(influencer.displayName || "Creator") : undefined;
+  if (!influencer || influencer.userId === userId || !isActiveCreator(influencer)) return { error: `${creatorName || "This creator"} is not available for booking right now.`, status: 409, creatorName };
+  const all = Array.isArray(influencer.packages) ? influencer.packages as Document[] : [];
+  const indexes = [...new Set(input.packageIndexes)];
+  if (!indexes.length || indexes.some((index) => !Number.isInteger(index) || Number(index) < 0 || Number(index) >= all.length)) return { error: "Choose one of the creator's packages.", status: 400, creatorName };
+  const packages = indexes.map((index) => { const item = all[Number(index)]; return { index: Number(index), title: String(item?.title || "Package"), deliverables: String(item?.deliverables || ""), pricePaise: inrPaise(item?.pricePaise) ?? 0, deliveryDays: Number.isInteger(item?.deliveryDays) ? Number(item.deliveryDays) : null }; });
+  if (packages.some((item) => item.pricePaise < 100)) return { error: "A selected package does not have a bookable price.", status: 409, creatorName };
+  const pending = await db.collection("mp_applications").countDocuments({ brandId, influencerId: String(influencer.userId), type: "booking", status: "invited" });
+  if (pending) return { error: `You already have a pending request with ${creatorName}. Wait for a response or withdraw it first.`, status: 409, creatorName };
+  const amountPaise = packages.reduce((sum, item) => sum + item.pricePaise, 0);
+  const title = packages.map((item) => item.title).join(" + ");
+  const campaignId = new ObjectId();
+  await db.collection("mp_campaigns").insertOne({ _id: campaignId, kind: PACKAGE_BOOKING_KIND, brandId, influencerProfileId: input.influencerProfileId, title: `${title} · ${creatorName}`.slice(0, 200), brief, deliverables: packages.map((item) => (item.deliverables || item.title).slice(0, 60)), targetAudience: "Package booking", budgetPaise: amountPaise, deadline, usageRights, status: "open", currency: "INR", packageSnapshot: packages[0], packages, createdBy: userId, createdAt: now, updatedAt: now });
+  const booking = { _id: new ObjectId(), campaignId, brandId, influencerId: String(influencer.userId), type: "booking", status: "invited", pitch: brief, ...(message ? { message } : {}), usageRights, packageTitle: title, packages, amountPaise, respondBy: respondByFrom(now), createdBy: userId, createdAt: now, updatedAt: now };
+  await db.collection("mp_applications").insertOne(booking);
+  await db.collection("mp_audit").insertOne({ entityId: campaignId, actorId: userId, action: "package_booking.requested", influencerProfileId: input.influencerProfileId, amountPaise, packages: packages.length, createdAt: now });
+  await notify(db, String(influencer.userId), "New booking request", `${String(brand.name)} requested “${title}”. Respond within ${RESPONSE_WINDOW_HOURS} hours.`, "/influencer-marketing/inbox");
+  return { booking };
+}
+
+/** Brand's 1-5 scores for a creator; null unless all three are whole numbers from 1 to 5. */
+function parseReviewScores(body: Record<string, unknown>) {
+  const score = (value: unknown) => Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 5 ? Number(value) : null;
+  const communication = score(body.communication), timeliness = score(body.timeliness), satisfaction = score(body.satisfaction);
+  return communication && timeliness && satisfaction ? { communication, timeliness, satisfaction } : null;
+}
+
+/** Average communication, timeliness and satisfaction over the reviews that have them (older reviews may not). */
+function reviewScoreAverages(reviews: Document[]) {
+  const scored = reviews.map((review) => review.scores as Record<string, number> | undefined).filter((scores): scores is Record<string, number> => Boolean(scores));
+  if (!scored.length) return {};
+  const average = (key: string) => Math.round(scored.reduce((sum, scores) => sum + Number(scores[key] || 0), 0) / scored.length * 10) / 10;
+  const parts = { communication: average("communication"), timeliness: average("timeliness"), satisfaction: average("satisfaction") };
+  // When every review has the three scores, the overall rating is their precise average (e.g. 4.7 rather than 5).
+  const precise = scored.length === reviews.length ? { average: Math.round((parts.communication + parts.timeliness + parts.satisfaction) / 3 * 10) / 10 } : {};
+  return { ...parts, ...precise };
 }

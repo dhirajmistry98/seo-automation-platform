@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { ensureMarketplaceIndexes, statusAfterVerification } from "@/lib/marketplace/core";
 import { instagramHandleMatches } from "@/lib/marketplace/instagram-handle";
-import { encryptToken, exchangeInstagramCode, exchangeUnifiedCode, fetchInstagramMedia, fetchInstagramProfile, hashState, listAssignedInstagramAccounts, metaConfig, type InstagramApi } from "@/lib/marketplace/meta";
+import { encryptToken, exchangeInstagramCode, exchangeUnifiedCode, fetchInstagramAnalytics, fetchInstagramMedia, fetchInstagramProfile, hashState, listAssignedInstagramAccounts, metaConfig, type InstagramApi } from "@/lib/marketplace/meta";
 
 export async function GET(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -51,6 +51,9 @@ export async function GET(request: Request) {
     // A successful Meta verification lists the creator straight away; an admin's rejection or suspension stays in force.
     const listedStatus = statusAfterVerification(creator.status);
     await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { instagram: { providerUserId: exchange.userId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: profile.profile_picture_url || null, recentMedia, mediaFetchedAt: now, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: listedStatus, updatedAt: now } });
+    // Public analytics (average Reel views, audience location and age) are best-effort and never block verification.
+    const analytics = await Promise.race([fetchInstagramAnalytics(exchange.token, exchange.userId, api), new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000))]).catch(() => null);
+    if (analytics) await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { "instagram.analytics": analytics } });
     await db.collection("mp_audit").insertOne({ entityId: session.user.id, actorId: session.user.id, action: "instagram.connected", followerCountAvailable, followerCount: profile.followers_count, createdAt: now });
     return go("connected-review");
   } catch { return go("verification-unavailable"); }

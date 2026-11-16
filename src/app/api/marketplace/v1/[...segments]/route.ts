@@ -1,5 +1,6 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { locationSearchTerm } from "@/lib/marketplace/india-cities";
+import { CAMPAIGN_CATEGORIES, COMPENSATION_TYPES, meetsFollowerMinimum, parseCampaign, parseProposedPrice } from "@/lib/marketplace/campaigns";
 import { instagramHandleMatches, normalizeInstagramHandle } from "@/lib/marketplace/instagram-handle";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
@@ -165,6 +166,15 @@ export async function GET(request: Request, context: Context) {
       instagram: { username: instagram.username, accountType: instagram.accountType, verifiedFollowers: instagram.verifiedFollowers, mediaCount: instagram.mediaCount, profilePictureUrl: instagram.profilePictureUrl, recentMedia: instagram.recentMedia, mediaFetchedAt: instagram.mediaFetchedAt, verifiedAt: instagram.verifiedAt, source: instagram.source },
     }, reviews, similar });
   }
+  if (path[0] === "saved-campaigns" && path.length === 1) {
+    const saved = await db.collection("mp_saved_campaigns").find({ userId }).sort({ createdAt: -1 }).limit(100).toArray();
+    const items = saved.length ? await db.collection("mp_campaigns").find({ _id: { $in: saved.map((item) => item.campaignId) }, ...notBooking }).toArray() : [];
+    const brandIds = [...new Map(items.map((item) => [String(item.brandId), item.brandId])).values()];
+    const brands = brandIds.length ? new Map((await db.collection("mp_brands").find({ _id: { $in: brandIds } }, { projection: { name: 1, location: 1, category: 1 } }).toArray()).map((brand) => [String(brand._id), record(brand)])) : new Map();
+    const byId = new Map(items.map((item) => [String(item._id), item]));
+    const campaigns = saved.flatMap((entry) => { const item = byId.get(String(entry.campaignId)); if (!item) return []; const open = item.status === "open" && item.deadline instanceof Date && item.deadline.getTime() > Date.now(); return [{ ...record(item), saved: true, open, savedAt: entry.createdAt, brand: brands.get(String(item.brandId)) ?? null }]; });
+    return json({ campaigns });
+  }
   if (path[0] === "cart" && path.length === 1) {
     const cartItems = await db.collection("mp_cart_items").find({ userId }).sort({ createdAt: -1 }).limit(30).toArray();
     const creatorIds = cartItems.map((item) => item.influencerId).filter((id): id is ObjectId => id instanceof ObjectId);
@@ -180,7 +190,7 @@ export async function GET(request: Request, context: Context) {
     const params = new URL(request.url).searchParams;
     const query = cleanText(params.get("q"), 80);
     const skip = Math.min(10_000, Math.max(0, Number.parseInt(params.get("skip") || "0", 10) || 0));
-    const filter: Record<string, unknown> = { status: "approved" };
+    const filter: Record<string, unknown> = { status: LISTABLE_CREATOR_STATUS };
     if (query) {
       const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.$or = [{ name: { $regex: escaped, $options: "i" } }, { description: { $regex: escaped, $options: "i" } }, { category: { $regex: escaped, $options: "i" } }, { location: { $regex: escaped, $options: "i" } }, { offerings: { $regex: escaped, $options: "i" } }];
@@ -192,12 +202,26 @@ export async function GET(request: Request, context: Context) {
   if (path[0] === "campaigns" && path.length === 1) {
     const mine = new URL(request.url).searchParams.get("mine") === "1";
     const memberIds = mine ? (await db.collection("mp_brand_members").find({ userId, status: "active" }, { projection: { brandId: 1 } }).toArray()).map((member) => member.brandId) : [];
-    const filter = mine ? { brandId: { $in: memberIds }, ...notBooking } : { status: "open", deadline: { $gt: new Date() }, ...notBooking };
+    const params = new URL(request.url).searchParams;
+    const filter: Record<string, unknown> = mine ? { brandId: { $in: memberIds }, ...notBooking } : { status: "open", deadline: { $gt: new Date() }, ...notBooking };
+    if (!mine) {
+      const category = CAMPAIGN_CATEGORIES.find((item) => item.toLowerCase() === (params.get("category") || "").toLowerCase());
+      if (category) filter.category = category;
+      const compensation = COMPENSATION_TYPES.find((item) => item === params.get("compensation"));
+      if (compensation) filter.compensation = compensation;
+      const city = locationSearchTerm(cleanText(params.get("location"), 80) || "");
+      // Campaigns without a location are open to creators anywhere.
+      if (city) filter.$and = [{ $or: [{ location: { $regex: city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } }, { location: "" }, { location: { $exists: false } }] }];
+      const q = cleanText(params.get("q"), 80);
+      if (q) filter.$or = [{ title: { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } }, { brief: { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } }];
+    }
     const items = await db.collection("mp_campaigns").find(filter).sort({ createdAt: -1 }).limit(50).toArray();
     const brandIds = [...new Map(items.map((item) => [String(item.brandId), item.brandId])).values()];
-    const brandItems = brandIds.length ? await db.collection("mp_brands").find({ _id: { $in: brandIds }, ...(mine ? {} : { status: "approved" }) }, { projection: { ownerId: 0 } }).toArray() : [];
+    const brandItems = brandIds.length ? await db.collection("mp_brands").find({ _id: { $in: brandIds }, ...(mine ? {} : { status: LISTABLE_CREATOR_STATUS }) }, { projection: { ownerId: 0 } }).toArray() : [];
     const brandById = new Map(brandItems.map((item) => [String(item._id), item]));
-    const campaigns = items.map((item) => ({ ...record(item), brand: brandById.has(String(item.brandId)) ? record(brandById.get(String(item.brandId))!) : null }));
+    const savedIds = new Set((await db.collection("mp_saved_campaigns").find({ userId, campaignId: { $in: items.map((item) => item._id) } }, { projection: { campaignId: 1 } }).toArray()).map((item) => String(item.campaignId)));
+    const counts = mine && items.length ? new Map((await db.collection("mp_applications").aggregate([{ $match: { campaignId: { $in: items.map((item) => item._id) }, type: "application" } }, { $group: { _id: "$campaignId", count: { $sum: 1 } } }]).toArray()).map((row) => [String(row._id), Number(row.count)])) : new Map<string, number>();
+    const campaigns = items.filter((item) => mine || brandById.has(String(item.brandId))).map((item) => ({ ...record(item), saved: savedIds.has(String(item._id)), ...(mine ? { applicationCount: counts.get(String(item._id)) ?? 0 } : {}), brand: brandById.has(String(item.brandId)) ? record(brandById.get(String(item.brandId))!) : null }));
     return json({ campaigns });
   }
   if (path[0] === "campaigns" && path[1] && path.length === 2) {
@@ -229,6 +253,7 @@ export async function GET(request: Request, context: Context) {
     const applicationsWithProfiles = applications.map((application) => ({
       _id: String(application._id), campaignId: String(application.campaignId), type: application.type,
       status: application.status, pitch: application.pitch, createdAt: application.createdAt,
+      ...(typeof application.proposedPricePaise === "number" ? { proposedPricePaise: application.proposedPricePaise } : {}),
       influencer: applicantById.get(String(application.influencerId)) || null,
     }));
     return json({ campaign: { ...record(campaign), brand: publicBrand }, applications: applicationsWithProfiles, activity });
@@ -290,6 +315,14 @@ export async function POST(request: Request, context: Context) {
   if (!limit.allowed) return error("Too many requests. Try again shortly.", 429);
   const now = new Date();
 
+  if (path[0] === "saved-campaigns" && path.length === 1) {
+    const campaignId = objectId(body.campaignId); if (!campaignId) return error("Choose a valid campaign.");
+    const campaign = await db.collection("mp_campaigns").findOne({ _id: campaignId, ...notBooking }, { projection: { _id: 1 } });
+    if (!campaign) return error("This campaign is no longer available.", 404);
+    if (await db.collection("mp_saved_campaigns").countDocuments({ userId }) >= 100) return error("You have saved 100 campaigns. Remove some before saving more.", 409);
+    await db.collection("mp_saved_campaigns").updateOne({ userId, campaignId }, { $setOnInsert: { userId, campaignId, createdAt: now } }, { upsert: true });
+    return json({ saved: true }, 201);
+  }
   if (path[0] === "cart" && path.length === 1) {
     const influencerId = objectId(body.influencerId);
     if (!influencerId) return error("Choose a valid creator profile.");
@@ -308,7 +341,7 @@ export async function POST(request: Request, context: Context) {
     const brandId = objectId(body.brandId); if (!brandId) return error("Choose the brand making this booking.");
     const member = await brandMembership(db, brandId, userId);
     if (!member || !["owner", "admin", "editor"].includes(member.role)) return error("Brand edit access is required to book creators.", 403);
-    const brand = await db.collection("mp_brands").findOne({ _id: brandId, status: "approved" });
+    const brand = await db.collection("mp_brands").findOne({ _id: brandId, status: LISTABLE_CREATOR_STATUS });
     if (!brand) return error("Your brand must be approved before it can book creators.", 409);
     const influencer = await db.collection("mp_influencers").findOne({ _id: influencerProfileId });
     if (!influencer || influencer.userId === userId || !isActiveCreator(influencer)) return error("This creator is not available for booking.", 409);
@@ -453,7 +486,7 @@ export async function POST(request: Request, context: Context) {
     const offerings = cleanList(body.offerings, 20);
     if (!name || description === null || !category || !location || (body.website && !website) || !offerings) return error("Provide a brand name, category, location, products or services, and a valid HTTPS website if supplied.");
     const id = new ObjectId();
-    const brand = { _id: id, ownerId: userId, slug: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50)}-${id.toHexString().slice(-6)}`, name, description, category, location, website, offerings, status: "pending", currency: "INR", createdAt: now, updatedAt: now };
+    const brand = { _id: id, ownerId: userId, slug: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50)}-${id.toHexString().slice(-6)}`, name, description, category, location, website, offerings, status: "approved", currency: "INR", createdAt: now, updatedAt: now };
     await db.collection("mp_brands").insertOne(brand);
     await db.collection("mp_brand_members").insertOne({ brandId: id, userId, role: "owner", status: "active", createdAt: now });
     await db.collection("mp_audit").insertOne({ entityId: id, actorId: userId, action: "brand.created", createdAt: now });
@@ -462,26 +495,32 @@ export async function POST(request: Request, context: Context) {
   if (path[0] === "campaigns" && path.length === 1) {
     const brandId = objectId(body.brandId); if (!brandId) return error("Select a brand.");
     const member = await brandMembership(db, brandId, userId); if (!member || !["owner", "admin", "editor"].includes(member.role)) return error("Brand edit access required.", 403);
-    const brand = await db.collection("mp_brands").findOne({ _id: brandId, status: "approved" });
-    if (!brand) return error("Brand approval is required before publishing campaigns.", 409);
-    const title = cleanText(body.title, 120, 5); const brief = cleanText(body.brief, 4000, 20);
-    const deliverables = cleanList(body.deliverables, 20); const targetAudience = cleanText(body.targetAudience, 500, 3);
-    const budgetPaise = inrPaise(body.budgetPaise); const deadline = typeof body.deadline === "string" ? new Date(body.deadline) : new Date(NaN);
-    if (!title || !brief || !deliverables?.length || !targetAudience || budgetPaise === null || budgetPaise < 100 || !Number.isFinite(deadline.getTime()) || deadline <= now || deadline.getTime() > now.getTime() + 365 * 86_400_000) return error("Provide a title, detailed brief, deliverables, audience, INR budget, and a deadline within one year.");
-    const campaign = { _id: new ObjectId(), brandId, title, brief, deliverables, targetAudience, budgetPaise, deadline, status: "open", currency: "INR", createdBy: userId, createdAt: now, updatedAt: now };
+    const brand = await db.collection("mp_brands").findOne({ _id: brandId, status: LISTABLE_CREATOR_STATUS });
+    if (!brand) return error("This brand profile is paused and cannot publish campaigns.", 409);
+    const parsedCampaign = parseCampaign(body, now);
+    if ("error" in parsedCampaign) return error(parsedCampaign.error);
+    const campaign = { _id: new ObjectId(), brandId, ...parsedCampaign.value, status: "open", currency: "INR", createdBy: userId, createdAt: now, updatedAt: now };
     await db.collection("mp_campaigns").insertOne(campaign);
-    return json({ campaign: record(campaign) }, 201);
+    // Tell listed creators in this category (and city, when set) about the new opportunity.
+    const city = locationSearchTerm(campaign.location);
+    const matching = await db.collection("mp_influencers").find({ status: LISTABLE_CREATOR_STATUS, userId: { $ne: userId }, categories: { $regex: `^${campaign.category}$`, $options: "i" }, ...(city ? { location: { $regex: city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" } } : {}) }, { projection: { userId: 1, instagram: 1, status: 1, instagramHandle: 1 } }).limit(300).toArray();
+    const eligible = matching.filter((creator) => isActiveCreator(creator) && meetsFollowerMinimum(campaign, (creator.instagram as { verifiedFollowers?: unknown } | undefined)?.verifiedFollowers));
+    await Promise.all(eligible.map((creator) => notify(db, String(creator.userId), `New ${campaign.category} campaign`, `${String(brand.name)}: ${campaign.title}`, `/influencer-marketing/campaigns/${campaign._id}`)));
+    return json({ campaign: record(campaign), notifiedCreators: eligible.length }, 201);
   }
   if (path[0] === "campaigns" && path[1] && path[2] === "apply") {
     const campaignId = objectId(path[1]); if (!campaignId) return error("Invalid campaign ID.");
     const campaign = await db.collection("mp_campaigns").findOne({ _id: campaignId, status: "open", deadline: { $gt: now }, ...notBooking });
     if (!campaign) return error("Campaign is closed.", 409);
-    if (!(await db.collection("mp_brands").findOne({ _id: campaign.brandId, status: "approved" }))) return error("Brand is unavailable.", 409);
+    if (!(await db.collection("mp_brands").findOne({ _id: campaign.brandId, status: LISTABLE_CREATOR_STATUS }))) return error("Brand is unavailable.", 409);
     const influencer = await db.collection("mp_influencers").findOne({ userId });
     if (!influencer || !isActiveCreator(influencer)) return error("An approved influencer profile with a current Meta-verified Instagram connection is required.", 403);
+    if (!meetsFollowerMinimum(campaign, (influencer.instagram as { verifiedFollowers?: unknown } | undefined)?.verifiedFollowers)) return error(`This campaign needs at least ${Number(campaign.minFollowers).toLocaleString("en-IN")} followers.`, 409);
     const pitch = cleanText(body.pitch, 1500, 20); if (!pitch) return error("Write a pitch of at least 20 characters.");
+    const price = parseProposedPrice(body.proposedPricePaise, Number(campaign.budgetPaise) || 0);
+    if ("error" in price) return error(price.error);
     try {
-      const application = { _id: new ObjectId(), campaignId, brandId: campaign.brandId, influencerId: userId, type: "application", status: "pending", pitch, createdAt: now, updatedAt: now };
+      const application = { _id: new ObjectId(), campaignId, brandId: campaign.brandId, influencerId: userId, type: "application", status: "pending", pitch, ...(price.value ? { proposedPricePaise: price.value } : {}), createdAt: now, updatedAt: now };
       await db.collection("mp_applications").insertOne(application);
       await notify(db, campaign.createdBy, "New campaign application", `${influencer.displayName} applied for ${campaign.title}.`, `/influencer-marketing/campaigns/${campaignId}`);
       return json({ application: record(application) }, 201);
@@ -491,7 +530,7 @@ export async function POST(request: Request, context: Context) {
     const campaignId = objectId(path[1]); if (!campaignId) return error("Invalid campaign ID.");
     const campaign = await db.collection("mp_campaigns").findOne({ _id: campaignId, status: "open", deadline: { $gt: now }, ...notBooking });
     const member = campaign ? await brandMembership(db, campaign.brandId, userId) : null;
-    if (!campaign || !member || !["owner", "admin", "editor"].includes(member.role) || !(await db.collection("mp_brands").findOne({ _id: campaign.brandId, status: "approved" }))) return error("Campaign access required.", 403);
+    if (!campaign || !member || !["owner", "admin", "editor"].includes(member.role) || !(await db.collection("mp_brands").findOne({ _id: campaign.brandId, status: LISTABLE_CREATOR_STATUS }))) return error("Campaign access required.", 403);
     const influencerProfileId = objectId(body.influencerProfileId); const influencer = influencerProfileId ? await db.collection("mp_influencers").findOne({ _id: influencerProfileId }) : null;
     if (!influencer || !isActiveCreator(influencer)) return error("Choose an approved, currently verified influencer.");
     const influencerId = String(influencer.userId);
@@ -512,7 +551,7 @@ export async function POST(request: Request, context: Context) {
     if (application.type === "application" ? !brandSide : application.influencerId !== userId) return error("This decision belongs to the other party.", 403);
     if (path[2] === "accept") {
       const campaign = await db.collection("mp_campaigns").findOne({ _id: application.campaignId, status: "open" });
-      const brand = await db.collection("mp_brands").findOne({ _id: application.brandId, status: "approved" });
+      const brand = await db.collection("mp_brands").findOne({ _id: application.brandId, status: LISTABLE_CREATOR_STATUS });
       const creator = await db.collection("mp_influencers").findOne({ userId: application.influencerId });
       if (!campaign || !brand || !creator || !isActiveCreator(creator)) return error("This collaboration is no longer eligible for acceptance.", 409);
     }
@@ -706,7 +745,7 @@ export async function POST(request: Request, context: Context) {
     const updated = await db.collection("mp_verification_requests").findOneAndUpdate({ _id: id, status: "pending" }, { $set: { status: body.decision, reviewNote: note, reviewedBy: userId, reviewedAt: now } }, { returnDocument: "after" });
     if (!updated) return error("Review request is no longer pending.", 409);
     await db.collection("mp_audit").insertOne({ entityId: id, actorId: userId, action: `identity_request.${body.decision}`, note, createdAt: now });
-    await notify(db, updated.userId, "Identity review update", `${note} Official follower verification remains separate.`, "/influencer-marketing/influencer");
+    await notify(db, updated.userId, "Identity review update", `${note} Official follower verification remains separate.`, "/influencer-marketing/creator");
     return json({ status: body.decision, followerVerification: "unchanged" });
   }
   if (path[0] === "admin" && path[1] === "settings" && path.length === 2) {
@@ -805,6 +844,12 @@ export async function DELETE(request: Request, context: Context) {
   if (!session?.user?.id) return error("Authentication required.", 401);
   const path = (await context.params).segments;
   if (path[0] === "influencers" && path[1] === "me" && path.length === 2) return deleteCreatorProfile(request, session.user.id);
+  if (path[0] === "saved-campaigns" && path.length === 2) {
+    const campaignId = objectId(path[1]); if (!campaignId) return error("Choose a valid campaign.");
+    const db = (await clientPromise).db();
+    const result = await db.collection("mp_saved_campaigns").deleteOne({ userId: session.user.id, campaignId });
+    return json({ removed: result.deletedCount > 0 });
+  }
   if (path[0] !== "cart" || path.length !== 2) return error("Marketplace endpoint not found.", 404);
   const influencerId = objectId(path[1]);
   if (!influencerId) return error("Choose a valid creator profile.");

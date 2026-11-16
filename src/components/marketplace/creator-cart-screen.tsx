@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Camera, CircleAlert, MapPin, ShoppingCart, Trash2, UserRound } from "lucide-react";
+import { ArrowRight, BadgeCheck, Camera, CircleAlert, Clock3, Heart, MapPin, Megaphone, Trash2, UserRound, Users } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 
 type Item = Record<string, unknown>;
@@ -16,6 +16,8 @@ const money = (paise: unknown) => new Intl.NumberFormat("en-IN", { style: "curre
 export function CreatorCartScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [campaigns, setCampaigns] = useState<Item[]>([]);
+  const [savedCampaigns, setSavedCampaigns] = useState<Item[]>([]);
+  const [tab, setTab] = useState<"creators" | "campaigns">("creators");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [notice, setNotice] = useState("");
@@ -24,8 +26,9 @@ export function CreatorCartScreen() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const [cartResponse, campaignResponse] = await Promise.all([fetch(api + "/cart", { cache: "no-store" }), fetch(api + "/campaigns?mine=1", { cache: "no-store" })]);
-      const [cartData, campaignData] = await Promise.all([readJson(cartResponse) as Promise<Item>, readJson(campaignResponse) as Promise<Item>]);
+      const [cartResponse, campaignResponse, savedResponse] = await Promise.all([fetch(api + "/cart", { cache: "no-store" }), fetch(api + "/campaigns?mine=1", { cache: "no-store" }), fetch(api + "/saved-campaigns", { cache: "no-store" })]);
+      const [cartData, campaignData, savedData] = await Promise.all([readJson(cartResponse) as Promise<Item>, readJson(campaignResponse) as Promise<Item>, readJson(savedResponse) as Promise<Item>]);
+      if (savedResponse.ok) setSavedCampaigns(arr(savedData.campaigns));
       if (!cartResponse.ok) throw new Error(str(cartData.error) || "Your creator cart could not be loaded.");
       setItems(arr(cartData.items)); setCampaigns(arr(campaignData.campaigns).filter((campaign) => campaign.status === "open"));
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Your creator cart could not be loaded."); }
@@ -41,7 +44,7 @@ export function CreatorCartScreen() {
       const result = await readJson(response) as Item;
       if (!response.ok) throw new Error(str(result.error) || "Creator could not be removed.");
       setItems((current) => current.filter((item) => str(item.creatorId) !== creatorId));
-      setNotice("Creator removed from your cart.");
+      setNotice("Creator removed from Saved.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Creator could not be removed."); }
     finally { setBusyId(""); }
   }
@@ -61,12 +64,34 @@ export function CreatorCartScreen() {
     finally { setBusyId(""); }
   }
 
+  async function unsaveCampaign(campaignId: string) {
+    setBusyId(campaignId); setError(""); setNotice("");
+    try {
+      const response = await fetch(api + "/saved-campaigns/" + encodeURIComponent(campaignId), { method: "DELETE" });
+      const result = await readJson(response) as Item;
+      if (!response.ok) throw new Error(str(result.error) || "Campaign could not be removed.");
+      setSavedCampaigns((current) => current.filter((item) => str(item._id) !== campaignId));
+      setNotice("Campaign removed from Saved.");
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Campaign could not be removed."); }
+    finally { setBusyId(""); }
+  }
+
+  const savedCampaignList = <div className="saved-campaign-list">{savedCampaigns.length ? savedCampaigns.map((campaign) => <article key={str(campaign._id)} className={`marketplace-card saved-campaign-card${campaign.open ? "" : " is-closed"}`}>
+      <div className="saved-campaign-top"><span className="mp-campaign-chip">{str(campaign.category) || "Campaign"}</span>{!campaign.open && <span className="mp-campaign-chip is-closed">Closed</span>}<button type="button" className="mp-heart is-saved" aria-label={`Remove ${str(campaign.title)} from Saved`} disabled={busyId === str(campaign._id)} onClick={() => void unsaveCampaign(str(campaign._id))}><Heart size={18} fill="currentColor" aria-hidden="true" /></button></div>
+      {str(obj(campaign.brand).name) && <small className="saved-campaign-brand"><Megaphone size={13} aria-hidden="true" /> {str(obj(campaign.brand).name)}</small>}
+      <h3><Link href={`/influencer-marketing/campaigns/${str(campaign._id)}`}>{str(campaign.title)}</Link></h3>
+      <p>{str(campaign.brief)}</p>
+      <div className="saved-campaign-facts"><span><MapPin size={13} aria-hidden="true" /> {str(campaign.location) ? str(campaign.location).split(",")[0] : "Anywhere"}</span><span><Users size={13} aria-hidden="true" /> {Number(campaign.creatorsWanted || 1)} creator{Number(campaign.creatorsWanted || 1) === 1 ? "" : "s"}</span><span><Clock3 size={13} aria-hidden="true" /> Apply by {new Date(str(campaign.deadline)).toLocaleDateString("en-IN")}</span></div>
+      <footer><strong>{campaign.compensation === "gifted" ? "Gifted product" : `${money(campaign.budgetPaise)} / creator`}</strong>{campaign.open ? <Link className="marketplace-primary" href={`/influencer-marketing/campaigns/${str(campaign._id)}`}>View and apply <ArrowRight size={14} /></Link> : <span>No longer accepting applications</span>}</footer>
+    </article>) : <div className="marketplace-empty"><Heart size={23} /><strong>No saved campaigns yet</strong><p>Tap the heart on any campaign to keep it here and apply later.</p><Link className="marketplace-primary" href="/influencer-marketing/campaigns">Browse campaigns <ArrowRight size={15} /></Link></div>}</div>;
+
   return <div className="marketplace-page creator-cart-page">
-    <div className="marketplace-page-head"><span className="marketplace-eyebrow">INFLUENCER MARKETING / CREATOR CART</span><h1>Your creator shortlist</h1><p>Review verified profiles and recent Instagram portfolio media, then invite a creator to an approved campaign. Adding a profile does not charge you.</p></div>
+    <div className="marketplace-page-head"><span className="marketplace-eyebrow">INFLUENCER MARKETING / SAVED</span><h1>Saved</h1><p>Review verified profiles and recent Instagram portfolio media, then invite a creator to an approved campaign. Adding a profile does not charge you.</p></div>
     {error && <div className="marketplace-banner is-warn" role="alert"><CircleAlert size={17} /><span>{error}</span></div>}
     {notice && <div className="marketplace-banner is-success" role="status"><BadgeCheck size={17} /><span>{notice}</span></div>}
-    {loading ? <div className="marketplace-loading" role="status">Loading your saved creators…</div> : items.length ? <>
-      <div className="creator-cart-summary"><span><ShoppingCart size={17} /> {items.length} saved creator{items.length === 1 ? "" : "s"}</span><Link href="/influencer-marketing/discover">Continue discovering <ArrowRight size={15} /></Link></div>
+    <div className="marketplace-tab-row saved-tabs" role="tablist" aria-label="Saved items"><button type="button" role="tab" aria-selected={tab === "creators"} className={tab === "creators" ? "is-active" : ""} onClick={() => setTab("creators")}>Creators <span>{items.length}</span></button><button type="button" role="tab" aria-selected={tab === "campaigns"} className={tab === "campaigns" ? "is-active" : ""} onClick={() => setTab("campaigns")}>Campaigns <span>{savedCampaigns.length}</span></button></div>
+    {loading ? <div className="marketplace-loading" role="status">Loading your saved items…</div> : tab === "campaigns" ? savedCampaignList : items.length ? <>
+      <div className="creator-cart-summary"><span><Heart size={17} /> {items.length} saved creator{items.length === 1 ? "" : "s"}</span><Link href="/influencer-marketing/discover">Continue discovering <ArrowRight size={15} /></Link></div>
       <div className="creator-cart-list">{items.map((cartItem) => {
         const creator = obj(cartItem.influencer); const instagram = obj(creator.instagram); const creatorId = str(cartItem.creatorId); const recentMedia = arr(instagram.recentMedia).slice(0, 6); const username = str(creator.instagramUsername).replace(/^@/, "");
         return <article className="creator-cart-card" key={str(cartItem.id)}>
@@ -84,6 +109,6 @@ export function CreatorCartScreen() {
         </article>;
       })}</div>
       <p className="creator-cart-note">Creator rates are starting prices. Scope, deliverables and usage rights can be agreed in a private collaboration. Payments are not enabled in this version.</p>
-    </> : <div className="marketplace-empty"><ShoppingCart size={23} /><strong>Your creator cart is empty</strong><p>Save approved creators from discovery to compare verified profiles and recent portfolio posts here.</p><Link className="marketplace-primary" href="/influencer-marketing/discover">Discover creators <ArrowRight size={15} /></Link></div>}
+    </> : <div className="marketplace-empty"><Heart size={23} /><strong>No saved creators yet</strong><p>Tap the heart on any creator in Discover to compare verified profiles and recent posts here.</p><Link className="marketplace-primary" href="/influencer-marketing/discover">Discover creators <ArrowRight size={15} /></Link></div>}
   </div>;
 }

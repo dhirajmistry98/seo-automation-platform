@@ -29,7 +29,7 @@ export const CREATOR_CATEGORIES = [
 const FAQ = [
   { q: "How does booking a creator work?", a: "Open a creator profile, choose one of their packages and send your brief with a delivery date. When the creator accepts, the package price and scope are recorded as agreed terms and a private collaboration opens for messages, files and content review." },
   { q: "Are follower counts real?", a: "Standard creators connect their Instagram professional account through Meta. Follower counts and recent posts come from Meta’s API and must have been refreshed within the last seven days to stay listed." },
-  { q: "Can I run a campaign instead of booking one creator?", a: "Yes. Publish a campaign brief from an approved brand and creators can apply with a pitch. You can also invite saved creators directly to a campaign." },
+  { q: "Can I run a campaign instead of booking one creator?", a: "Yes. Post a campaign brief from your brand profile and creators can apply with a pitch. You can also invite saved creators directly to a campaign." },
   { q: "How are payments handled?", a: "Online checkout and payouts are not enabled yet. Agreed prices are kept as a collaboration record so both sides have a clear scope; settle payment directly until marketplace payments launch." },
   { q: "What happens if content needs changes?", a: "Brands can approve each deliverable or request up to three revisions. If something goes wrong, either side can open a dispute for administrator review." },
 ];

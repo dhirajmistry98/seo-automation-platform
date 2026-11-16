@@ -54,7 +54,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
       if (!active) return;
       if (cartResult.status === "fulfilled") setSaved(arr(cartResult.value.items).some((item) => str(item.creatorId) === creatorId));
       if (campaignResult.status === "fulfilled") setCampaigns(arr(campaignResult.value.campaigns).filter((campaign) => campaign.status === "open" && new Date(String(campaign.deadline)).getTime() > Date.now()));
-      if (meResult.status === "fulfilled") setBrands(arr(meResult.value.brands).filter((brand) => brand.status === "approved"));
+      if (meResult.status === "fulfilled") setBrands(arr(meResult.value.brands).filter((brand) => brand.status !== "rejected" && brand.status !== "suspended"));
     }
     void loadProfile();
     void loadBrandActions();
@@ -178,7 +178,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
             <label className="marketplace-field"><span>Content needed by</span><input name="deadline" type="date" required min={isoDateInDays(1)} defaultValue={isoDateInDays(minDeliveryDays + 2)} /></label>
             <div className="marketplace-actions"><button type="button" onClick={() => setBookingOpen(false)}>Cancel</button><button className="marketplace-primary" disabled={busy}>{busy ? "Sending…" : "Send booking request"}</button></div>
             <small className="marketplace-form-note">No payment is taken. Online checkout is not enabled yet; the agreed price is recorded for both sides.</small>
-          </form> : <div className="mp-booking-needs-brand"><p>You need an approved brand profile to book creators.</p><Link className="marketplace-secondary" href={`${basePath}/brand`}>Create a brand profile <ArrowRight size={14} /></Link></div>)}
+          </form> : <div className="mp-booking-needs-brand"><p>Create a brand profile to book creators. It takes a minute.</p><Link className="marketplace-secondary" href={`${basePath}/brand`}>Create a brand profile <ArrowRight size={14} /></Link></div>)}
           {!creator.owner && <button type="button" className="mp-save-button" disabled={busy || saved} onClick={() => void saveCreator()}><ShoppingCart size={15} />{saved ? "Saved to your shortlist" : busy ? "Saving…" : "Save to creator cart"}</button>}
           {Boolean(creator.owner) && <p className="creator-marketplace-cart-note">This is how brands see your profile. <Link href={`${basePath}/creator`}>Edit packages</Link></p>}
         </section>

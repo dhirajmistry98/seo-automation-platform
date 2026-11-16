@@ -64,6 +64,14 @@ function PackageEditor({ initial }: { initial: unknown }) {
 
 /** Creator studio side card: where the creator stands with Instagram verification, as numbered steps. */
 function CreatorVerificationCard({ influencer, connectAvailable }: { influencer: Item; connectAvailable: boolean }) {
+  const [asking, setAsking] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  useEffect(() => {
+    if (!asking) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setAsking(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [asking]);
   const instagram = obj(influencer.instagram);
   const saved = Boolean(influencer._id);
   const handle = str(influencer.instagramHandle) || str(instagram.username);
@@ -85,7 +93,25 @@ function CreatorVerificationCard({ influencer, connectAvailable }: { influencer:
     <h3 id="mp-verify-title">{verified ? "Your Instagram is verified" : "Verify your Instagram"}</h3>
     <p>Brands only see creators whose Instagram is confirmed through Meta. Any follower count is welcome.</p>
     <ol className="mp-verify-steps">{steps.map((step, index) => <li key={step.title} className={step.done ? "is-done" : ""}><span className="mp-verify-step-mark" aria-hidden="true">{step.done ? <BadgeCheck size={14} /> : index + 1}</span><span><strong>{step.title}</strong><small>{step.text}</small></span></li>)}</ol>
-    {saved && connectAvailable && <Link className="marketplace-primary mp-verify-button" href="/api/marketplace/meta/authorize">{verified ? "Re-verify Instagram" : "Verify Instagram through Meta"} <ArrowRight size={16} aria-hidden="true" /></Link>}
+    {saved && connectAvailable && <button type="button" className="marketplace-primary mp-verify-button" onClick={() => { setAgreed(false); setAsking(true); }}>{verified ? "Re-verify Instagram" : "Verify Instagram through Meta"} <ArrowRight size={16} aria-hidden="true" /></button>}
+    {asking && <div className="mp-consent-overlay" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setAsking(false); }}>
+      <div className="mp-consent" role="dialog" aria-modal="true" aria-labelledby="mp-consent-title">
+        <div className="mp-consent-head"><span className="mp-verify-icon"><ShieldCheck size={20} aria-hidden="true" /></span><button type="button" className="mp-consent-close" aria-label="Close" onClick={() => setAsking(false)}><X size={18} /></button></div>
+        <span className="marketplace-eyebrow">PERMISSION REQUIRED</span>
+        <h3 id="mp-consent-title">Allow SEO Studio to verify @{handle || "your Instagram"}</h3>
+        <p>Next you&apos;ll see Meta&apos;s secure login. Choose <strong>Continue with Instagram</strong> (or Facebook), pick <strong>@{handle || "your account"}</strong> and allow access. Your password always stays with Meta.</p>
+        <div className="mp-consent-grid">
+          <div><strong>We will read</strong><ul><li>Instagram username and account ID</li><li>Follower and post counts, profile photo</li><li>Your recent posts (for your portfolio)</li><li>Account insights such as reach, if you allow it</li></ul></div>
+          <div><strong>We will never</strong><ul><li>Post, comment or send messages</li><li>See your password or private messages</li><li>Run ads or change your account</li><li>Sell your data</li></ul></div>
+        </div>
+        <p className="mp-consent-note">The data is used only to verify your account and show it on your creator profile, and is refreshed daily. You can withdraw any time by deleting your creator account or removing SEO Studio in Instagram settings. See our <Link href="/privacy" target="_blank">Privacy Policy</Link>.</p>
+        <label className="mp-consent-check"><input type="checkbox" checked={agreed} onChange={(event) => setAgreed(event.target.checked)} /> <span>I agree to let SEO Studio access this Instagram data for verification, as described above.</span></label>
+        <div className="mp-consent-actions">
+          <button type="button" className="marketplace-secondary" onClick={() => setAsking(false)}>Not now</button>
+          <a className={`marketplace-primary${agreed ? "" : " is-disabled"}`} aria-disabled={!agreed} href={agreed ? "/api/marketplace/meta/authorize?consent=v1" : undefined} onClick={(event) => { if (!agreed) event.preventDefault(); }}>Continue to Meta <ArrowRight size={16} aria-hidden="true" /></a>
+        </div>
+      </div>
+    </div>}
     {!saved && <p className="marketplace-form-note">Save your creator profile first, then verify.</p>}
     {saved && !connectAvailable && <p className="marketplace-form-note">Instagram verification is temporarily unavailable. Please try again later.</p>}
     <dl className="mp-verify-facts">
@@ -107,6 +133,7 @@ const META_RESULT: Record<string, { tone: "info" | "warn" | "success"; text: str
   "verification-unavailable": { tone: "warn", text: "Instagram verification could not be completed. Make sure it is a Professional (Business or Creator) account and try again." },
   "invalid-state": { tone: "warn", text: "The Instagram connection expired. Please click Connect Instagram again." },
   cancelled: { tone: "info", text: "Instagram connection was cancelled." },
+  "consent-required": { tone: "info", text: "Please review and accept the Instagram permission notice before continuing to Meta." },
   "too-many-attempts": { tone: "warn", text: "Too many Instagram connection attempts. For your security, please wait a few minutes and try again." },
   "not-configured": { tone: "warn", text: "Instagram connection is not configured yet." },
   "sign-in-required": { tone: "warn", text: "Sign in again, then connect Instagram." },

@@ -830,3 +830,25 @@
 .mp-package-total span { color:var(--mp-muted); font-size:12px; }
 .mp-package-total small { color:var(--mp-muted); font-size:11px; }
 .mp-package-total strong { color:#15110e; font-size:20px; }
+/* Instagram permission notice shown before Meta login */
+.mp-consent-overlay { position:fixed; z-index:120; inset:0; display:grid; place-items:center; overflow:auto; background:rgba(15,12,9,.62); padding:20px; }
+.mp-consent { display:grid; gap:12px; width:min(100%,600px); border:1px solid var(--mp-line); border-radius:16px; background:#faf8f5; padding:24px; box-shadow:0 24px 60px rgba(15,12,9,.3); }
+.mp-consent-head { display:flex; justify-content:space-between; align-items:center; }
+.mp-consent-close { display:inline-flex; border:0; border-radius:8px; background:transparent; padding:6px; color:var(--mp-muted); cursor:pointer; }
+.mp-consent-close:hover { background:#efe9e2; }
+.mp-consent h3 { margin:0; font-size:22px; line-height:1.25; }
+.mp-consent > p { margin:0; color:var(--mp-muted); font-size:13px; line-height:1.6; }
+.mp-consent > p strong { color:#15110e; }
+.mp-consent-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mp-consent-grid > div { border:1px solid var(--mp-line); border-radius:12px; background:#fff; padding:12px 14px; }
+.mp-consent-grid > div:first-child { border-color:#cfe5d6; background:#f3faf5; }
+.mp-consent-grid > div:last-child { border-color:#f0d6c6; background:#fff7f1; }
+.mp-consent-grid strong { font-size:12px; }
+.mp-consent-grid ul { display:grid; gap:5px; margin:8px 0 0; padding-left:18px; color:#3d352e; font-size:12px; line-height:1.45; }
+.mp-consent-note { font-size:12px !important; }
+.mp-consent-note a { color:var(--mp-orange); }
+.mp-consent-check { display:flex; gap:10px; align-items:flex-start; border:1px solid var(--mp-line); border-radius:10px; background:#fff; padding:12px; font-size:13px; line-height:1.45; cursor:pointer; }
+.mp-consent-check input { flex:none; width:18px; height:18px; margin-top:1px; accent-color:var(--mp-orange); }
+.mp-consent-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
+.mp-consent-actions .is-disabled { cursor:not-allowed; opacity:.45; }
+@media (max-width:560px) { .mp-consent { padding:18px; } .mp-consent-grid { grid-template-columns:1fr; } .mp-consent-actions > * { flex:1 1 100%; justify-content:center; } }

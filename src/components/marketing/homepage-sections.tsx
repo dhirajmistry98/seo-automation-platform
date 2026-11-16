@@ -398,7 +398,7 @@ export function SiteFooter() {
     { title: "Explore", links: [["Home", "/#home"], ["Features", "/#features"], ["Marketplace", "/#marketplace"], ["Integrations", "/#integrations"], ["FAQ", "/#faq"]] },
     { title: "Products", links: [["SEO Application", "/#application"], ["WordPress Plugin", "/#wordpress"], ["Influencer Marketing", "/#marketplace"], ["Expert Services", "/#marketplace"]] },
     { title: "Learn", links: [["Blog", "/blog"], ["Practical guide", "/guide"], ["Get started", "/guide#first-steps"]] },
-    { title: "Account", links: [["Sign in", ROUTES.signIn], ["Create account", ROUTES.signIn], ["Terms and Conditions", "/terms"]] },
+    { title: "Account", links: [["Sign in", ROUTES.signIn], ["Create account", ROUTES.signIn], ["Terms and Conditions", "/terms"], ["Privacy Policy", "/privacy"]] },
   ];
 
   return (

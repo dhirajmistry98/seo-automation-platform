@@ -16,15 +16,17 @@ export async function POST(request: Request) {
   try {
     let token = decryptToken(connection.accessTokenEncrypted);
     let expiresAt = connection.expiresAt as Date;
-    if (expiresAt.getTime() < now.getTime() + 14 * 86_400_000) {
+    const api = connection.api === "facebook" ? "facebook" as const : "instagram" as const;
+    // Unified Login tokens are system-user tokens that do not expire; only Instagram Login tokens are refreshed.
+    if (api === "instagram" && expiresAt.getTime() < now.getTime() + 14 * 86_400_000) {
       const refreshed = await refreshInstagramToken(token);
       token = refreshed.token; expiresAt = refreshed.expiresAt;
     }
-    const profile = await fetchInstagramProfile(token);
+    const profile = await fetchInstagramProfile(token, api === "facebook" ? { api, id: String(connection.providerUserId) } : undefined);
     if (String(profile.user_id || profile.id) !== connection.providerUserId) throw new Error("Instagram account identity changed.");
     const eligible = typeof profile.followers_count === "number" && Number.isSafeInteger(profile.followers_count) && profile.followers_count >= 0;
     if (!eligible) throw new Error("Meta did not return a valid follower count.");
-    const recentMedia = await fetchInstagramMedia(token, connection.providerUserId).catch(() => null);
+    const recentMedia = await fetchInstagramMedia(token, connection.providerUserId, api).catch(() => null);
     const previous = await db.collection("mp_influencers").findOne({ userId: connection.userId });
     const oldInstagram = previous?.instagram && typeof previous.instagram === "object" ? previous.instagram as Record<string, unknown> : {};
     const mediaSnapshot = recentMedia === null ? { ...(Array.isArray(oldInstagram.recentMedia) ? { recentMedia: oldInstagram.recentMedia } : {}), ...(oldInstagram.mediaFetchedAt ? { mediaFetchedAt: oldInstagram.mediaFetchedAt } : {}) } : { recentMedia, mediaFetchedAt: now };
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
     const lastInsightsAt = connection.lastInsightsAt instanceof Date ? connection.lastInsightsAt : connection.lastInsightsAt ? new Date(connection.lastInsightsAt) : null;
     if (!lastInsightsAt || lastInsightsAt.getTime() < now.getTime() - 23 * 60 * 60_000) {
       try {
-        const metrics = await fetchInstagramInsights(token, connection.providerUserId);
+        const metrics = await fetchInstagramInsights(token, connection.providerUserId, api);
         if (metrics.length) {
           await db.collection("mp_instagram_insights").insertOne({ userId: connection.userId, provider: "instagram_graph_api", providerUserId: connection.providerUserId, username: String(profile.username || ""), metrics, source: "Meta Instagram Insights API", fetchedAt: now });
           await db.collection("mp_social_connections").updateOne({ _id: connection._id }, { $set: { lastInsightsAt: now, lastInsightsError: null, updatedAt: now } });

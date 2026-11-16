@@ -31,7 +31,10 @@ export function metaConfig() {
   if (!clientId || !clientSecret || !version || !/^v\d+\.\d+$/.test(version) || !appUrl) throw new Error("Configure Meta Instagram app ID, secret, Graph API version, and application URL.");
   const origin = new URL(appUrl).origin;
   if (process.env.NODE_ENV === "production" && !origin.startsWith("https://") && !origin.startsWith("http://localhost:")) throw new Error("Meta OAuth requires an HTTPS application origin.");
-  return { clientId, clientSecret, version, redirectUri: `${origin}/api/marketplace/meta/callback` };
+  // When set, creators verify through Meta's Unified Login (Facebook Login for Business) instead of Instagram Login.
+  const configId = process.env.META_INSTAGRAM_CONFIG_ID?.trim() || "";
+  if (configId && !/^\d{5,30}$/.test(configId)) throw new Error("META_INSTAGRAM_CONFIG_ID must be the numeric login configuration ID.");
+  return { clientId, clientSecret, version, configId, redirectUri: `${origin}/api/marketplace/meta/callback` };
 }
 function encryptionKey() {
   const value = process.env.META_TOKEN_ENCRYPTION_KEY;
@@ -60,6 +63,39 @@ async function jsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) throw new Error("Instagram rejected the connection or requested permissions.");
   return data;
 }
+/** Which Meta API a stored connection uses: Instagram Login (graph.instagram.com) or Unified Login (graph.facebook.com). */
+export type InstagramApi = "instagram" | "facebook";
+const graphHost = (api: InstagramApi) => api === "facebook" ? "https://graph.facebook.com" : "https://graph.instagram.com";
+
+/** Unified Login dialog: Meta app ID + login configuration; people log in with Instagram or Facebook. */
+export function unifiedLoginUrl(state: string) {
+  const config = metaConfig();
+  if (!config.configId) throw new Error("Unified Login is not configured.");
+  const url = new URL("https://www.facebook.com/dialog/oauth");
+  url.search = new URLSearchParams({ client_id: config.clientId, config_id: config.configId, redirect_uri: config.redirectUri, response_type: "code", state }).toString();
+  return url;
+}
+
+/** Unified Login: exchange the code for a Business Integration System User token (does not expire). */
+export async function exchangeUnifiedCode(code: string) {
+  const config = metaConfig();
+  const url = new URL(`https://graph.facebook.com/${config.version}/oauth/access_token`);
+  url.search = new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret, redirect_uri: config.redirectUri, code }).toString();
+  const result = await jsonResponse<TokenResponse>(await fetch(url, { redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12_000) }));
+  if (!result.access_token) throw new Error("Meta did not return an access token.");
+  const lifetime = Number(result.expires_in);
+  return { token: result.access_token, expiresAt: Number.isFinite(lifetime) && lifetime > 0 ? new Date(Date.now() + lifetime * 1000) : new Date(Date.now() + 10 * 365 * 86_400_000) };
+}
+
+/** Unified Login: Instagram accounts the person granted to the app (with usernames). */
+export async function listAssignedInstagramAccounts(token: string) {
+  const config = metaConfig();
+  const url = new URL(`https://graph.facebook.com/${config.version}/me/assigned_instagram_accounts`);
+  url.searchParams.set("fields", "id,username");
+  const result = await jsonResponse<{ data?: Array<{ id?: unknown; username?: unknown }> }>(await fetch(url, { headers: { Authorization: `Bearer ${token}` }, redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12_000) }));
+  return (result.data || []).flatMap((item) => typeof item.id === "string" && /^[0-9]+$/.test(item.id) ? [{ id: item.id, username: typeof item.username === "string" ? item.username : "" }] : []);
+}
+
 export async function exchangeInstagramCode(code: string) {
   const config = metaConfig();
   const response = await fetch("https://api.instagram.com/oauth/access_token", { method: "POST", redirect: "manual", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret, grant_type: "authorization_code", redirect_uri: config.redirectUri, code }), cache: "no-store", signal: AbortSignal.timeout(12_000) });
@@ -71,10 +107,13 @@ export async function exchangeInstagramCode(code: string) {
   if (!long.access_token || !Number.isFinite(long.expires_in) || (long.expires_in || 0) < 86_400) throw new Error("Instagram did not grant a refreshable access token.");
   return { token: long.access_token, userId: String(short.user_id), expiresAt: new Date(Date.now() + Number(long.expires_in) * 1000) };
 }
-export async function fetchInstagramProfile(token: string) {
+export async function fetchInstagramProfile(token: string, account?: { api: InstagramApi; id: string }) {
   const config = metaConfig();
-  const url = new URL(`https://graph.instagram.com/${config.version}/me`);
-  url.searchParams.set("fields", "user_id,username,name,account_type,followers_count,media_count,profile_picture_url");
+  const facebook = account?.api === "facebook";
+  if (facebook && !/^[0-9]+$/.test(account.id)) throw new Error("Instagram account identity is invalid.");
+  const url = new URL(facebook ? `https://graph.facebook.com/${config.version}/${account.id}` : `https://graph.instagram.com/${config.version}/me`);
+  // graph.facebook.com has no user_id/account_type on the Instagram user node.
+  url.searchParams.set("fields", facebook ? "id,username,name,followers_count,media_count,profile_picture_url" : "user_id,username,name,account_type,followers_count,media_count,profile_picture_url");
   const profile = await jsonResponse<InstagramProfile>(await fetch(url, { headers: { Authorization: `Bearer ${token}` }, redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12_000) }));
   if (!profile.user_id && !profile.id) throw new Error("Instagram account identity is unavailable.");
   if (!Number.isSafeInteger(profile.followers_count) || Number(profile.followers_count) < 0) throw new Error("Instagram did not provide an authorized follower count. This profile cannot be verified.");
@@ -82,10 +121,10 @@ export async function fetchInstagramProfile(token: string) {
   return { ...profile, profile_picture_url: safeProviderUrl(profile.profile_picture_url) || undefined };
 }
 
-export async function fetchInstagramMedia(token: string, userId: string): Promise<InstagramMediaItem[]> {
+export async function fetchInstagramMedia(token: string, userId: string, api: InstagramApi = "instagram"): Promise<InstagramMediaItem[]> {
   if (!/^[0-9]+$/.test(userId)) throw new Error("Instagram account identity is invalid.");
   const config = metaConfig();
-  const url = new URL(`https://graph.instagram.com/${config.version}/${encodeURIComponent(userId)}/media`);
+  const url = new URL(`${graphHost(api)}/${config.version}/${encodeURIComponent(userId)}/media`);
   url.searchParams.set("fields", "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp");
   url.searchParams.set("limit", "9");
   const result = await jsonResponse<{ data?: InstagramMediaItem[] }>(await fetch(url, { headers: { Authorization: `Bearer ${token}` }, redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(15_000) }));
@@ -107,10 +146,10 @@ export async function fetchInstagramMedia(token: string, userId: string): Promis
   });
 }
 
-export async function fetchInstagramInsights(token: string, userId: string) {
+export async function fetchInstagramInsights(token: string, userId: string, api: InstagramApi = "instagram") {
   if (!/^[0-9]+$/.test(userId)) throw new Error("Instagram account identity is invalid.");
   const config = metaConfig();
-  const url = new URL(`https://graph.instagram.com/${config.version}/${encodeURIComponent(userId)}/insights`);
+  const url = new URL(`${graphHost(api)}/${config.version}/${encodeURIComponent(userId)}/insights`);
   url.searchParams.set("metric", "reach,views,accounts_engaged,total_interactions,profile_views");
   url.searchParams.set("period", "day");
   url.searchParams.set("metric_type", "total_value");

@@ -1,0 +1,52 @@
+# Runs the app's scheduled jobs (Vercel Cron is not used: it sends GET and the Hobby plan only allows daily runs).
+# Each /api/cron/* call handles one item, so every job is called repeatedly until nothing is left (with a cap).
+# Requires repository secret CRON_SECRET (same value as the production CRON_SECRET in Vercel)
+# and repository variable APP_URL (e.g. https://seo-automation-platform-ten.vercel.app).
+name: Scheduler
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: scheduler
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Run scheduled jobs
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          set -u
+          if [ -z "${CRON_SECRET}" ] || [ -z "${APP_URL}" ]; then echo "::notice::Scheduler not configured yet: add the CRON_SECRET secret and APP_URL variable in the repository settings."; exit 0; fi
+          failures=0
+          # run_job <path> <max calls>: repeat while the job reports it processed something.
+          run_job() {
+            local path="$1" max="$2" i body code
+            for i in $(seq 1 "$max"); do
+              body=$(curl -sS -X POST -H "Authorization: Bearer ${CRON_SECRET}" -H "Content-Type: application/json" \
+                --max-time 310 -w '\n%{http_code}' "${APP_URL%/}${path}") || { echo "::warning::${path} request failed"; failures=$((failures+1)); return; }
+              code=$(printf '%s' "$body" | tail -n1); body=$(printf '%s' "$body" | sed '$d')
+              echo "${path} #${i} -> HTTP ${code} ${body:0:200}"
+              # 503 = feature not configured on the server (e.g. no provider key): not a scheduler failure.
+              if [ "$code" = "503" ]; then return; fi
+              if [ "$code" -ge 400 ] && [ "$code" != "409" ] && [ "$code" != "502" ]; then failures=$((failures+1)); return; fi
+              printf '%s' "$body" | grep -Eq '"processed":(true|[1-9])' || return
+            done
+          }
+          run_job /api/cron/scheduled-audits 10        # queues due weekly/monthly audits
+          run_job /api/cron/crawl-jobs 6               # runs queued crawls (user crawls also start instantly)
+          run_job /api/cron/scheduled-pagespeed 10
+          run_job /api/cron/scheduled-rank-tracking 10
+          run_job /api/cron/marketplace-instagram 25   # refreshes creators' Meta verification before it expires
+          run_job /api/cron/marketplace-realtime 50    # delivers queued realtime chat events
+          if [ "$failures" -gt 0 ]; then echo "::error::${failures} job(s) failed"; exit 1; fi

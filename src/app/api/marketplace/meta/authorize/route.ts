@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
-import { createState, hashState, metaConfig } from "@/lib/marketplace/meta";
+import { createState, hashState, metaConfig, unifiedLoginUrl } from "@/lib/marketplace/meta";
 import { ensureMarketplaceIndexes } from "@/lib/marketplace/core";
 
 export async function GET() {
@@ -18,6 +18,8 @@ export async function GET() {
   try {
     const config = metaConfig(); const state = createState();
     await db.collection("mp_oauth_states").insertOne({ stateHash: hashState(state), userId: session.user.id, expiresAt: new Date(Date.now() + 10 * 60_000), createdAt: new Date() });
+    // Unified Login (Facebook Login for Business) when a login configuration is set; otherwise Instagram Login.
+    if (config.configId) return Response.redirect(unifiedLoginUrl(state));
     const url = new URL("https://www.instagram.com/oauth/authorize");
     url.search = new URLSearchParams({ client_id: config.clientId, redirect_uri: config.redirectUri, response_type: "code", scope: "instagram_business_basic,instagram_business_manage_insights", state, enable_fb_login: "0", force_authentication: "1" }).toString();
     return Response.redirect(url);

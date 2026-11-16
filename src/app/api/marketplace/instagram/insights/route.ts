@@ -33,12 +33,14 @@ export async function POST(request: Request) {
   try {
     let token = decryptToken(connection.accessTokenEncrypted);
     let expiresAt = connection.expiresAt instanceof Date ? connection.expiresAt : new Date(connection.expiresAt);
-    if (expiresAt.getTime() < now.getTime() + 14 * 86_400_000) {
+    const api = connection.api === "facebook" ? "facebook" as const : "instagram" as const;
+    // Unified Login tokens are system-user tokens that do not expire; only Instagram Login tokens are refreshed.
+    if (api === "instagram" && expiresAt.getTime() < now.getTime() + 14 * 86_400_000) {
       const refreshed = await refreshInstagramToken(token);
       token = refreshed.token;
       expiresAt = refreshed.expiresAt;
     }
-    const metrics = await fetchInstagramInsights(token, String(connection.providerUserId));
+    const metrics = await fetchInstagramInsights(token, String(connection.providerUserId), api);
     if (!metrics.length) return json({ error: "Meta returned no insight metrics. Confirm the Instagram Insights permission and professional account eligibility." }, 502);
     const report = { _id: new ObjectId(), userId: session.user.id, provider: "instagram_graph_api", providerUserId: String(connection.providerUserId), username: String(connection.username || ""), metrics, source: "Meta Instagram Insights API", fetchedAt: now };
     await db.collection("mp_instagram_insights").insertOne(report);

@@ -16,5 +16,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: post.pillar ? 0.9 : 0.8,
     })),
     { url: `${origin}/terms`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${origin}/privacy`, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

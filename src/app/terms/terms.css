@@ -22,3 +22,7 @@
 .terms-document-footer a { display:inline-flex; align-items:center; gap:6px; color:#a84616; font-size:12px; font-weight:650; text-decoration:none; }
 .terms-document-footer a:hover { color:#e96306; }
 @media (max-width:560px) { .terms-page { padding-inline:12px; }.terms-document { padding:20px 16px; }.terms-back-link { margin-bottom:27px; }.terms-operator dl > div { grid-template-columns:1fr; gap:3px; }.terms-document > section h2 { font-size:15px; } }
+/* Lists in legal documents (privacy policy) */
+.terms-document section ul { display: grid; gap: 8px; margin: 10px 0 0; padding-left: 20px; list-style: disc; }
+.terms-document section li { line-height: 1.65; }
+.terms-document section a { text-decoration: underline; text-underline-offset: 2px; }

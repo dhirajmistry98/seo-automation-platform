@@ -15,6 +15,8 @@ test("Unified Login URL uses the Meta app ID, config ID, redirect and state", as
     assert.equal(url.searchParams.get("redirect_uri"), "https://app.example.com/api/marketplace/meta/callback");
     assert.equal(url.searchParams.get("response_type"), "code");
     assert.equal(url.searchParams.get("state"), "state-1");
+    assert.equal(url.searchParams.get("override_default_response_type"), "true");
+    assert.equal(url.searchParams.get("prompt"), "login");
   });
   await withEnv({ META_INSTAGRAM_CONFIG_ID: undefined }, () => { assert.equal(metaConfig().configId, ""); assert.throws(() => unifiedLoginUrl("s")); });
   await withEnv({ META_INSTAGRAM_CONFIG_ID: "abc" }, () => assert.throws(() => metaConfig(), /numeric/));

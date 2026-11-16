@@ -72,7 +72,8 @@ export function unifiedLoginUrl(state: string) {
   const config = metaConfig();
   if (!config.configId) throw new Error("Unified Login is not configured.");
   const url = new URL("https://www.facebook.com/dialog/oauth");
-  url.search = new URLSearchParams({ client_id: config.clientId, config_id: config.configId, redirect_uri: config.redirectUri, response_type: "code", state }).toString();
+  // Same parameters as the Login URL Meta generates for this configuration (full-page, not popup).
+  url.search = new URLSearchParams({ client_id: config.clientId, config_id: config.configId, override_default_response_type: "true", redirect_uri: config.redirectUri, response_type: "code", state, prompt: "login" }).toString();
   return url;
 }
 

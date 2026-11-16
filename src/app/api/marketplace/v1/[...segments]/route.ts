@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
-import { BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
+import { LISTABLE_CREATOR_STATUS, BRAND_CATEGORIES, brandMembership, cleanList, cleanText, collaborationAccess, creatorRatingMap, ensureMarketplaceIndexes, inrPaise, isActiveCreator, notify, objectId, PACKAGE_BOOKING_KIND, profileTier, safeUrl, startingPricePaise } from "@/lib/marketplace/core";
 import { queueMarketplaceEvent, realtimeAvailable } from "@/lib/marketplace/realtime";
 import { getRazorpayConfig, marketplaceCommissionBps, razorpayRequest, RazorpayApiError, verifyRazorpayHmac } from "@/lib/marketplace/razorpay";
 import { recordCapturedCampaignPayment, type CampaignCapturedPayment } from "@/lib/marketplace/campaign-payments";
@@ -94,7 +94,7 @@ export async function GET(request: Request, context: Context) {
       const creator = creatorById.get(String(item.influencerId));
       return { ...record(item), influencerId: item.influencerId, campaignTitle: campaign?.title || "", isBooking: campaign?.kind === PACKAGE_BOOKING_KIND, campaignDeadline: campaign?.deadline || null, brandName: brandNameById.get(String(item.brandId)) || "", creatorName: creator?.name || "", creatorProfileId: creator?.profileId || "" };
     };
-    return json({ userId, influencer: influencer ? { ...record(influencer), tier: profileTier(influencer) } : null, brands: records(brands), memberships: records(memberships), applications: applications.map(describe), collaborations: collaborations.map(describe), sentBookings: sentBookings.map(describe), admin: admin(session.user.email), realtimeAvailable: realtimeAvailable(), instagramConnectAvailable: !!(process.env.META_INSTAGRAM_APP_ID && process.env.META_INSTAGRAM_APP_SECRET && process.env.META_GRAPH_API_VERSION && process.env.META_TOKEN_ENCRYPTION_KEY), marketplacePaymentCheckoutAvailable: marketplacePaymentsEnabled() });
+    return json({ userId, influencer: influencer ? { ...record(influencer), tier: profileTier(influencer), listed: isActiveCreator(influencer), paused: ["rejected", "suspended"].includes(String(influencer.status)) } : null, brands: records(brands), memberships: records(memberships), applications: applications.map(describe), collaborations: collaborations.map(describe), sentBookings: sentBookings.map(describe), admin: admin(session.user.email), realtimeAvailable: realtimeAvailable(), instagramConnectAvailable: !!(process.env.META_INSTAGRAM_APP_ID && process.env.META_INSTAGRAM_APP_SECRET && process.env.META_GRAPH_API_VERSION && process.env.META_TOKEN_ENCRYPTION_KEY), marketplacePaymentCheckoutAvailable: marketplacePaymentsEnabled() });
   }
   if (path[0] === "influencers" && path.length === 1) {
     const params = new URL(request.url).searchParams;
@@ -110,7 +110,7 @@ export async function GET(request: Request, context: Context) {
     const maxRateRupees = params.get("maxRate") ? Number(params.get("maxRate")) : null;
     const skip = Math.min(10_000, Math.max(0, Number.parseInt(params.get("skip") || "0", 10) || 0));
     // Includes the signed-in creator's own listing, so creators can see how brands find them.
-    const filter: Record<string, unknown> = { status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
+    const filter: Record<string, unknown> = { status: LISTABLE_CREATOR_STATUS, "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
     // No minimum audience: one directory of Meta-verified creators, optionally narrowed by the follower filter.
     const followerRange: Record<string, number> = { $gte: 0 };
     if (minFollowers !== null && Number.isSafeInteger(minFollowers) && minFollowers >= 0) followerRange.$gte = minFollowers;
@@ -151,7 +151,7 @@ export async function GET(request: Request, context: Context) {
     const rating = reviews.length ? { average: Math.round(reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length * 10) / 10, count: reviews.length } : null;
     // Similar creators: same niche, currently public, excluding this creator and the viewer.
     const categories = Array.isArray(profile.categories) ? profile.categories.filter((value: unknown): value is string => typeof value === "string").slice(0, 5) : [];
-    const similarFilter: Record<string, unknown> = { _id: { $ne: profile._id }, userId: { $ne: userId }, status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
+    const similarFilter: Record<string, unknown> = { _id: { $ne: profile._id }, userId: { $ne: userId }, status: LISTABLE_CREATOR_STATUS, "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
     if (categories.length) similarFilter.categories = { $in: categories.map((category: string) => new RegExp(`^${escapeRegex(category)}$`, "i")) };
     const similarDocs = await db.collection("mp_influencers").find(similarFilter, { projection: { verificationNotes: 0, "instagram.providerUserId": 0 } }).sort({ "instagram.verifiedFollowers": -1 }).limit(8).toArray();
     const similar = (await publicCreatorCards(db, similarDocs.filter(isActiveCreator))).slice(0, 4);
@@ -167,7 +167,7 @@ export async function GET(request: Request, context: Context) {
   if (path[0] === "cart" && path.length === 1) {
     const cartItems = await db.collection("mp_cart_items").find({ userId }).sort({ createdAt: -1 }).limit(30).toArray();
     const creatorIds = cartItems.map((item) => item.influencerId).filter((id): id is ObjectId => id instanceof ObjectId);
-    const profiles = creatorIds.length ? await db.collection("mp_influencers").find({ _id: { $in: creatorIds }, status: "approved" }, { projection: { userId: 0, verificationNotes: 0, "instagram.providerUserId": 0 } }).toArray() : [];
+    const profiles = creatorIds.length ? await db.collection("mp_influencers").find({ _id: { $in: creatorIds }, status: LISTABLE_CREATOR_STATUS }, { projection: { userId: 0, verificationNotes: 0, "instagram.providerUserId": 0 } }).toArray() : [];
     const profilesById = new Map(profiles.filter(isActiveCreator).map((profile) => [String(profile._id), { ...record(profile), tier: profileTier(profile) }]));
     const items = cartItems.flatMap((item) => {
       const influencer = item.influencerId instanceof ObjectId ? profilesById.get(String(item.influencerId)) : null;

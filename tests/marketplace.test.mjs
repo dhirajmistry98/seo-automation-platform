@@ -20,7 +20,9 @@ test("any audience size is listed, but only with a current Meta verification of 
   // Not verified through Meta, stale verification, or not approved.
   assert.equal(isActiveCreator(creator(900, { instagram: { verifiedFollowers: 900, verifiedAt: null } })), false);
   assert.equal(isActiveCreator(creator(900, { instagram: { source: "meta_api", username: "dhiraj.creates", verifiedFollowers: 900, verifiedAt: new Date(Date.now() - 8 * 86_400_000) } })), false);
-  assert.equal(isActiveCreator(creator(900, { status: "draft" })), false);
+  // No admin approval step: draft/pending verified creators are listed; only moderation blocks them.
+  for (const status of ["draft", "pending", undefined]) assert.equal(isActiveCreator(creator(900, { status })), true, String(status));
+  for (const status of ["rejected", "suspended"]) assert.equal(isActiveCreator(creator(900, { status })), false, status);
   // Meta verified a different account than the username on the profile.
   assert.equal(isActiveCreator(creator(900, { instagramHandle: "someone.else" })), false);
   // Verified before the username field existed: matches on the verified username.

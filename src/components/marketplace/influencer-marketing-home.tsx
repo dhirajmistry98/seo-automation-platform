@@ -103,7 +103,7 @@ export function InfluencerMarketingHome({ basePath = "/influencer-marketing" }: 
       <Link href={`${basePath}/inbox`}><strong>{collaborations.length}</strong><span>Active collaborations</span></Link>
       <Link href={`${basePath}/inbox`}><strong>{pendingRequests}</strong><span>Requests awaiting you</span></Link>
       <Link href={`${basePath}/brand`}><strong>{brands.length}</strong><span>Brand profiles</span></Link>
-      <Link href={`${basePath}/creator`}><strong>{influencer._id ? str(influencer.status) || "draft" : "—"}</strong><span>Creator profile</span></Link>
+      <Link href={`${basePath}/creator`}><strong>{influencer._id ? (influencer.listed ? "Listed" : influencer.paused ? "Paused" : "Not verified") : "—"}</strong><span>Creator profile</span></Link>
     </div>}
 
     <section aria-labelledby="mp-home-categories">

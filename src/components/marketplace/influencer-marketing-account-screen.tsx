@@ -71,7 +71,7 @@ export function InfluencerMarketingAccountScreen({ identity }: { identity: Ident
   const verifiedTimestamp = verifiedAt ? new Date(String(verifiedAt)).getTime() : Number.NaN;
   const freshVerification = currentTime !== null && instagramProfile.source === "meta_api" && Number.isFinite(verifiedTimestamp) && currentTime - verifiedTimestamp <= 7 * 86_400_000;
   const verified = freshVerification && followers !== null && followers >= 0;
-  const creatorStatus = !influencer._id ? "not created" : verified && influencer.status === "approved" ? "verified" : statusLabel(influencer.status);
+  const creatorStatus = !influencer._id ? "not created" : influencer.listed ? "listed" : influencer.paused ? "paused" : "not verified";
   const connectedBrandMemberships = rows(me?.memberships).length;
 
   return <div className="marketplace-page influencer-account-page">
@@ -113,7 +113,7 @@ export function InfluencerMarketingAccountScreen({ identity }: { identity: Ident
 
       <div className="influencer-account-profile-grid">
         <section className="marketplace-panel">
-          <div className="influencer-account-section-head"><span className="influencer-account-icon"><UsersRound size={20} /></span><div><span className="marketplace-eyebrow">CREATOR PROFILE</span><h2>{string(influencer.displayName) || "Your creator presence"}</h2></div>{Boolean(influencer._id) && <StatusPill value={influencer.status} />}</div>
+          <div className="influencer-account-section-head"><span className="influencer-account-icon"><UsersRound size={20} /></span><div><span className="marketplace-eyebrow">CREATOR PROFILE</span><h2>{string(influencer.displayName) || "Your creator presence"}</h2></div>{Boolean(influencer._id) && <span className={`influencer-account-status is-${influencer.listed ? "approved" : influencer.paused ? "suspended" : "pending"}`}>{influencer.listed ? "Listed" : influencer.paused ? "Paused" : "Not verified"}</span>}</div>
           {influencer._id ? <>
             <p className="influencer-account-profile-copy">{string(influencer.bio) || "Add a short introduction in Creator Studio so brands understand your content and audience."}</p>
             <div className="influencer-account-facts"><span>{string(influencer.location) || "Location not added"}</span><strong>{rupees(influencer.ratePaise)}</strong></div>

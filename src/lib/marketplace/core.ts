@@ -6,6 +6,13 @@ export const BRAND_CATEGORIES = ["startup", "small_business", "local_business", 
 export type BrandCategory = typeof BRAND_CATEGORIES[number];
 export const PROFILE_STATUSES = ["draft", "pending", "approved", "rejected", "suspended"] as const;
 export const CAMPAIGN_STATUSES = ["draft", "open", "closed", "cancelled"] as const;
+/**
+ * Creators verify themselves through Meta; there is no manual approval step. Only a profile an admin has
+ * rejected or suspended (moderation) is kept out of listings.
+ */
+export const BLOCKED_CREATOR_STATUSES = ["rejected", "suspended"];
+/** MongoDB status condition for creator listings (pair it with the Meta verification fields). */
+export const LISTABLE_CREATOR_STATUS = { $nin: BLOCKED_CREATOR_STATUSES };
 export const APPLICATION_STATUSES = ["pending", "invited", "accepted", "declined", "withdrawn"] as const;
 
 export function cleanText(value: unknown, max = 200, min = 1): string | null {
@@ -52,7 +59,7 @@ export function hasVerifiedInstagramUsername(profile: Document) {
  * currently verified through Meta. There is no minimum follower count.
  */
 export function isActiveCreator(profile: Document) {
-  return profile.status === "approved" && isCurrentMetaVerification(profile) && hasVerifiedInstagramUsername(profile);
+  return !BLOCKED_CREATOR_STATUSES.includes(String(profile.status)) && isCurrentMetaVerification(profile) && hasVerifiedInstagramUsername(profile);
 }
 
 const globalIndexes = globalThis as typeof globalThis & { marketplaceIndexes?: Promise<void>; marketplaceCartIndexes?: Promise<void>; marketplaceBookingIndexes?: Promise<void> };

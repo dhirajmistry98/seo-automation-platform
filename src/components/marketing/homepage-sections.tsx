@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Activity, ArrowDown, ArrowRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, Check, ChevronDown, FileCheck2, Info, LockKeyhole, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { BRAND, ROUTES } from "@/lib/marketing";
 import clientPromise from "@/lib/mongodb";
-import { profileTier } from "@/lib/marketplace/core";
+import { LISTABLE_CREATOR_STATUS, profileTier } from "@/lib/marketplace/core";
 import { ScrollCue } from "./scroll-cue";
 import { BrandLogo } from "./brand-logo";
 import { ApplicationPreview, PluginPreview } from "./product-previews";
@@ -221,7 +221,7 @@ async function MarketplaceSection() {
     const verifiedSince = new Date(Date.now() - 7 * 86_400_000);
     [creators, brands] = await Promise.all([
       db.collection("mp_influencers").find({
-        status: "approved",
+        status: LISTABLE_CREATOR_STATUS,
         "instagram.source": "meta_api",
         "instagram.verifiedFollowers": { $gte: 0 },
         "instagram.verifiedAt": { $gte: verifiedSince },

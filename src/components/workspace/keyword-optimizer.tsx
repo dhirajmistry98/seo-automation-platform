@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, CircleAlert, HelpCircle, ListOrdered, LoaderCircle, RotateCcw, Search, Target, TrendingUp, XCircle } from "lucide-react";
+import { BarChart3, CheckCircle2, CircleAlert, ExternalLink, HelpCircle, ListOrdered, LoaderCircle, RotateCcw, Search, Target, TrendingUp, XCircle } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 
 type Check = { id: string; label: string; status: "pass" | "warn" | "fail"; impact: "high" | "medium" | "low"; detail: string; fix: string };
@@ -10,8 +10,14 @@ type Result = {
   missingTopics: string[]; unansweredQuestions: string[]; relatedSearches: string[]; questions: string[]; wordCount: number; keywordCount: number;
   google: { connected: boolean; status?: GoogleStatus; message?: string; position: number | null; impressions: number; clicks: number; rankingPage: string | null; samePage: boolean | null };
   market: { language: string; country: string };
+  topResults?: TopResults;
 };
-type Target = { url: string; keyword: string; updatedAt: string; history: Array<{ at: string; score: number; position: number | null; googleStatus?: GoogleStatus; googleMessage?: string }> };
+type Profile = { words: number; sections: number; keywordUses: number; keywordInTitle: boolean; keywordInH1: boolean; schema: string[] };
+type TopResults =
+  | { status: "ok"; position: number | null; rankingUrl: string | null; depth: number; checkedAt: string; comparedWith: string[]; top10: Array<{ rank: number; url: string; domain: string; title: string; yours: boolean }>;
+      benchmark: { yours: Profile; top: { pages: number; words: number; sections: number; keywordUses: number; keywordInTitle: number; keywordInH1: number; schema: string[] }; missingTopics: string[] } }
+  | { status: "not_your_site" | "unavailable" | "limit" | "error"; message: string };
+type Target = { url: string; keyword: string; updatedAt: string; history: Array<{ at: string; score: number; position: number | null; serpPosition?: number | null; googleStatus?: GoogleStatus; googleMessage?: string }> };
 type GoogleStatus = "ranking" | "not_ranking" | "not_connected" | "no_property" | "api_error" | "not_your_site";
 const GOOGLE_LABEL: Record<GoogleStatus, string> = { ranking: "", not_ranking: "Not ranking yet", not_connected: "Connect Search Console", no_property: "No Search Console property", api_error: "Google error", not_your_site: "Not your website" };
 /** Table cell text: the position, or why there is none (older checks without a status fall back to a dash). */
@@ -79,6 +85,8 @@ export function KeywordOptimizer({ websites }: { websites: Array<{ domain: strin
           </div>
           {result.google.connected && result.google.samePage === false && result.google.rankingPage && <p className="google-data-message">Google currently ranks a different page for this keyword: <a href={result.google.rankingPage} target="_blank" rel="noreferrer">{result.google.rankingPage}</a>. Either optimize that page instead, or link from it to this one so the two pages do not compete.</p>}
 
+          {result.topResults && <GoogleTopResults keyword={result.keyword} data={result.topResults} />}
+
           {result.plan.length > 0 && (
             <section className="seo-check-panel">
               <h3><ListOrdered size={15} aria-hidden="true" /> Your plan to rank higher</h3>
@@ -110,7 +118,7 @@ export function KeywordOptimizer({ websites }: { websites: Array<{ domain: strin
                 <td>{target.keyword}</td>
                 <td className="kw-opt-url">{target.url.replace(/^https?:\/\//, "")}</td>
                 <td>{last?.score ?? "—"}{change ? <small className={change > 0 ? "kw-opt-up" : "kw-opt-down"}> {change > 0 ? "+" : ""}{change}</small> : null}</td>
-                <td title={last?.googleMessage}>{googleCell(last?.position, last?.googleStatus)}</td>
+                <td title={last?.googleMessage}>{last?.position ? googleCell(last.position, last.googleStatus) : last?.serpPosition ? `#${last.serpPosition}` : googleCell(last?.position, last?.googleStatus)}</td>
                 <td>{new Date(target.updatedAt).toLocaleDateString()}</td>
                 <td><button type="button" className="kw-opt-rerun" disabled={loading} onClick={() => { setUrl(target.url); setKeyword(target.keyword); void run(target.url, target.keyword); }}><RotateCcw size={12} aria-hidden="true" /> Re-check</button></td>
               </tr>
@@ -120,4 +128,33 @@ export function KeywordOptimizer({ websites }: { websites: Array<{ domain: strin
       )}
     </div>
   );
+}
+
+/** Live Google top 10 for the keyword and how the page compares with the top-ranking pages. */
+function GoogleTopResults({ keyword, data }: { keyword: string; data: TopResults }) {
+  if (data.status !== "ok") return <section className="seo-check-panel kw-serp"><h3><BarChart3 size={15} aria-hidden="true" /> Google&apos;s top results</h3><p className="kw-serp-note">{data.message}</p></section>;
+  const { benchmark: b } = data;
+  const row = (label: string, yours: string, top: string, behind: boolean) => <tr key={label}><td>{label}</td><td className={behind ? "kw-serp-behind" : ""}>{yours}</td><td>{top}</td></tr>;
+  return <section className="seo-check-panel kw-serp">
+    <h3><BarChart3 size={15} aria-hidden="true" /> Google&apos;s top results for “{keyword}”</h3>
+    <div className="kw-serp-position">
+      <strong>{data.position ? `#${data.position}` : `Not in the top ${data.depth}`}</strong>
+      <span>{data.position ? <>Your site ranks here in live Google results{data.rankingUrl ? <> with <a href={data.rankingUrl} target="_blank" rel="noreferrer">{data.rankingUrl.replace(/^https?:\/\//, "")}</a></> : null}.</> : "Your site does not appear in the first results yet. Use the gaps below to compete."}</span>
+      <small>Checked {new Date(data.checkedAt).toLocaleString()}; refreshed at most once a day.</small>
+    </div>
+    <ol className="kw-serp-list">{data.top10.map((item) => <li key={`${item.rank}-${item.url}`} className={item.yours ? "is-yours" : ""}><span className="kw-serp-rank">{item.rank}</span><span><a href={item.url} target="_blank" rel="noreferrer">{item.title || item.domain} <ExternalLink size={11} aria-hidden="true" /></a><small>{item.domain}{item.yours ? " · your site" : ""}</small></span></li>)}</ol>
+    {b.top.pages > 0 && <>
+      <h4>Your page vs the top {b.top.pages} pages</h4>
+      <div className="google-report-table-wrap"><table className="google-report-table kw-serp-table"><thead><tr><th>Signal</th><th>Your page</th><th>Top pages</th></tr></thead><tbody>
+        {row("Words", b.yours.words.toLocaleString(), `~${b.top.words.toLocaleString()}`, b.yours.words < b.top.words * 0.7)}
+        {row("Sections (H2)", String(b.yours.sections), `~${b.top.sections}`, b.yours.sections < Math.round(b.top.sections * 0.6))}
+        {row("Keyword uses", String(b.yours.keywordUses), `~${b.top.keywordUses}`, b.yours.keywordUses < Math.max(1, Math.round(b.top.keywordUses * 0.5)))}
+        {row("Keyword in title", b.yours.keywordInTitle ? "Yes" : "No", `${b.top.keywordInTitle} of ${b.top.pages}`, !b.yours.keywordInTitle && b.top.keywordInTitle >= Math.ceil(b.top.pages / 2))}
+        {row("Keyword in H1", b.yours.keywordInH1 ? "Yes" : "No", `${b.top.keywordInH1} of ${b.top.pages}`, !b.yours.keywordInH1 && b.top.keywordInH1 >= Math.ceil(b.top.pages / 2))}
+        {row("Structured data", b.yours.schema.join(", ") || "None", b.top.schema.join(", ") || "—", b.top.schema.some((type) => !b.yours.schema.includes(type)))}
+      </tbody></table></div>
+      {b.missingTopics.length > 0 && <div className="kw-serp-topics"><h4>Topics the top pages cover that you don&apos;t</h4><div>{b.missingTopics.map((topic) => <span key={topic}>{topic}</span>)}</div></div>}
+    </>}
+    {b.top.pages === 0 && <p className="kw-serp-note">The top pages could not be read for comparison (they may block automated visits).</p>}
+  </section>;
 }

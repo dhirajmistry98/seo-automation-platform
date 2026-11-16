@@ -173,3 +173,7 @@ export function analyzeKeywordTargeting(page: AuditedPage, html: string, keyword
     .map((check) => ({ step: check.label, fix: check.fix, impact: check.impact }));
   return { score, checks, plan, missingTopics, unansweredQuestions, wordCount: page.wordCount, keywordCount: exactCount };
 }
+
+/** Shared with the Google top-results benchmark. */
+export const meaningfulTokens = meaningful;
+export const visiblePageText = visibleText;

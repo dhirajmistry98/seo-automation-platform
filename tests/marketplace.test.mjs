@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { influencerTier } from "../src/lib/marketplace/tiers.ts";
-import { isActiveCreator } from "../src/lib/marketplace/core.ts";
+import { isActiveCreator, statusAfterVerification } from "../src/lib/marketplace/core.ts";
 import { createState, decryptToken, encryptToken, hashState } from "../src/lib/marketplace/meta.ts";
 import { collaborationChannel, createCollaborationTokenRequest } from "../src/lib/marketplace/realtime.ts";
 import { matchesFileSignature } from "../src/lib/marketplace/file-types.ts";
@@ -70,4 +70,10 @@ test("private attachment upload rejects mismatched file signatures", () => {
   assert.equal(matchesFileSignature("image/jpeg", pdf), false);
   assert.equal(matchesFileSignature("application/pdf", jpeg), false);
   assert.equal(matchesFileSignature("image/png", Uint8Array.from([0x89, 0x50])), false);
+});
+
+test("Meta verification lists a creator unless an admin rejected or suspended them", () => {
+  for (const current of [undefined, "draft", "pending", "approved"]) assert.equal(statusAfterVerification(current), "approved", String(current));
+  assert.equal(statusAfterVerification("rejected"), "rejected");
+  assert.equal(statusAfterVerification("suspended"), "suspended");
 });

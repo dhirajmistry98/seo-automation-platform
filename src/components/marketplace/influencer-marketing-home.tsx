@@ -113,7 +113,7 @@ export function InfluencerMarketingHome({ basePath = "/influencer-marketing" }: 
 
     <section aria-labelledby="mp-home-featured">
       <div className="marketplace-section-title"><div><span className="marketplace-eyebrow">FEATURED</span><h2 id="mp-home-featured">Top verified creators</h2></div>{total > 0 && <Link className="mp-home-see-all" href={`${basePath}/discover`}>See all {total} <ArrowRight size={14} /></Link>}</div>
-      {loading ? <div className="marketplace-loading" role="status">Loading creators…</div> : featured.length ? <div className="mp-creator-tile-grid">{featured.map((creator) => <CreatorTile key={str(creator._id)} creator={creator} basePath={basePath} />)}</div> : <div className="marketplace-empty"><UsersRound size={22} /><strong>No verified creators listed yet</strong><p>Creators appear here after connecting Instagram through Meta and passing marketplace review.</p><Link className="marketplace-primary" href={`${basePath}/creator`}>Join as a creator <ArrowRight size={15} /></Link></div>}
+      {loading ? <div className="marketplace-loading" role="status">Loading creators…</div> : featured.length ? <div className="mp-creator-tile-grid">{featured.map((creator) => <CreatorTile key={str(creator._id)} creator={creator} basePath={basePath} />)}</div> : <div className="marketplace-empty"><UsersRound size={22} /><strong>No verified creators listed yet</strong><p>Creators appear here as soon as they verify their Instagram through Meta.</p><Link className="marketplace-primary" href={`${basePath}/creator`}>Join as a creator <ArrowRight size={15} /></Link></div>}
     </section>
 
     {risingOnly.length > 0 && <section aria-labelledby="mp-home-rising">

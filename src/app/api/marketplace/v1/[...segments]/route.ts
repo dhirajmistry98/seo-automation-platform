@@ -109,7 +109,8 @@ export async function GET(request: Request, context: Context) {
     const minRateRupees = params.get("minRate") ? Number(params.get("minRate")) : null;
     const maxRateRupees = params.get("maxRate") ? Number(params.get("maxRate")) : null;
     const skip = Math.min(10_000, Math.max(0, Number.parseInt(params.get("skip") || "0", 10) || 0));
-    const filter: Record<string, unknown> = { userId: { $ne: userId }, status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
+    // Includes the signed-in creator's own listing, so creators can see how brands find them.
+    const filter: Record<string, unknown> = { status: "approved", "instagram.source": "meta_api", "instagram.verifiedAt": { $gte: new Date(Date.now() - 7 * 86_400_000) } };
     // No minimum audience: one directory of Meta-verified creators, optionally narrowed by the follower filter.
     const followerRange: Record<string, number> = { $gte: 0 };
     if (minFollowers !== null && Number.isSafeInteger(minFollowers) && minFollowers >= 0) followerRange.$gte = minFollowers;

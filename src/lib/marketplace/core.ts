@@ -155,3 +155,8 @@ export function startingPricePaise(profile: Document): number | null {
   if (prices.length) return Math.min(...prices);
   return typeof profile.ratePaise === "number" ? profile.ratePaise : null;
 }
+
+/** Status after a successful Meta verification: listed straight away, unless an admin rejected or suspended the profile. */
+export function statusAfterVerification(current: unknown) {
+  return current === "rejected" || current === "suspended" ? current : "approved";
+}

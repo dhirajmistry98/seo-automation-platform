@@ -82,7 +82,7 @@ function CreatorVerificationCard({ influencer, connectAvailable }: { influencer:
   const steps = [
     { done: saved && Boolean(handle), title: "Save your profile", text: handle ? `With Instagram username @${handle}` : "Include your Instagram username" },
     { done: verified, title: "Verify through Meta", text: verified ? `Verified as @${str(instagram.username)} on ${verifiedAt!.toLocaleDateString("en-IN")}` : "Log in to Instagram with that exact account" },
-    { done: verified && approved, title: "Listed for brands", text: approved ? "Your profile is approved" : "After verification, a quick review" },
+    { done: verified && approved, title: "Listed for brands", text: approved ? "Brands can find you in Discover" : str(influencer.status) === "suspended" || str(influencer.status) === "rejected" ? "Paused by the marketplace team. Contact support." : "Happens automatically after verification" },
   ];
   return <aside className="marketplace-panel marketplace-side-panel mp-verify-card" aria-labelledby="mp-verify-title">
     <div className="mp-verify-head">
@@ -124,7 +124,7 @@ function CreatorVerificationCard({ influencer, connectAvailable }: { influencer:
 
 /** Result of the Instagram (Meta) connection, passed back as ?meta=<status>. */
 const META_RESULT: Record<string, { tone: "info" | "warn" | "success"; text: string }> = {
-  "connected-review": { tone: "success", text: "Instagram verified: the account you logged in with matches your username. Your follower count was saved and your profile is under review." },
+  "connected-review": { tone: "success", text: "Instagram verified: the account you logged in with matches your username. Your profile is now listed for brands in Discover." },
   "username-mismatch": { tone: "warn", text: "Verification failed: the Instagram account you logged in with is not the username on your profile. Log in with that exact account, or correct the username and save before connecting again." },
   "username-required": { tone: "warn", text: "Add your Instagram username to your creator profile and save it before connecting Instagram." },
   "profile-required": { tone: "warn", text: "Save your creator profile first, then connect Instagram." },

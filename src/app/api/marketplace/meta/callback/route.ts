@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
-import { ensureMarketplaceIndexes } from "@/lib/marketplace/core";
+import { ensureMarketplaceIndexes, statusAfterVerification } from "@/lib/marketplace/core";
 import { instagramHandleMatches } from "@/lib/marketplace/instagram-handle";
 import { encryptToken, exchangeInstagramCode, exchangeUnifiedCode, fetchInstagramMedia, fetchInstagramProfile, hashState, listAssignedInstagramAccounts, metaConfig, type InstagramApi } from "@/lib/marketplace/meta";
 
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const used = await db.collection("mp_oauth_states").findOneAndDelete({ stateHash: hashState(state), userId: session.user.id, expiresAt: { $gt: new Date() } });
   if (!used) return go("invalid-state");
   try {
-    const creator = await db.collection("mp_influencers").findOne({ userId: session.user.id }, { projection: { instagramHandle: 1 } });
+    const creator = await db.collection("mp_influencers").findOne({ userId: session.user.id }, { projection: { instagramHandle: 1, status: 1 } });
     if (!creator?.instagramHandle) return go("username-required");
     let api: InstagramApi = "instagram";
     let exchange: { token: string; userId: string; expiresAt: Date };
@@ -48,7 +48,9 @@ export async function GET(request: Request) {
     const followerCountAvailable = typeof profile.followers_count === "number" && Number.isSafeInteger(profile.followers_count) && profile.followers_count >= 0;
     if (!followerCountAvailable) return go("verification-unavailable");
     await db.collection("mp_social_connections").updateOne({ userId: session.user.id, provider: "instagram" }, { $set: { providerUserId: exchange.userId, api, username: profile.username, accessTokenEncrypted: encryptToken(exchange.token), expiresAt: exchange.expiresAt, nextCheckAt: new Date(now.getTime() + 86_400_000), updatedAt: now }, $setOnInsert: { createdAt: now } }, { upsert: true });
-    await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { instagram: { providerUserId: exchange.userId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: profile.profile_picture_url || null, recentMedia, mediaFetchedAt: now, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: "pending", updatedAt: now } });
+    // A successful Meta verification lists the creator straight away; an admin's rejection or suspension stays in force.
+    const listedStatus = statusAfterVerification(creator.status);
+    await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { instagram: { providerUserId: exchange.userId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: profile.profile_picture_url || null, recentMedia, mediaFetchedAt: now, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: listedStatus, updatedAt: now } });
     await db.collection("mp_audit").insertOne({ entityId: session.user.id, actorId: session.user.id, action: "instagram.connected", followerCountAvailable, followerCount: profile.followers_count, createdAt: now });
     return go("connected-review");
   } catch { return go("verification-unavailable"); }

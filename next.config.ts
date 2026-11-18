@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
     ];
     return [{ source: "/:path*", headers }];
   },
+  async redirects() {
+    // seostudio.vercel.app is the main address. Pages on the old Vercel address move there; /api/ stays
+    // reachable on both so the scheduler, webhooks, OAuth callbacks and WordPress plugins keep working.
+    return [{
+      source: "/:path((?!api/).*)",
+      has: [{ type: "host", value: "seo-automation-platform-ten.vercel.app" }],
+      destination: "https://seostudio.vercel.app/:path",
+      permanent: true,
+    }];
+  },
   turbopack: {
     root: path.join(__dirname),
     rules: {

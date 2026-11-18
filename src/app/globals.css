@@ -1926,3 +1926,7 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 .login-story-orbit { pointer-events:none; }
 .login-legal-note { margin-top: 8px; color: color-mix(in srgb, var(--brand-navy) 60%, transparent); font-size: 11px; line-height: 1.5; }
 .login-legal-note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Lalezar display face for headings; DM Sans stays the body font. Lalezar ships one weight, so tight negative tracking is relaxed. */
+:root { --font-heading: var(--font-lalezar), var(--font-dm-sans), Arial, sans-serif; --font-display: var(--font-lalezar), var(--font-dm-sans), Arial, sans-serif; }
+h1, h2, .hero-title, .section-title, .product-card h3, .final-cta h2, .landing-hero-copy h1, .landing-section-intro h2, .landing-product-copy h3, .landing-cta h2, .login-story-copy h1, .login-form-heading h2, .workspace-page-heading h1, .workspace-empty-state h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: -.01em; }

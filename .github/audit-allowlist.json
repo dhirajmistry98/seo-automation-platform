@@ -1,0 +1,9 @@
+[
+  {
+    "id": "GHSA-fc5q-39xc-vjpf",
+    "package": "picomatch",
+    "reason": "ReDoS in glob matching with no patched release (<= 4.0.7). Reached only through dev lint tooling (eslint-config-next, typescript-eslint), which matches repository file globs; production dependencies are unaffected (npm audit --omit=dev is clean).",
+    "added": "2026-11-18",
+    "expires": "2027-01-31"
+  }
+]

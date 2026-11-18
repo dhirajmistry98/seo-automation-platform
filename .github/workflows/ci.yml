@@ -54,7 +54,8 @@ jobs:
         run: npm run lint
 
       - name: Audit all dependencies
-        run: npm audit --audit-level=moderate
+        # Fails on any moderate+ advisory except dated, reviewed exceptions in .github/audit-allowlist.json.
+        run: node scripts/audit-gate.mjs
 
       - name: Build production app
         run: npm run build

@@ -1930,3 +1930,5 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 /* Lalezar display face for headings; DM Sans stays the body font. Lalezar ships one weight, so tight negative tracking is relaxed. */
 :root { --font-heading: var(--font-lalezar), var(--font-dm-sans), Arial, sans-serif; --font-display: var(--font-lalezar), var(--font-dm-sans), Arial, sans-serif; }
 h1, h2, .hero-title, .section-title, .product-card h3, .final-cta h2, .landing-hero-copy h1, .landing-section-intro h2, .landing-product-copy h3, .landing-cta h2, .login-story-copy h1, .login-form-heading h2, .workspace-page-heading h1, .workspace-empty-state h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: -.01em; }
+/* Lalezar is condensed with a narrow word space: older headline rules use negative tracking (tailwind tracking-tight etc.), which makes words collide. Reset it everywhere the display face is used. */
+h1, h2, h3, h4, .font-heading, [class*="font-heading"], .hero-title, .section-title { letter-spacing: 0 !important; word-spacing: .14em; }

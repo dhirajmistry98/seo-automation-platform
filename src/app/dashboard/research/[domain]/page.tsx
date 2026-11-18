@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
-import { ResearchWorkbench } from "@/components/workspace/research-workbench";
+import { ResearchWorkbench, type ResearchHistoryReport } from "@/components/workspace/research-workbench";
 import { AuthorityIndexCard, type AuthoritySnapshot } from "@/components/workspace/authority-index-card";
 import { getWebsiteSeoTarget } from "@/lib/seo/target";
 
@@ -33,8 +33,13 @@ export default async function WebsiteResearchPage({ params }: { params: Promise<
   }));
   const history = reports.map((report) => ({
     _id: String(report._id),
-    kind: report.kind as "keywords" | "rank" | "backlinks" | "competitors",
+    kind: String(report.kind) as ResearchHistoryReport["kind"],
     competitorDomain: typeof report.competitorDomain === "string" ? report.competitorDomain : undefined,
+    backlinkMode: report.backlinkMode === "new" || report.backlinkMode === "lost" ? report.backlinkMode as "new" | "lost" : report.backlinkMode === "all" ? "all" as const : undefined,
+    platform: report.platform === "chat_gpt" ? "chat_gpt" as const : report.platform === "google" ? "google" as const : undefined,
+    provider: typeof report.provider === "string" ? report.provider : undefined,
+    searchConsoleConnected: typeof report.searchConsoleConnected === "boolean" ? report.searchConsoleConnected : undefined,
+    providerSummary: Array.isArray(report.providerSummary) ? report.providerSummary as Array<Record<string, unknown>> : undefined,
     query: String(report.query || ""),
     locationCode: Number(report.locationCode || 2840),
     locationName: typeof report.locationName === "string" ? report.locationName : undefined,
@@ -48,7 +53,7 @@ export default async function WebsiteResearchPage({ params }: { params: Promise<
     fetchedAt: report.fetchedAt instanceof Date ? report.fetchedAt.toISOString() : String(report.fetchedAt),
   }));
   return <>
-    <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> SEARCH INTELLIGENCE</p><h1>{website.name || domain}</h1><p>Keyword, organic position, and backlink research for {domain}.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><ArrowLeft size={15} /> All websites</Link></header>
+    <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> SEARCH INTELLIGENCE</p><h1>{website.name || domain}</h1><p>Keyword, domain, competitor, position, local, backlink and AI search research for {domain}.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><ArrowLeft size={15} /> All websites</Link></header>
     <AuthorityIndexCard domain={domain} initialHistory={authorityHistory} />
     <ResearchWorkbench domain={domain} verified={Boolean(website.verifiedAt)} configured={isDataForSeoConfigured()} competitorDomains={Array.isArray(website.competitorDomains) ? website.competitorDomains.filter((item): item is string => typeof item === "string") : []} initialHistory={history} initialTarget={getWebsiteSeoTarget(website as unknown as Parameters<typeof getWebsiteSeoTarget>[0])} />
   </>;

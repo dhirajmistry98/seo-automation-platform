@@ -160,18 +160,56 @@ export function getProviderItems(result: DataForSeoResponse): Array<Record<strin
   return result.tasks?.flatMap((task) => task.result?.flatMap((entry) => (entry.items || []).map((item) => ({ ...(typeof entry.target === "string" ? { target: entry.target } : {}), ...item }))) || []) || [];
 }
 
-export function buildDomainRankRows(tasks: NonNullable<DataForSeoResponse["tasks"]>, keywords: string[], websiteDomain: string) {
-  const domain = websiteDomain.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+function bareHost(value: unknown) {
+  let candidate = typeof value === "string" ? value : "";
+  if (candidate.includes("/")) { try { candidate = new URL(candidate).hostname; } catch { candidate = ""; } }
+  return candidate.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+}
+
+function hostMatches(host: string, domain: string) { return Boolean(host) && (host === domain || host.endsWith(`.${domain}`)); }
+
+function itemHost(item: Record<string, unknown>) { return bareHost(item.domain) || bareHost(item.url); }
+
+/** Every AI Overview citation inside a SERP item, wherever the provider nests it. */
+function aiOverviewReferences(item: unknown, found: Array<Record<string, unknown>> = [], depth = 0): Array<Record<string, unknown>> {
+  if (!item || typeof item !== "object" || depth > 6) return found;
+  if (Array.isArray(item)) { for (const entry of item) aiOverviewReferences(entry, found, depth + 1); return found; }
+  const record = item as Record<string, unknown>;
+  if (record.type === "ai_overview_reference" || (depth > 0 && typeof record.url === "string" && typeof record.source === "string")) found.push(record);
+  for (const [key, value] of Object.entries(record)) if (key === "references" || key === "items") aiOverviewReferences(value, found, depth + 1);
+  return found;
+}
+
+/**
+ * One row per keyword: the website's best organic result plus Position Tracking extras from the same SERP
+ * (no extra provider calls): saved competitors' positions, SERP features shown, AI Overview presence and
+ * citation, and every URL of the website that ranks (two or more is keyword cannibalization).
+ */
+export function buildDomainRankRows(tasks: NonNullable<DataForSeoResponse["tasks"]>, keywords: string[], websiteDomain: string, competitorDomains: string[] = []) {
+  const domain = bareHost(websiteDomain);
+  const competitors = [...new Set(competitorDomains.map(bareHost).filter((value) => value && value !== domain))].slice(0, 20);
   return keywords.map((keyword, index) => {
-    const organicItems = tasks[index]?.result?.flatMap((entry) => entry.items || []) || [];
-    const matching = organicItems.find((item) => {
-      let candidate = typeof item.domain === "string" ? item.domain.toLowerCase().replace(/^www\./, "").replace(/\.$/, "") : "";
-      if (!candidate && typeof item.url === "string") {
-        try { candidate = new URL(item.url).hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, ""); } catch {}
-      }
-      return candidate === domain || candidate.endsWith(`.${domain}`);
-    });
-    return matching ? { keyword, ...matching } : { keyword, rank_group: null, rank_absolute: null, url: null, title: null, domain: null };
+    const entries = tasks[index]?.result || [];
+    const allItems = entries.flatMap((entry) => entry.items || []);
+    const organicItems = allItems.filter((item) => item.type === undefined || item.type === "organic");
+    const ownResults = organicItems.filter((item) => hostMatches(itemHost(item), domain));
+    const matching = ownResults[0];
+    const competitorPositions: Record<string, number | null> = {};
+    for (const competitor of competitors) {
+      const hit = organicItems.find((item) => hostMatches(itemHost(item), competitor));
+      competitorPositions[competitor] = hit && typeof hit.rank_group === "number" ? hit.rank_group : null;
+    }
+    const features = [...new Set(entries.flatMap((entry) => Array.isArray(entry.item_types) ? entry.item_types.filter((type): type is string => typeof type === "string") : []))];
+    const overview = allItems.find((item) => item.type === "ai_overview");
+    const references = overview ? aiOverviewReferences(overview) : [];
+    const citation = references.find((reference) => hostMatches(bareHost(reference.domain) || bareHost(reference.url), domain));
+    const extras = {
+      competitor_positions: competitorPositions,
+      serp_features: features.filter((type) => type !== "organic"),
+      ai_overview: { present: Boolean(overview) || features.includes("ai_overview"), cited: Boolean(citation), cited_url: typeof citation?.url === "string" ? citation.url : null },
+      own_urls: [...new Set(ownResults.map((item) => item.url).filter((url): url is string => typeof url === "string"))].slice(0, 5),
+    };
+    return matching ? { keyword, ...matching, ...extras } : { keyword, rank_group: null, rank_absolute: null, url: null, title: null, domain: null, ...extras };
   });
 }
 

@@ -6,7 +6,7 @@ import { findAccessibleWebsite } from "@/lib/organizations";
 import { dataForSeoGet, dataForSeoPost, isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
-import { AI_PLATFORMS, answerExcerpt, assessAnswer, buildAnswerRequest, parseAnswer, pickModel, summarizeAnswers, type AiPlatform, type AnswerRow, type ProviderModel } from "@/lib/seo/ai-answers";
+import { AI_PLATFORMS, answerExcerpt, assessAnswer, brandSentiment, buildAnswerRequest, parseAnswer, pickModel, summarizeAnswers, type AiPlatform, type AnswerRow, type ProviderModel } from "@/lib/seo/ai-answers";
 
 // Each live answer can take up to ~2 minutes at the provider; all run in parallel.
 export const maxDuration = 300;
@@ -80,7 +80,7 @@ export async function POST(request: Request, context: Context) {
       const answer = parseAnswer(result.tasks?.[0]?.result?.[0] as Record<string, unknown> | undefined);
       if (!answer.text) return { prompt, platform, status: "error", model: answer.model ?? model.name, error: "The assistant returned an empty answer." };
       const verdict = assessAnswer(answer, [brand], domain);
-      return { prompt, platform, status: "ok", model: answer.model ?? model.name, mentioned: verdict.mentioned, cited: verdict.cited, excerpt: answerExcerpt(answer.text, [brand, domain]), text: answer.text.slice(0, 6_000), sources: answer.sources };
+      return { prompt, platform, status: "ok", model: answer.model ?? model.name, mentioned: verdict.mentioned, cited: verdict.cited, sentiment: verdict.mentioned ? brandSentiment(answer.text, [brand, domain]) : null, excerpt: answerExcerpt(answer.text, [brand, domain]), text: answer.text.slice(0, 6_000), sources: answer.sources };
     } catch (caught) {
       return { prompt, platform, status: "error", model: model.name, error: caught instanceof Error ? caught.message : "The assistant could not answer right now." };
     }

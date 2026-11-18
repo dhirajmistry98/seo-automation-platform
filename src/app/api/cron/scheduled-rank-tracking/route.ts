@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     {
       active: { $ne: false },
       verifiedAt: { $exists: true },
-      rankTrackingFrequency: { $in: ["weekly", "monthly"] },
+      rankTrackingFrequency: { $in: ["daily", "weekly", "monthly"] },
       "primaryKeywords.0": { $exists: true },
       nextScheduledRankTrackingAt: { $lte: now },
       $and: [
@@ -62,8 +62,9 @@ export async function POST(request: Request) {
   const query = keywords.join(", ");
 
   try {
-    const providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, ...serpLocation(locationCode, geoPoint), language_code: languageCode, device, depth: 100 })));
-    const rows = resultDocument(buildDomainRankRows(providerResult.tasks || [], keywords, String(site.domain)));
+    const providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, ...serpLocation(locationCode, geoPoint), language_code: languageCode, device, depth: 100, load_async_ai_overview: true })));
+    const competitorDomains = Array.isArray(site.competitorDomains) ? site.competitorDomains.filter((item: unknown): item is string => typeof item === "string") : [];
+    const rows = resultDocument(buildDomainRankRows(providerResult.tasks || [], keywords, String(site.domain), competitorDomains));
     const completedAt = new Date();
     const ownership = await db.collection("websites").findOne({ _id: site._id, rankTrackingLeaseToken: leaseToken }, { projection: { rankTrackingFrequency: 1 } });
     if (!ownership) return NextResponse.json({ processed: false, message: "Rank tracking settings changed while this report was running." });

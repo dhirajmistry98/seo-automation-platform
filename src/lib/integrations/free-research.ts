@@ -1,5 +1,6 @@
 import type { Db } from "mongodb";
 import { getGoogleAccessToken, googleApiError } from "@/lib/integrations/google";
+import { findCannibalization, type GscRow } from "@/lib/integrations/research-reports";
 
 /**
  * Free research sources used when no paid DataForSEO account is available:
@@ -133,4 +134,17 @@ export async function freeRankPositions(db: Db, organizationId: unknown, domain:
       title: ranked ? `${metrics!.impressions} impressions · ${metrics!.clicks} clicks (Search Console, 28 days)` : "Not seen in Search Console for this site",
     };
   }));
+}
+
+/** Cannibalization report (last 28 days of Search Console data), or null when Search Console is not connected. */
+export async function freeCannibalization(db: Db, organizationId: unknown, domain: string): Promise<{ items: ReturnType<typeof findCannibalization> } | { error: string } | null> {
+  const context = await searchConsoleContext(db, organizationId, domain);
+  if (!context) return null;
+  const endpoint = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(context.property)}/searchAnalytics/query`;
+  let response: Response;
+  try { response = await fetch(endpoint, { method: "POST", headers: { Authorization: `Bearer ${context.accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ ...reportDates(), dimensions: ["query", "page"], rowLimit: 25_000 }), cache: "no-store", signal: AbortSignal.timeout(30_000) }); }
+  catch { return { error: "Search Console did not respond. Try again shortly." }; }
+  if (!response.ok) return { error: await googleApiError(response, "Search Console data could not be read.") };
+  const payload = await response.json().catch(() => ({})) as { rows?: GscRow[] };
+  return { items: findCannibalization(payload.rows || []) };
 }

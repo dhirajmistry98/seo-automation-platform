@@ -1,5 +1,7 @@
 export const BRAND = {
   name: "SEO STUDIO",
+  /** Mixed-case name for email subjects and senders (all-caps subjects look like spam). */
+  displayName: "SEO Studio",
   descriptor: "SEO Automation Platform",
   tagline: "SEARCH, UNDERSTOOD.",
 };

@@ -10,10 +10,10 @@ const PLATFORMS = [
   { id: "gemini", label: "Gemini" },
   { id: "perplexity", label: "Perplexity" },
 ] as const;
-type Row = { prompt: string; platform: string; status: "ok" | "error"; model?: string | null; mentioned?: boolean; cited?: boolean; excerpt?: string; text?: string; sources?: Array<{ url: string; title: string }>; error?: string };
+type Row = { prompt: string; platform: string; status: "ok" | "error"; model?: string | null; mentioned?: boolean; cited?: boolean; sentiment?: "positive" | "neutral" | "negative" | null; excerpt?: string; text?: string; sources?: Array<{ url: string; title: string }>; error?: string };
 type Report = {
   brand: string; prompts: string[]; createdAt: string; providerCostUsd?: number; rows: Row[];
-  summary: { answered: number; mentioned: number; cited: number; platforms: Array<{ platform: string; label: string; answered: number; failed: number; mentioned: number; cited: number }>; topCitedDomains: Array<{ domain: string; count: number }> };
+  summary: { answered: number; mentioned: number; cited: number; sentiment?: { positive: number; neutral: number; negative: number }; platforms: Array<{ platform: string; label: string; answered: number; failed: number; mentioned: number; cited: number }>; topCitedDomains: Array<{ domain: string; count: number }> };
 };
 const label = (platform: string) => PLATFORMS.find((item) => item.id === platform)?.label ?? platform;
 
@@ -81,6 +81,7 @@ export function AiAnswersPanel({ domain, canRun }: { domain: string; canRun: boo
       <div className="ai-answers-summary">
         <div><strong>{latest.summary.mentioned}/{latest.summary.answered}</strong><span>answers mention “{latest.brand}”</span></div>
         <div><strong>{latest.summary.cited}/{latest.summary.answered}</strong><span>answers cite {domain}</span></div>
+        {latest.summary.sentiment && latest.summary.mentioned > 0 && <div><strong>{latest.summary.sentiment.positive} · {latest.summary.sentiment.neutral} · {latest.summary.sentiment.negative}</strong><span>positive · neutral · negative mentions (word-based estimate)</span></div>}
         <small>Checked {new Date(latest.createdAt).toLocaleString()}. AI answers vary between runs; re-check over time.</small>
       </div>
       <div className="ai-answers-platforms">{latest.summary.platforms.map((item) => <div key={item.platform}><strong>{item.label}</strong><span>Mentioned {item.mentioned}/{item.answered}</span><span>Cited {item.cited}/{item.answered}</span>{item.failed > 0 && <small>{item.failed} failed</small>}</div>)}</div>
@@ -90,7 +91,7 @@ export function AiAnswersPanel({ domain, canRun }: { domain: string; canRun: boo
         {latest.rows.filter((row) => row.prompt === prompt).map((row) => {
           const key = `${prompt}|${row.platform}`;
           return <article key={key} className={`ai-answers-row ${row.status === "error" ? "is-error" : row.mentioned ? "is-mentioned" : ""}`}>
-            <header><strong>{label(row.platform)}</strong>{row.status === "ok" ? <span className="ai-answers-badges"><span className={row.mentioned ? "is-yes" : "is-no"}>{row.mentioned ? <BadgeCheck size={12} /> : <XCircle size={12} />} {row.mentioned ? "Mentioned" : "Not mentioned"}</span><span className={row.cited ? "is-yes" : "is-no"}>{row.cited ? <BadgeCheck size={12} /> : <XCircle size={12} />} {row.cited ? "Cited" : "Not cited"}</span></span> : <span className="ai-answers-error">{row.error}</span>}</header>
+            <header><strong>{label(row.platform)}</strong>{row.status === "ok" ? <span className="ai-answers-badges"><span className={row.mentioned ? "is-yes" : "is-no"}>{row.mentioned ? <BadgeCheck size={12} /> : <XCircle size={12} />} {row.mentioned ? "Mentioned" : "Not mentioned"}</span><span className={row.cited ? "is-yes" : "is-no"}>{row.cited ? <BadgeCheck size={12} /> : <XCircle size={12} />} {row.cited ? "Cited" : "Not cited"}</span>{row.mentioned && row.sentiment && <span className={row.sentiment === "positive" ? "is-yes" : row.sentiment === "negative" ? "is-no" : ""} title="Word-based estimate from the sentences that name your brand">{row.sentiment === "positive" ? "Positive" : row.sentiment === "negative" ? "Negative" : "Neutral"}</span>}</span> : <span className="ai-answers-error">{row.error}</span>}</header>
             {row.status === "ok" && <>
               <p>{row.excerpt}</p>
               <button type="button" className="ai-answers-toggle" onClick={() => setOpen(open === key ? null : key)}>{open === key ? "Hide full answer" : "Show full answer and sources"}</button>

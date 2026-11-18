@@ -1,8 +1,8 @@
-export type RankTrackingFrequency = "manual" | "weekly" | "monthly";
+export type RankTrackingFrequency = "manual" | "daily" | "weekly" | "monthly";
 export type RankTrackingDevice = "desktop" | "mobile";
 
 export function parseRankTrackingFrequency(value: unknown): RankTrackingFrequency | null {
-  return value === "manual" || value === "weekly" || value === "monthly" ? value : null;
+  return value === "manual" || value === "daily" || value === "weekly" || value === "monthly" ? value : null;
 }
 
 export function parseRankTrackingLocationCode(value: unknown): number | null {
@@ -32,6 +32,6 @@ export function getRankTrackingKeywords(value: unknown): string[] {
 export function nextRankTrackingAt(frequency: RankTrackingFrequency, from = new Date()): Date | null {
   if (frequency === "manual") return null;
   const next = new Date(from.getTime());
-  next.setUTCDate(next.getUTCDate() + (frequency === "weekly" ? 7 : 30));
+  next.setUTCDate(next.getUTCDate() + (frequency === "daily" ? 1 : frequency === "weekly" ? 7 : 30));
   return next;
 }

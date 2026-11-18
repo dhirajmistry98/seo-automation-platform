@@ -32,20 +32,37 @@ function gmailConfig() {
   return user && password ? { user, password } : null;
 }
 
+/** Name shown as the sender: the same brand name the emails use, so the sender and the content match. */
+export const EMAIL_SENDER_NAME = "SEO Studio";
+
+/** Domains that can never pass SPF/DKIM for us (documentation placeholders and local names). */
+const PLACEHOLDER_SENDER_DOMAIN = /(^|\.)(example\.(com|org|net)|localhost|test|invalid|local)$/i;
+
+/**
+ * The Resend sender address, or null when AUTH_EMAIL_FROM is missing, malformed or a placeholder such as
+ * sign-in@example.com. Resend only delivers (and signs with DKIM) mail from a domain verified in the account.
+ */
+export function usableResendSender(value: string | undefined) {
+  const address = value?.match(/<\s*([^<>\s]+@[^<>\s]+)\s*>\s*$/)?.[1] ?? value?.trim();
+  const domain = address?.match(/^[^@\s]+@([a-z0-9.-]+\.[a-z]{2,})$/i)?.[1];
+  return address && domain && !PLACEHOLDER_SENDER_DOMAIN.test(domain) ? address : null;
+}
+
+let warnedPlaceholderSender = false;
+
 function resendConfig() {
-  const apiKey = process.env.RESEND_API_KEY;
-  const sender = process.env.AUTH_EMAIL_FROM;
-  return apiKey && sender ? { apiKey, sender } : null;
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const address = usableResendSender(process.env.AUTH_EMAIL_FROM);
+  if (apiKey && process.env.AUTH_EMAIL_FROM && !address && !warnedPlaceholderSender) {
+    warnedPlaceholderSender = true;
+    console.warn("AUTH_EMAIL_FROM is not an address on a domain you own (for example it is still sign-in@example.com), so Resend is skipped.");
+  }
+  return apiKey && address ? { apiKey, sender: `${EMAIL_SENDER_NAME} <${address}>` } : null;
 }
 
 /** True when at least one delivery method (Gmail SMTP or Resend) is configured. */
 export function emailDeliveryConfigured() {
   return Boolean(gmailConfig() || resendConfig());
-}
-
-function senderName() {
-  const configured = process.env.AUTH_EMAIL_FROM?.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim();
-  return (configured || "SEO Studio").replace(/[\r\n"<>]/g, "");
 }
 
 async function sendWithGmail(config: { user: string; password: string }, email: TransactionalEmail) {
@@ -61,7 +78,7 @@ async function sendWithGmail(config: { user: string; password: string }, email: 
   });
   try {
     await transport.sendMail({
-      from: { name: senderName(), address: config.user },
+      from: { name: EMAIL_SENDER_NAME, address: config.user },
       to: email.to,
       subject: email.subject,
       text: email.text,
@@ -95,11 +112,15 @@ async function sendWithResend(config: { apiKey: string; sender: string }, email:
   }
 }
 
-/** Sends via Gmail SMTP when configured, otherwise via Resend. Returns false when nothing is configured or delivery fails. */
+/**
+ * Sends via Resend first: mail from your own verified domain is SPF/DKIM-authenticated and lands in the inbox.
+ * Gmail SMTP (a personal @gmail.com sender) is the fallback when Resend is not set up or fails, because inbox
+ * providers often junk brand mail sent from a personal address. Returns false when nothing could deliver it.
+ */
 export async function sendTransactionalEmail(email: TransactionalEmail) {
+  const resend = resendConfig();
+  if (resend && await sendWithResend(resend, email)) return true;
   const gmail = gmailConfig();
   if (gmail) return sendWithGmail(gmail, email);
-  const resend = resendConfig();
-  if (resend) return sendWithResend(resend, email);
   return false;
 }

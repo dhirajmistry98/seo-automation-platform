@@ -78,7 +78,34 @@ export function assessAnswer(answer: { text: string; sources: Array<{ url: strin
   return { mentioned, cited, otherDomains };
 }
 
-export type AnswerRow = { prompt: string; platform: AiPlatform; status: "ok" | "error"; model?: string | null; mentioned?: boolean; cited?: boolean; excerpt?: string; text?: string; sources?: Array<{ url: string; title: string }>; error?: string };
+export type BrandSentiment = "positive" | "neutral" | "negative";
+
+const POSITIVE_WORDS = ["best", "leading", "trusted", "reliable", "recommended", "recommend", "excellent", "great", "popular", "top", "affordable", "easy", "quality", "reputable", "strong", "good", "praised", "loved", "award", "award-winning", "innovative", "efficient", "helpful", "favorite", "favourite", "standout", "well-known", "renowned", "secure", "fast", "value"];
+const NEGATIVE_WORDS = ["avoid", "poor", "bad", "complaints", "complaint", "expensive", "scam", "slow", "unreliable", "worse", "worst", "issues", "problems", "lawsuit", "criticized", "criticised", "limited", "lacks", "lacking", "outdated", "overpriced", "negative", "disappointing", "difficult", "confusing", "risky", "fraud", "fake", "unresponsive", "downside", "downsides", "drawback", "drawbacks", "weak"];
+const NEGATIONS = new Set(["not", "no", "never", "isn't", "aren't", "wasn't", "don't", "doesn't", "hardly", "without"]);
+
+/**
+ * Word-based estimate of how an AI answer talks about the brand: scores only the sentences that name it,
+ * flipping a word after a negation ("not reliable"). Returns null when the brand is not named.
+ */
+export function brandSentiment(text: string, brandNames: string[]): BrandSentiment | null {
+  const names = brandNames.map((name) => name.trim().toLowerCase()).filter((name) => name.length >= 2);
+  const sentences = text.split(/(?<=[.!?])\s+|\n+/).filter((sentence) => names.some((name) => sentence.toLowerCase().includes(name)));
+  if (!sentences.length) return null;
+  let score = 0;
+  for (const sentence of sentences) {
+    const words = sentence.toLowerCase().match(/[\p{L}\p{N}'-]+/gu) || [];
+    words.forEach((word, index) => {
+      const value = POSITIVE_WORDS.includes(word) ? 1 : NEGATIVE_WORDS.includes(word) ? -1 : 0;
+      if (!value) return;
+      const negated = words.slice(Math.max(0, index - 3), index).some((before) => NEGATIONS.has(before));
+      score += negated ? -value : value;
+    });
+  }
+  return score >= 2 ? "positive" : score <= -1 ? "negative" : "neutral";
+}
+
+export type AnswerRow = { prompt: string; platform: AiPlatform; status: "ok" | "error"; model?: string | null; mentioned?: boolean; cited?: boolean; sentiment?: BrandSentiment | null; excerpt?: string; text?: string; sources?: Array<{ url: string; title: string }>; error?: string };
 
 /** Per-AI totals and the domains AI assistants cite most often instead of the website. */
 export function summarizeAnswers(rows: AnswerRow[]) {
@@ -93,6 +120,11 @@ export function summarizeAnswers(rows: AnswerRow[]) {
     answered: answered.length,
     mentioned: answered.filter((row) => row.mentioned).length,
     cited: answered.filter((row) => row.cited).length,
+    sentiment: {
+      positive: answered.filter((row) => row.mentioned && row.sentiment === "positive").length,
+      neutral: answered.filter((row) => row.mentioned && row.sentiment === "neutral").length,
+      negative: answered.filter((row) => row.mentioned && row.sentiment === "negative").length,
+    },
     platforms,
     topCitedDomains: [...counts].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([domain, count]) => ({ domain, count })),
   };

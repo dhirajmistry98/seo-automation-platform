@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, BarChart3, FileBarChart, FileSearch, Gauge, Link2, ListTodo, Radar, ScanSearch, Search, ShieldCheck, Target } from "lucide-react";
+import { Activity, BarChart3, FileBarChart, FileSearch, Gauge, Globe, LineChart, Link2, ListTodo, MapPinned, Megaphone, Network, Radar, ScanSearch, Search, ShieldCheck, Sparkles, Split, Target } from "lucide-react";
 import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
@@ -20,9 +20,16 @@ const liveTools = [
   { name: "Search Console & GA4", description: "Review verified search performance and authorized traffic reports.", icon: BarChart3, state: "Connect Google", href: "/dashboard/integrations" },
   { name: "SEO Authority Index", description: "Calculate a versioned authority estimate from saved backlink, Search Console and crawl evidence.", icon: Activity, state: "Open research", href: "/dashboard/research" },
   { name: "GEO, AEO & LLMO readiness", description: "Review first-party content and technical signals from the latest site crawl.", icon: Radar, state: "Open readiness", href: "/dashboard/visibility" },
+  { name: "Domain overview & organic research", description: "Any website's estimated traffic, 12-month trend, ranking distribution, every ranking keyword and its top pages.", icon: Globe, state: "Open research", href: "/dashboard/research" },
+  { name: "Keyword magic", description: "Hundreds of keyword ideas with volume, difficulty, intent and trend, plus filters and automatic word groups.", icon: Sparkles, state: "Find keywords", href: "/dashboard/research" },
+  { name: "Position tracking & share of voice", description: "Daily, weekly or monthly ranks with competitor positions, SERP features, AI Overview citations and share of voice.", icon: LineChart, state: "Track positions", href: "/dashboard/research" },
+  { name: "Local map grid", description: "A 3×3 or 5×5 heatmap of your Google Maps position around a location.", icon: MapPinned, state: "Run a grid", href: "/dashboard/research" },
+  { name: "Backlink analytics & gap", description: "Referring domains, anchors, new and lost backlinks, and sites that link to competitors but not to you.", icon: Link2, state: "Analyse links", href: "/dashboard/research" },
+  { name: "Advertising research", description: "The paid Google keywords and ads of your website or a competitor.", icon: Megaphone, state: "Research ads", href: "/dashboard/research" },
+  { name: "Keyword cannibalization", description: "Searches where two or more of your pages compete, from your Search Console data. Free.", icon: Split, state: "Find conflicts", href: "/dashboard/research" },
 ];
 const plannedTools = [
-  { name: "Content and internal link opportunities", description: "Deeper clustering and recommendations need broader crawl and content analysis.", icon: Link2 },
+  { name: "Content and internal link opportunities", description: "Deeper clustering and recommendations need broader crawl and content analysis.", icon: Network },
   { name: "Approval workflows", description: "Review and approve automated changes before they are applied.", icon: ShieldCheck },
 ];
 

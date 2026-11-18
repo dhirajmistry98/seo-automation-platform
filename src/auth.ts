@@ -182,7 +182,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await ensureAuthSessionIndexes(db);
         const revoked = await db.collection("auth_revoked_sessions").findOne({ jti, expiresAt: { $gt: now } }, { projection: { _id: 1 } });
         if (revoked) { token.sub = undefined; return token; }
-        await db.collection("active_sessions").updateOne({ jti, userId }, { $set: { userId, lastSeenAt: now, expiresAt: new Date(now.getTime() + SESSION_MAX_AGE_SECONDS * 1000) }, $setOnInsert: { jti, createdAt: now } }, { upsert: true });
+        const activeUpdate = { $set: { userId, lastSeenAt: now, expiresAt: new Date(now.getTime() + SESSION_MAX_AGE_SECONDS * 1000) }, $setOnInsert: { jti, createdAt: now } };
+        try {
+          await db.collection("active_sessions").updateOne({ jti, userId }, activeUpdate, { upsert: true });
+        } catch (error) {
+          // Two requests of a new session can race to insert the same jti; the loser just refreshes the row.
+          if (!(typeof error === "object" && error !== null && "code" in error && error.code === 11000)) throw error;
+          await db.collection("active_sessions").updateOne({ jti, userId }, { $set: activeUpdate.$set });
+        }
       }
       return token;
     },

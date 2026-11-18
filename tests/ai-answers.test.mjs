@@ -50,3 +50,11 @@ test("summarizeAnswers totals per AI and ranks cited domains", () => {
   assert.deepEqual(summary.platforms.map((p) => [p.label, p.mentioned, p.failed]), [["ChatGPT", 1, 0], ["Claude", 0, 0], ["Gemini", 0, 1]]);
   assert.deepEqual(summary.topCitedDomains[0], { domain: "moz.com", count: 2 });
 });
+
+test("brand sentiment scores only sentences naming the brand and respects negation", async () => {
+  const { brandSentiment } = await import("../src/lib/seo/ai-answers.ts");
+  assert.equal(brandSentiment("Acme is a trusted and reliable choice. Others are bad.", ["Acme"]), "positive");
+  assert.equal(brandSentiment("Acme is not reliable and has many complaints.", ["Acme"]), "negative");
+  assert.equal(brandSentiment("Acme sells shoes.", ["Acme"]), "neutral");
+  assert.equal(brandSentiment("Nothing about the brand here.", ["Acme"]), null);
+});

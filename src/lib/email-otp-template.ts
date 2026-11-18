@@ -27,10 +27,10 @@ export function buildSignInCodeEmail(code: string, email: string | undefined, ex
     ? `${origin}/login#otp=${code}${email ? `&amp;email=${encodeURIComponent(email)}` : ""}${expiry}`
     : "";
   // Code first in the subject so Gmail / Apple Mail / iOS / Android detect it and offer their own "Copy code" action.
-  const subject = `${code} is your ${BRAND.name} sign-in code`;
+  const subject = `${code} is your ${BRAND.displayName} sign-in code`;
 
   const text = [
-    `${BRAND.name} — ${BRAND.descriptor}`,
+    `${BRAND.displayName} — ${BRAND.descriptor}`,
     "",
     `Your sign-in code is: ${code}`,
     "",
@@ -61,7 +61,7 @@ export function buildSignInCodeEmail(code: string, email: string | undefined, ex
         </td></tr>
         <tr><td style="background:#FFFDFA;border:1px solid #E7DED4;border-radius:16px;padding:32px 28px;">
           <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:600;color:${NAVY};">Your sign-in code</h1>
-          <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${MUTED};">Enter this code on the ${BRAND.name} sign-in page to continue.</p>
+          <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${MUTED};">Enter this code on the ${BRAND.displayName} sign-in page to continue.</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${NAVY};border-radius:12px;"><tr>
             <td style="padding:18px 8px 18px 20px;text-align:center;">
               <span style="font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:34px;font-weight:700;letter-spacing:10px;color:${CORAL};-webkit-user-select:all;user-select:all;">${code}</span>
@@ -70,10 +70,10 @@ export function buildSignInCodeEmail(code: string, email: string | undefined, ex
               <a href="${fillUrl}" title="Use this code" style="display:block;width:44px;height:44px;line-height:44px;border-radius:10px;background:#1E1A17;border:1px solid #3A322C;color:#FFFFFF;font-size:22px;text-align:center;text-decoration:none;">&#10697;</a>
             </td>` : ""}
           </tr></table>
-          ${fillUrl ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:${MUTED};text-align:center;">Click the copy icon to open ${BRAND.name} with this code filled in.</p>` : ""}
+          ${fillUrl ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:${MUTED};text-align:center;">Click the copy icon to open ${BRAND.displayName} with this code filled in.</p>` : ""}
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;border-top:1px solid #EFE7DE;">
             <tr><td style="padding-top:16px;font-size:13px;line-height:1.6;color:${MUTED};">Expires in <strong style="color:${NAVY};">${lifetime}</strong> and works only once.</td></tr>
-            <tr><td style="padding-top:6px;font-size:13px;line-height:1.6;color:${MUTED};">Never share this code. ${BRAND.name} will never ask for it.</td></tr>
+            <tr><td style="padding-top:6px;font-size:13px;line-height:1.6;color:${MUTED};">Never share this code. ${BRAND.displayName} will never ask for it.</td></tr>
             <tr><td style="padding-top:6px;font-size:13px;line-height:1.6;color:${MUTED};">Didn't try to sign in? You can safely ignore this email.</td></tr>
           </table>
         </td></tr>

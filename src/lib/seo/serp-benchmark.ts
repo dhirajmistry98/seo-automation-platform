@@ -45,7 +45,7 @@ const median = (values: number[]) => {
   return sorted.length % 2 ? sorted[middle] : Math.round((sorted[middle - 1] + sorted[middle]) / 2);
 };
 
-/** Organic results from a DataForSEO SERP task, plus the first position held by the user's domain. */
+/** Organic results from a live SERP task, plus the first position held by the user's domain. */
 export function parseSerp(items: Array<Record<string, unknown>>, domain: string) {
   const own = bareHost(domain);
   const organic: SerpResult[] = [];

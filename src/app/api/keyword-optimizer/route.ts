@@ -118,13 +118,13 @@ const SERP_CACHE_HOURS = 24;
 type CachedSerp = { key: string; top10: SerpResult[]; organic: SerpResult[]; competitors: Array<{ url: string; profile: PageProfile; text: string }>; createdAt: Date; expiresAt: Date };
 
 /**
- * Live Google results for the keyword (DataForSEO), the site's position, and a benchmark of the page against the
+ * Live Google results for the keyword, the site's position, and a benchmark of the page against the
  * top-ranking pages. Paid calls only for verified websites; cached 24h per keyword + market; 25 fresh checks/day.
  */
 async function googleTopResults(db: Db, userId: string, site: Record<string, unknown> | null, keyword: string, language: string, page: Parameters<typeof pageProfile>[0], html: string) {
   if (!site) return { status: "not_your_site" as const, message: "Add and verify this website to compare it with Google's top results." };
   if (researchSource("rank", { paidConfigured: isDataForSeoConfigured(), verified: Boolean(site.verifiedAt) }) !== "paid") {
-    return { status: "unavailable" as const, message: site.verifiedAt ? "Live Google results are not configured on this server." : "Verify ownership of this website to compare it with Google's top results." };
+    return { status: "unavailable" as const, message: "Live Google results require a data provider. Verify ownership of this website and configure a provider to enable this feature." };
   }
   const domain = String(site.domain);
   const locationCode = Number.isSafeInteger(Number(site.rankTrackingLocationCode)) && Number(site.rankTrackingLocationCode) > 0 ? Number(site.rankTrackingLocationCode) : 2356;

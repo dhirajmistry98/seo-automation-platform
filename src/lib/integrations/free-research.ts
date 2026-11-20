@@ -3,7 +3,7 @@ import { getGoogleAccessToken, googleApiError } from "@/lib/integrations/google"
 import { findCannibalization, type GscRow } from "@/lib/integrations/research-reports";
 
 /**
- * Free research sources used when no paid DataForSEO account is available:
+ * Free research sources — always available, no paid provider required:
  * - Google's public autocomplete endpoint for keyword and question ideas.
  * - The website's own Google Search Console data (when connected) for real
  *   impressions, clicks and average positions.

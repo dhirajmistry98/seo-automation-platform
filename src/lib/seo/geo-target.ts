@@ -1,9 +1,9 @@
 /**
  * Exact-point ("live location") search targets for local SEO.
  *
- * Google personalises local results by the searcher's precise position. DataForSEO's live SERP endpoints accept
+ * Google personalises local results by the searcher's precise position. Live SERP endpoints accept
  * `location_coordinate: "latitude,longitude,radius"` instead of a `location_code`, so a rank check can run from a
- * specific street rather than a whole city. Keyword-volume endpoints (DataForSEO Labs) only support country codes,
+ * specific street rather than a whole city. Keyword-volume endpoints only support country codes,
  * so they keep using the country.
  */
 
@@ -25,17 +25,17 @@ export function parseGeoPoint(latitude: unknown, longitude: unknown, radiusKm: u
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
   const radius = toNumber(radiusKm);
   const safeRadius = Number.isFinite(radius) ? Math.min(100, Math.max(0.2, radius)) : DEFAULT_RADIUS_KM;
-  // 7 decimals is ~1 cm, DataForSEO's maximum precision.
+  // 7 decimals is ~1 cm precision.
   return { latitude: Number(lat.toFixed(7)), longitude: Number(lng.toFixed(7)), radiusKm: safeRadius };
 }
 
-/** DataForSEO `location_coordinate` value: "latitude,longitude,radius" with the radius in metres (200 m – 199.999 km). */
+/** `location_coordinate` value for SERP APIs: "latitude,longitude,radius" with the radius in metres (200 m – 199.999 km). */
 export function dataForSeoCoordinate(point: GeoPoint) {
   const metres = Math.round(Math.min(199_999, Math.max(200, point.radiusKm * 1000)));
   return `${point.latitude},${point.longitude},${metres}`;
 }
 
-/** Location fields for a DataForSEO live SERP task: the exact point when one is set, otherwise the location code. */
+/** Location fields for a live SERP task: the exact point when one is set, otherwise the location code. */
 export function serpLocation(locationCode: number, point: GeoPoint | null) {
   return point ? { location_coordinate: dataForSeoCoordinate(point) } : { location_code: locationCode };
 }

@@ -27,7 +27,7 @@ export function calculateAuthorityIndex(input: AuthorityInput) {
   const referringDomains = backlinks ? count(backlinks.referring_domains) : null;
   const referringIps = backlinks ? count(backlinks.referring_ips) : null;
   const spamScore = backlinks ? count(backlinks.backlinks_spam_score) : null;
-  if (referringDomains === null) missing.push("DataForSEO backlink summary");
+  if (referringDomains === null) missing.push("backlink data (run a backlinks report)");
   if (!rows?.length || !rows.some((row) => count(row.clicks) !== null)) missing.push("Google Search Console query report with clicks");
   if (!pages?.length) missing.push("completed website crawl");
 

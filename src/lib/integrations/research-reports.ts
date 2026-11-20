@@ -1,7 +1,7 @@
 /**
- * Semrush-style research reports built on DataForSEO: domain overview, organic research, top pages, paid
- * keywords, keyword magic, backlink analytics (referring domains, anchors, new/lost links), backlink gap,
- * share of voice and a local map-pack grid.
+ * Extended SEO research reports: domain overview, organic research, top pages, paid keywords, keyword magic,
+ * backlink analytics (referring domains, anchors, new/lost links), backlink gap, share of voice and a local
+ * map-pack grid. Requires a configured external data provider (e.g. DataForSEO via DATAFORSEO_LOGIN).
  *
  * Every report returns flat rows (only the fields the UI shows) so saved reports stay small, plus an optional
  * summary object. Network calls go through the injected `post` so the parsers can be tested without a provider.

@@ -77,7 +77,7 @@ function DomainOverview({ report }: { report: ExtendedReport }) {
     </div>
     <h3 className="research-subheading">Top organic keywords</h3>
     <RankedKeywordTable rows={report.result} />
-    <p className="research-data-note">Traffic, keyword and backlink numbers are DataForSEO estimates for {text(summary.target)} in the selected country, not first-party analytics.</p>
+    <p className="research-data-note">Traffic, keyword and backlink numbers are third-party estimates for {text(summary.target)} in the selected country, not first-party analytics.</p>
   </div>;
 }
 

@@ -21,7 +21,7 @@ function resultDocument(result: unknown): Array<Record<string, unknown>> {
 
 export async function POST(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "A valid CRON_SECRET bearer token is required." }, { status: 401 });
-  if (!isDataForSeoConfigured()) return NextResponse.json({ error: "Scheduled rank tracking requires configured DataForSEO credentials." }, { status: 503 });
+  if (!isDataForSeoConfigured()) return NextResponse.json({ processed: false, message: "Scheduled rank tracking requires a configured data provider (DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD)." });
 
   const db = (await clientPromise).db();
   await ensureSeoIndexes(db);
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       countryLocationCode: parseRankTrackingLocationCode(site.rankTrackingCountryLocationCode) || locationCode,
       languageCode,
       device,
-      provider: "DataForSEO",
+      provider: "SERP",
       source: "scheduled",
       fetchedAt: completedAt,
       result: rows,

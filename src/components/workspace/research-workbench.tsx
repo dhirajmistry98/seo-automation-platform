@@ -55,7 +55,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
   const [checkingProvider, setCheckingProvider] = useState(false);
   const blocked = isBlockingIssue(providerIssue);
 
-  /** Server's view of the DataForSEO account (a free check, no report charge). */
+  /** Server's view of the optional data provider account (a free check, no report charge). */
   const fetchProviderStatus = useCallback(async (fresh: boolean) => {
     const response = await fetch(`/api/seo/provider-status${fresh ? "?fresh=1" : ""}`, { cache: "no-store" });
     if (!response.ok) return null;
@@ -77,7 +77,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
     try {
       const issue = await fetchProviderStatus(true);
       setProviderIssue(issue);
-      if (!issue) { setError(""); setNotice("DataForSEO account is ready. You can run reports now."); }
+      if (!issue) { setError(""); setNotice("Data provider account is ready. You can run extended reports now."); }
     } catch { /* Keep the current state; running a report reports problems anyway. */ }
     finally { setCheckingProvider(false); }
   }
@@ -101,7 +101,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
   }
   return <div className="research-layout">
     <section className="research-panel"><div className="research-panel-heading"><span className="research-icon"><SlidersHorizontal size={17} /></span><div><p className="workspace-eyebrow">NEW REPORT</p><h2>Configure research</h2></div></div>
-      {kind === "cannibalization" ? <div className="research-config-alert"><strong>Free · uses Search Console</strong><p>Finds searches where two or more of your pages compete. Connect Google Search Console for this website under Integrations.</p></div> : !configured && (FREE_KINDS.includes(kind) ? <div className="research-config-alert"><strong>Free mode</strong><p>{kind === "rank" ? "Positions come from your Google Search Console data (connect it under Integrations)." : "Ideas come from Google autocomplete, plus your Search Console clicks and positions when connected."} No paid account needed.</p></div> : <div className="research-config-alert"><strong>Paid data source required</strong><p>This report needs a DataForSEO account. Keyword overview, AEO questions, positions and cannibalization work for free.</p></div>)}
+      {kind === "cannibalization" ? <div className="research-config-alert"><strong>Free · uses Search Console</strong><p>Finds searches where two or more of your pages compete. Connect Google Search Console for this website under Integrations.</p></div> : !configured && (FREE_KINDS.includes(kind) ? <div className="research-config-alert"><strong>Free mode</strong><p>{kind === "rank" ? "Positions come from your Google Search Console data (connect it under Integrations)." : "Ideas come from Google autocomplete, plus your Search Console clicks and positions when connected."} No paid account needed.</p></div> : <div className="research-config-alert"><strong>External data provider required</strong><p>This report needs an external data provider. Keyword overview, AEO questions, positions and cannibalization work for free.</p></div>)}
       {!verified && !UNVERIFIED_KINDS.includes(kind) && <div className="research-config-alert"><strong>Website verification required</strong><p>This report uses paid data for your domain. Verify ownership on the Websites page first. Keyword overview, AEO questions and cannibalization work without verification.</p></div>}
       {providerIssue && <ProviderAccountAlert issue={providerIssue} checking={checkingProvider} onRecheck={() => void recheckProvider()} />}
       <form className="research-form" onSubmit={run}>
@@ -119,7 +119,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
         <SeoLocationSelector value={target} onChange={setTarget} label="City, region, or local area" />
         <div className="research-info">
           <p><MapPinned size={14} aria-hidden="true" /> City, region and live-location targeting applies to live Google position checks. Keyword demand, competitors and AI visibility use country-level data.</p>
-          <p><Activity size={14} aria-hidden="true" /> Each run uses DataForSEO credit. AI mention results are sampled observations, not a promise of future citations.</p>
+          <p><Activity size={14} aria-hidden="true" /> Extended reports use provider credits. AI mention results are sampled observations, not a promise of future citations.</p>
         </div>
         {error && <p className="research-error" role="alert">{error}</p>}{notice && <p className="research-success" role="status">{notice}</p>}
         <div className={`research-submit-row${blocked ? " is-blocked" : ""}`}>
@@ -170,7 +170,7 @@ function ResultTable({ report, domain }: { report: Report; domain: string }) {
       const sources = Array.isArray(item.sources) ? item.sources as Array<Record<string, unknown>> : [];
       const matching = sources.filter((source) => typeof source.domain === "string" && (source.domain === domain || source.domain.endsWith(`.${domain}`)));
       return <tr key={`${value(item, "question")}-${index}`}><td><details><summary>{value(item, "question")}</summary><p>{value(item, "answer")}</p></details></td><td>{value(item, "model_name", "platform")}</td><td>{value(item, "ai_search_volume")}</td><td>{matching.length ? matching.slice(0, 5).map((source, sourceIndex) => { const href = externalHttpUrl(source.url); return <span key={sourceIndex}>{href ? <a href={href} target="_blank" rel="noreferrer">{value(source, "title", "domain")}</a> : value(source, "title", "domain")}{sourceIndex < matching.length - 1 ? ", " : ""}</span>; }) : "No matching source returned"}</td></tr>;
-    }) : <tr><td colSpan={4}>The provider returned no AI mention records for this domain and region.</td></tr>}</tbody></table><p className="research-data-note">Data is supplied by DataForSEO for {report.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"}. The provider samples AI search answers and sources; coverage and timing can vary, and this does not establish a ranking or guarantee citations.</p></div>;
+    }) : <tr><td colSpan={4}>The provider returned no AI mention records for this domain and region.</td></tr>}</tbody></table><p className="research-data-note">Data is supplied by the configured provider for {report.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"}. The provider samples AI search answers and sources; coverage and timing can vary, and this does not establish a ranking or guarantee citations.</p></div>;
   }
   if (report.kind === "competitors") {
     const summaries = report.providerSummary || [];

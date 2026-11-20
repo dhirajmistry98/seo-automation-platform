@@ -8,48 +8,48 @@ export type ProviderIssue = {
   actionUrl: string;
 };
 
-/** Issues that make every report fail until the account owner fixes something on DataForSEO. */
+/** Issues that make every report fail until the account owner fixes something in the data provider account. */
 export function isBlockingIssue(issue: ProviderIssue | null): issue is ProviderIssue {
   return Boolean(issue && (issue.state === "unverified" || issue.state === "bad_credentials" || issue.state === "no_balance"));
 }
 
 const COPY: Record<ProviderIssue["state"], { title: string; body: string; steps: string[]; action: string }> = {
   unverified: {
-    title: "Verify your DataForSEO account",
-    body: "Reports use DataForSEO for Google data. DataForSEO blocks every request until the account is verified.",
+    title: "Verify your data provider account",
+    body: "The configured data provider blocks requests until the account is verified.",
     steps: [
-      "Open the DataForSEO dashboard and sign in.",
-      "Follow the verification prompt (usually confirming your email or phone, sometimes billing details).",
+      "Open the provider dashboard and sign in.",
+      "Follow the verification prompt (email, phone, or billing details).",
       "Make sure the account has a balance, then come back and select Check again.",
     ],
-    action: "Verify on DataForSEO",
+    action: "Open provider dashboard",
   },
   no_balance: {
-    title: "Add balance to DataForSEO",
-    body: "Each report uses a small amount of DataForSEO credit, and the account balance is empty.",
-    steps: ["Open the DataForSEO dashboard.", "Add funds under Payments.", "Come back and select Check again."],
-    action: "Add balance on DataForSEO",
+    title: "Add balance to your data provider",
+    body: "Each report uses a small amount of provider credit, and the account balance is empty.",
+    steps: ["Open the provider dashboard.", "Add funds under Payments.", "Come back and select Check again."],
+    action: "Open provider dashboard",
   },
   bad_credentials: {
-    title: "DataForSEO login rejected",
+    title: "Data provider login rejected",
     body: "The API login or password saved on the server is wrong.",
     steps: [
-      "Open API Access in the DataForSEO dashboard and copy the API login and API password (not your account password).",
-      "Update DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in Vercel and redeploy.",
+      "Open API Access in the provider dashboard and copy the API login and password.",
+      "Update DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in your server environment and redeploy.",
     ],
-    action: "Open DataForSEO API access",
+    action: "Open provider API access",
   },
   rate_limited: {
-    title: "DataForSEO is busy",
+    title: "Data provider is busy",
     body: "Too many requests were sent in a short time. Wait a minute, then run the report again.",
     steps: [],
-    action: "Open DataForSEO",
+    action: "Open provider dashboard",
   },
   unavailable: {
-    title: "DataForSEO could not be reached",
+    title: "Data provider could not be reached",
     body: "This is usually temporary. Try again in a moment.",
     steps: [],
-    action: "Open DataForSEO",
+    action: "Open provider dashboard",
   },
 };
 

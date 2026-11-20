@@ -1,7 +1,7 @@
 /**
- * Which data source a research report may use. Paid provider calls (DataForSEO, billed to the operator)
- * are only allowed for verified websites: website creation is unlimited, so unverified sites must never
- * reach the paid provider. Free kinds fall back to Google autocomplete + Search Console.
+ * Which data source a research report may use. Paid provider calls (optional — requires DATAFORSEO_LOGIN)
+ * are only allowed for verified websites to prevent unverified sites from incurring provider costs.
+ * Free kinds use Google Autocomplete + Search Console and always work without a paid provider.
  */
 export const FREE_CAPABLE_KINDS = ["keywords", "questions", "rank"] as const;
 

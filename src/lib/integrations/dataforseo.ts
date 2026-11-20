@@ -17,6 +17,7 @@ export function normalizeSearchDevice(value: unknown): SearchDevice {
   return value === "mobile" ? "mobile" : "desktop";
 }
 
+/** Optional paid data provider. Free research features (keywords, questions, rank, cannibalization) work without it. */
 export function isDataForSeoConfigured() {
   return Boolean(process.env.DATAFORSEO_LOGIN?.trim() && process.env.DATAFORSEO_PASSWORD?.trim());
 }

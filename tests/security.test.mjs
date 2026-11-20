@@ -273,7 +273,7 @@ test("Auth.js user formatting safely ignores legacy string userId fields", () =>
 test("Authority Index requires real source data and does not use SEO Health scores", () => {
   const empty = calculateAuthorityIndex({});
   assert.equal(empty.score, null);
-  assert.ok(empty.missing.includes("DataForSEO backlink summary"));
+  assert.ok(empty.missing.includes("backlink data (run a backlinks report)"));
   const complete = calculateAuthorityIndex({
     backlinks: { referring_domains: 80, referring_ips: 60, backlinks_spam_score: 18 },
     searchQueries: [{ keys: ["seo audit software"], clicks: 150 }, { keys: ["website audit"], clicks: 40 }],

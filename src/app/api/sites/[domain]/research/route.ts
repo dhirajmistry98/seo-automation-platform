@@ -5,7 +5,7 @@ import { findAccessibleWebsite } from "@/lib/organizations";
 import { researchSource } from "@/lib/integrations/research-policy";
 import { FREE_PROVIDER, FREE_RESEARCH_KINDS, freeCannibalization, freeKeywordIdeas, freeQuestionIdeas, freeRankPositions } from "@/lib/integrations/free-research";
 import { DOMAIN_TARGET_KINDS, EXTENDED_RESEARCH_KINDS, isExtendedResearchKind, parseBacklinkSummary, runExtendedResearch, type BacklinkMode, type ExtendedResearchKind, type GridSize } from "@/lib/integrations/research-reports";
-import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice, DATAFORSEO_DASHBOARD_URL, DataForSeoAccountError } from "@/lib/integrations/dataforseo";
+import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice, DataForSeoAccountError } from "@/lib/integrations/dataforseo";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
@@ -81,7 +81,7 @@ export async function POST(request: Request, context: Context) {
   if (kind === "cannibalization") return runCannibalization();
   const freeKind = (FREE_RESEARCH_KINDS as readonly string[]).includes(kind);
   const paidConfigured = isDataForSeoConfigured();
-  if (!paidConfigured && !freeKind) return error("Backlinks, competitor gaps and AI mentions need a paid DataForSEO account. Keyword demand, AEO questions and live positions (from Search Console) work for free.", 503);
+  if (!paidConfigured && !freeKind) return error("This report requires an external data provider. Keyword demand, AEO questions, positions and cannibalization work for free.", 503);
   const limit = await consumeRateLimit(db, "seo-research", `${String(website.organizationId)}:${domain}`, 20, 60 * 60_000);
   if (!limit.allowed) return error(`Research limit reached for this website. Try again in ${limit.retryAfterSeconds} seconds.`, 429);
   if (kind === "local_grid") {
@@ -248,14 +248,14 @@ export async function POST(request: Request, context: Context) {
         ? "Free positions come from your Google Search Console data: impression-weighted average position over the last 28 days, not a live SERP check."
         : `Free ideas come from Google autocomplete${kind === "keywords" ? (searchConsoleConnected ? " plus your Search Console impressions, clicks and positions" : ". Connect Search Console to add your real impressions, clicks and positions") : ""}. Autocomplete does not give search volume.`
       : kind === "ai_visibility"
-      ? "This report queries DataForSEO AI search mention data. Results are third-party observations, platform coverage varies by location, and the provider may charge your account. It does not prove rankings or future citations."
+      ? "This report queries AI search mention data via the configured provider. Results are third-party observations, platform coverage varies by location, and the provider may charge your account. It does not prove rankings or future citations."
       : kind === "questions"
         ? "Question keywords are provider suggestions for AEO research, not proof of search intent, featured snippets, or AI answers. The provider may charge your account."
-      : "This report uses your DataForSEO account and may incur provider charges. Competitor metrics are third-party estimates.";
+      : "This report uses the configured data provider and may incur provider charges. Competitor metrics are third-party estimates.";
     return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice }, { headers: { "Cache-Control": "no-store" } });
   } catch (caught) {
     if (caught instanceof DataForSeoAccountError) {
-      return NextResponse.json({ error: caught.message, providerIssue: { state: caught.reason, actionUrl: DATAFORSEO_DASHBOARD_URL } }, { status: 503, headers: { "Cache-Control": "no-store" } });
+      return NextResponse.json({ error: caught.message, providerIssue: { state: caught.reason, actionUrl: "https://app.dataforseo.com/" } }, { status: 503, headers: { "Cache-Control": "no-store" } });
     }
     const message = caught instanceof Error ? caught.message : "SEO research is temporarily unavailable.";
     const status = /not configured/.test(message) ? 503 : 502;

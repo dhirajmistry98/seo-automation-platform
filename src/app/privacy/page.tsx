@@ -65,7 +65,7 @@ export default async function PrivacyPage() {
             <li><strong>Vercel</strong> (application hosting, India region) and <strong>MongoDB Atlas</strong> (database).</li>
             <li><strong>Google</strong> (sign-in, Search Console, Analytics, Business Profile, Merchant Center, PageSpeed Insights, and Google Analytics for this website).</li>
             <li><strong>Meta</strong> (Instagram verification for creators).</li>
-            <li><strong>DataForSEO</strong> (search, keyword, backlink and AI-answer research): receives the keywords, domains and questions you submit, not your account details.</li>
+            <li><strong>SEO data providers</strong> (search, keyword, backlink and AI-answer research): receive the keywords, domains and questions you submit when extended research features are used, not your account details.</li>
             <li><strong>Email providers</strong> (Gmail or Resend) to deliver sign-in codes and notifications, and <strong>Ably</strong> for real-time collaboration messages.</li>
             <li><strong>Other marketplace users</strong>: your public creator or brand profile is visible to signed-in users; collaboration content is visible only to its participants.</li>
             <li><strong>Authorities</strong>, when required by law or to protect rights and safety.</li>

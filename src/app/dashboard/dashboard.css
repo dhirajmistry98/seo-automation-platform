@@ -1230,6 +1230,24 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
 .redirect-301 { background:#fef3c7; color:#92400e; }
 .redirect-302 { background:#e0e7ff; color:#3730a3; }
 
+/* ── Fix & Verify rank impact ── */
+.rank-impact { margin-top:8px; border:1px solid #ded8d1; border-radius:6px; background:#fff; overflow:hidden; }
+.rank-impact-header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:#faf8f5; border-bottom:1px solid #ded8d1; }
+.rank-impact-header strong { font-size:10px; color:#49423b; }
+.rank-impact-header small { color:#70675e; font-size:10px; }
+.rank-impact-btn { display:inline-flex; align-items:center; gap:5px; border:1px solid #ddd7d0; border-radius:5px; background:#fff; padding:3px 9px; color:#49423b; font-size:10px; cursor:pointer; }
+.rank-impact-btn:hover { border-color:#ff6a00; color:#ff6a00; }
+.rank-impact-btn:disabled { opacity:.5; cursor:wait; }
+.rank-impact-table { width:100%; border-collapse:collapse; font-size:10px; }
+.rank-impact-table th { text-align:left; padding:5px 10px; color:#70675e; font-weight:600; border-bottom:1px solid #f3efea; white-space:nowrap; }
+.rank-impact-table td { padding:5px 10px; border-bottom:1px solid #f3efea; }
+.rank-impact-table tr:last-child td { border-bottom:none; }
+.rank-impact-delta { font-weight:700; }
+.rank-impact-delta.is-improved { color:#246449; }
+.rank-impact-delta.is-dropped { color:#b91c1c; }
+.rank-impact-none { padding:10px; color:#70675e; font-size:10px; text-align:center; }
+.rank-impact-error { padding:8px 10px; color:#b91c1c; font-size:10px; }
+
 /* ── Action Engine ── */
 .action-engine-card { position:relative; }
 .action-engine-empty { display:grid; gap:8px; justify-items:center; margin:40px 0; text-align:center; color:#70675e; }

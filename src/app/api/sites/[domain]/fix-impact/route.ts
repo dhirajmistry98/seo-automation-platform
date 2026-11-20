@@ -5,6 +5,7 @@ import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { searchConsoleContext } from "@/lib/integrations/free-research";
 import { googleApiError } from "@/lib/integrations/google";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 type Context = { params: Promise<{ domain: string }> };
 
@@ -18,6 +19,10 @@ export async function GET(request: Request, context: Context) {
   const db = (await clientPromise).db();
   const { website } = await findAccessibleWebsite(db, session.user.id, domain, "reports.read");
   if (!website) return NextResponse.json({ error: "Website not found." }, { status: 404 });
+
+  // Each check makes a live GSC API call — cap at 30 per hour per workspace.
+  const rateLimit = await consumeRateLimit(db, "fix-impact", String(website.organizationId), 30, 60 * 60_000);
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many rank checks. Try again in an hour." }, { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds), "Cache-Control": "no-store" } });
 
   const issue = await db.collection("seo_issues").findOne(
     { _id: new ObjectId(issueId), organizationId: website.organizationId, websiteDomain: domain },

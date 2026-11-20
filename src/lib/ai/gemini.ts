@@ -3,6 +3,26 @@ import { estimateCost, DEFAULT_MODEL } from "./models";
 import { buildPrompt, SYSTEM_PROMPT, taskOutputTokens, taskTemperature } from "./prompts";
 import type { AiGenRequest, AiGenResponse, AiUsageMeta } from "./types";
 
+function friendlyError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (msg.includes("no longer available") || msg.includes("404")) {
+    return "The selected AI model is no longer available. Go to AI Studio → Config and choose a different model.";
+  }
+  if (msg.includes("API key") || msg.includes("API_KEY") || msg.includes("403")) {
+    return "Invalid API key. Check your GEMINI_API_KEY in settings.";
+  }
+  if (msg.includes("quota") || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
+    return "AI quota exceeded. Please wait a moment and try again, or check your Google AI Studio usage limits.";
+  }
+  if (msg.includes("network") || msg.includes("fetch") || msg.includes("ECONNREFUSED")) {
+    return "Could not reach the AI service. Check your internet connection and try again.";
+  }
+  if (msg.includes("safety") || msg.includes("SAFETY")) {
+    return "The request was blocked by the AI safety filter. Try rephrasing your input.";
+  }
+  return "AI generation failed. Please try again or switch to a different model in AI Studio settings.";
+}
+
 function client(): GoogleGenerativeAI {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY is not configured.");
@@ -41,16 +61,24 @@ export async function geminiGenerate(req: AiGenRequest): Promise<AiGenResponse> 
         parts: [{ text: turn.content }],
       })),
     });
-    const result = await chat.sendMessage(prompt);
+    try {
+      const result = await chat.sendMessage(prompt);
+      const resp = result.response;
+      const usage = extractUsage(resp.usageMetadata as Record<string, unknown> | undefined, modelId);
+      return { result: resp.text(), model: modelId, mode: "raw", usage, durationMs: Date.now() - start };
+    } catch (err) {
+      throw new Error(friendlyError(err));
+    }
+  }
+
+  try {
+    const result = await model.generateContent(prompt);
     const resp = result.response;
     const usage = extractUsage(resp.usageMetadata as Record<string, unknown> | undefined, modelId);
     return { result: resp.text(), model: modelId, mode: "raw", usage, durationMs: Date.now() - start };
+  } catch (err) {
+    throw new Error(friendlyError(err));
   }
-
-  const result = await model.generateContent(prompt);
-  const resp = result.response;
-  const usage = extractUsage(resp.usageMetadata as Record<string, unknown> | undefined, modelId);
-  return { result: resp.text(), model: modelId, mode: "raw", usage, durationMs: Date.now() - start };
 }
 
 export async function geminiTestConnection(modelId = DEFAULT_MODEL): Promise<{ ok: boolean; error?: string }> {
@@ -62,6 +90,6 @@ export async function geminiTestConnection(modelId = DEFAULT_MODEL): Promise<{ o
     if (!text.includes("connected")) throw new Error("Unexpected response.");
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    return { ok: false, error: friendlyError(err) };
   }
 }

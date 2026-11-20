@@ -106,7 +106,15 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
-  useEffect(() => { if (tab === "config") void loadKbDomains(); }, [tab, loadKbDomains]);
+  useEffect(() => {
+    if (tab !== "config") return;
+    let active = true;
+    fetch("/api/ai/ingest")
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((d) => { if (active) setKbDomains(d.domains ?? []); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [tab]);
 
   const saveConfig = useCallback(async (patch: Partial<Pick<AiConfig, "mode" | "model">>) => {
     setSaving(true);

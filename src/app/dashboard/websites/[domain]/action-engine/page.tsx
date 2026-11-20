@@ -9,6 +9,12 @@ import { searchConsoleContext } from "@/lib/integrations/free-research";
 
 export const instant = false;
 
+function gscRange() {
+  const end = new Date(Date.now() - 3 * 86_400_000);
+  const start = new Date(end.getTime() - 87 * 86_400_000);
+  return { startDate: start.toISOString().slice(0, 10), endDate: end.toISOString().slice(0, 10) };
+}
+
 const SEVERITY_WEIGHT = { critical: 3, warning: 2, notice: 1 } as const;
 
 const RULE_LABELS: Record<string, string> = {
@@ -60,16 +66,15 @@ export default async function ActionEnginePage({ params }: { params: Promise<{ d
     try {
       const gscCtx = await searchConsoleContext(db, website.organizationId, domain);
       if (gscCtx) {
-        const end = new Date(Date.now() - 3 * 86_400_000);
-        const start = new Date(end.getTime() - 87 * 86_400_000);
+        const { startDate, endDate } = gscRange();
         const response = await fetch(
           `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(gscCtx.property)}/searchAnalytics/query`,
           {
             method: "POST",
             headers: { Authorization: `Bearer ${gscCtx.accessToken}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              startDate: start.toISOString().slice(0, 10),
-              endDate: end.toISOString().slice(0, 10),
+              startDate,
+              endDate,
               dimensions: ["page"],
               rowLimit: 25_000,
             }),

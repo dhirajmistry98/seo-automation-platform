@@ -168,7 +168,7 @@ function ResultTable({ report, domain }: { report: Report; domain: string }) {
         }) : <tr><td colSpan={7}>No keywords found at positions 4–20 with 10+ impressions in the last 90 days. This could mean you&apos;re already in the top 3 for most queries, or Search Console has not collected enough data yet.</td></tr>}
         </tbody>
       </table>
-      <p className="research-data-note">Keywords are from your Google Search Console data for the last 90 days, filtered to positions 4–20 with at least 10 impressions. Sorted by opportunity score (impressions × closeness to top 3). "Potential clicks at #1" assumes a 28% click-through rate — an estimate, not a guarantee. Focus on pages near position 4–8 first: they need the least improvement.</p>
+      <p className="research-data-note">Keywords are from your Google Search Console data for the last 90 days, filtered to positions 4–20 with at least 10 impressions. Sorted by opportunity score (impressions × closeness to top 3). &ldquo;Potential clicks at #1&rdquo; assumes a 28% click-through rate &mdash; an estimate, not a guarantee. Focus on pages near position 4–8 first: they need the least improvement.</p>
     </div>;
   }
   if (!["keywords", "questions", "rank", "backlinks", "competitors", "ai_visibility"].includes(report.kind)) return <ExtendedResults report={report} domain={domain} />;

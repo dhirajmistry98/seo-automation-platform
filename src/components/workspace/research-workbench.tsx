@@ -8,20 +8,20 @@ import type { SeoTarget } from "@/lib/seo/target";
 import { readJson } from "@/lib/read-json";
 import { ExportButton, ExtendedResults, difficultyLabel, intentLabel } from "@/components/workspace/research-extended-results";
 
-type Kind = "keywords" | "keyword_magic" | "questions" | "domain_overview" | "organic_keywords" | "top_pages" | "competitors" | "paid_keywords" | "rank" | "share_of_voice" | "local_grid" | "cannibalization" | "backlinks" | "referring_domains" | "anchors" | "backlink_list" | "backlink_gap" | "ai_visibility";
+type Kind = "keywords" | "keyword_magic" | "questions" | "domain_overview" | "organic_keywords" | "top_pages" | "competitors" | "paid_keywords" | "rank" | "quick_wins" | "share_of_voice" | "local_grid" | "cannibalization" | "backlinks" | "referring_domains" | "anchors" | "backlink_list" | "backlink_gap" | "ai_visibility";
 /** Report menu, grouped like Semrush's toolkits. */
 const REPORT_GROUPS: Array<{ label: string; kinds: Array<[Kind, string]> }> = [
   { label: "Keyword research", kinds: [["keywords", "Keyword overview"], ["keyword_magic", "Keyword magic (ideas, filters, groups)"], ["questions", "AEO question keywords"]] },
   { label: "Domain & competitor research", kinds: [["domain_overview", "Domain overview"], ["organic_keywords", "Organic research (all ranking keywords)"], ["top_pages", "Top pages"], ["competitors", "Keyword gap"], ["paid_keywords", "Advertising research (paid keywords)"]] },
-  { label: "Position tracking", kinds: [["rank", "Live organic positions"], ["share_of_voice", "Share of voice"], ["local_grid", "Local map grid (heatmap)"], ["cannibalization", "Keyword cannibalization"]] },
+  { label: "Position tracking", kinds: [["quick_wins", "Quick wins (keywords near top 10)"], ["rank", "Live organic positions"], ["share_of_voice", "Share of voice"], ["local_grid", "Local map grid (heatmap)"], ["cannibalization", "Keyword cannibalization"]] },
   { label: "Backlinks", kinds: [["backlinks", "Backlink overview"], ["referring_domains", "Referring domains"], ["anchors", "Anchor texts"], ["backlink_list", "Backlinks (new / lost)"], ["backlink_gap", "Backlink gap"]] },
   { label: "AI search", kinds: [["ai_visibility", "AI search mentions"]] },
 ];
 const REPORT_LABEL = Object.fromEntries(REPORT_GROUPS.flatMap((group) => group.kinds)) as Record<Kind, string>;
 /** Reports that run without a paid account (Google autocomplete / Search Console). */
-const FREE_KINDS: Kind[] = ["keywords", "questions", "rank", "cannibalization"];
+const FREE_KINDS: Kind[] = ["keywords", "questions", "rank", "cannibalization", "quick_wins"];
 /** Reports that do not need a verified website. */
-const UNVERIFIED_KINDS: Kind[] = ["keywords", "questions", "cannibalization"];
+const UNVERIFIED_KINDS: Kind[] = ["keywords", "questions", "cannibalization", "quick_wins"];
 /** Reports that can analyse a saved competitor instead of the website. */
 const TARGET_KINDS: Kind[] = ["domain_overview", "organic_keywords", "top_pages", "paid_keywords", "referring_domains", "anchors", "backlink_list"];
 const BACKLINK_INDEX_KINDS: Kind[] = ["backlinks", "referring_domains", "anchors", "backlink_list", "backlink_gap"];
@@ -33,7 +33,7 @@ export type ResearchHistoryReport = Report;
 type Props = { domain: string; verified: boolean; configured: boolean; competitorDomains: string[]; initialHistory: Report[]; initialTarget: SeoTarget };
 function value(item: Record<string, unknown>, ...keys: string[]) { for (const key of keys) { const v = item[key]; if (v !== undefined && v !== null && typeof v !== "object") return String(v); } return "—"; }
 function nested(item: Record<string, unknown>, parent: string, key: string) { const object = item[parent]; return object && typeof object === "object" ? value(object as Record<string, unknown>, key) : "—"; }
-function reportLocation(report: Report) { return BACKLINK_INDEX_KINDS.includes(report.kind) ? "Global backlink index" : report.kind === "cannibalization" ? "Search Console, 28 days" : report.kind === "local_grid" ? "Google Maps grid" : report.kind === "rank" ? report.locationName || report.countryName || "Saved search area" : report.countryName || report.countryCode || "Country not recorded"; }
+function reportLocation(report: Report) { return BACKLINK_INDEX_KINDS.includes(report.kind) ? "Global backlink index" : report.kind === "cannibalization" || report.kind === "quick_wins" ? "Search Console, 90 days" : report.kind === "local_grid" ? "Google Maps grid" : report.kind === "rank" ? report.locationName || report.countryName || "Saved search area" : report.countryName || report.countryCode || "Country not recorded"; }
 
 export function ResearchWorkbench({ domain, verified, configured, competitorDomains, initialHistory, initialTarget }: Props) {
   const [kind, setKind] = useState<Kind>("keywords");
@@ -101,7 +101,7 @@ export function ResearchWorkbench({ domain, verified, configured, competitorDoma
   }
   return <div className="research-layout">
     <section className="research-panel"><div className="research-panel-heading"><span className="research-icon"><SlidersHorizontal size={17} /></span><div><p className="workspace-eyebrow">NEW REPORT</p><h2>Configure research</h2></div></div>
-      {kind === "cannibalization" ? <div className="research-config-alert"><strong>Free · uses Search Console</strong><p>Finds searches where two or more of your pages compete. Connect Google Search Console for this website under Integrations.</p></div> : !configured && (FREE_KINDS.includes(kind) ? <div className="research-config-alert"><strong>Free mode</strong><p>{kind === "rank" ? "Positions come from your Google Search Console data (connect it under Integrations)." : "Ideas come from Google autocomplete, plus your Search Console clicks and positions when connected."} No paid account needed.</p></div> : <div className="research-config-alert"><strong>External data provider required</strong><p>This report needs an external data provider. Keyword overview, AEO questions, positions and cannibalization work for free.</p></div>)}
+      {kind === "cannibalization" ? <div className="research-config-alert"><strong>Free · uses Search Console</strong><p>Finds searches where two or more of your pages compete. Connect Google Search Console for this website under Integrations.</p></div> : kind === "quick_wins" ? <div className="research-config-alert"><strong>Free · uses Search Console</strong><p>Finds all your keywords ranking at positions 4–20 and ranks them by opportunity — the fastest way to get more keywords into the top 3. Connect Google Search Console under Integrations.</p></div> : !configured && (FREE_KINDS.includes(kind) ? <div className="research-config-alert"><strong>Free mode</strong><p>{kind === "rank" ? "Positions come from your Google Search Console data (connect it under Integrations)." : "Ideas come from Google autocomplete, plus your Search Console clicks and positions when connected."} No paid account needed.</p></div> : <div className="research-config-alert"><strong>External data provider required</strong><p>This report needs an external data provider. Keyword overview, AEO questions, positions and cannibalization work for free.</p></div>)}
       {!verified && !UNVERIFIED_KINDS.includes(kind) && <div className="research-config-alert"><strong>Website verification required</strong><p>This report uses paid data for your domain. Verify ownership on the Websites page first. Keyword overview, AEO questions and cannibalization work without verification.</p></div>}
       {providerIssue && <ProviderAccountAlert issue={providerIssue} checking={checkingProvider} onRecheck={() => void recheckProvider()} />}
       <form className="research-form" onSubmit={run}>
@@ -147,6 +147,30 @@ function nestedPath(item: Record<string, unknown>, ...keys: string[]) {
 }
 
 function ResultTable({ report, domain }: { report: Report; domain: string }) {
+  if (report.kind === "quick_wins") {
+    const total = report.result.length;
+    return <div className="research-table-wrap">
+      <table className="research-table">
+        <thead><tr><th>Keyword</th><th title="Current average position in Google (90 days)">Position</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th title="Estimated extra monthly clicks if this keyword reaches #1">Potential clicks at #1</th><th>Ranking page</th></tr></thead>
+        <tbody>{total ? report.result.map((item, index) => {
+          const pos = Number(item.position);
+          const posClass = pos <= 5 ? "research-change is-up" : pos <= 10 ? "" : "research-change is-down";
+          const page = typeof item.page === "string" ? item.page : null;
+          return <tr key={`${value(item, "keyword")}-${index}`}>
+            <td><strong style={{ fontWeight: 600 }}>{value(item, "keyword")}</strong></td>
+            <td><span className={posClass}># {value(item, "position")}</span></td>
+            <td>{value(item, "impressions")}</td>
+            <td>{value(item, "clicks")}</td>
+            <td>{value(item, "ctr")}%</td>
+            <td>{value(item, "potential_clicks")}</td>
+            <td>{page ? <a href={page} target="_blank" rel="noreferrer" style={{ wordBreak: "break-all", fontSize: "10px" }}>{page.replace(/^https?:\/\/(www\.)?[^/]+/, "") || "/"}</a> : "—"}</td>
+          </tr>;
+        }) : <tr><td colSpan={7}>No keywords found at positions 4–20 with 10+ impressions in the last 90 days. This could mean you&apos;re already in the top 3 for most queries, or Search Console has not collected enough data yet.</td></tr>}
+        </tbody>
+      </table>
+      <p className="research-data-note">Keywords are from your Google Search Console data for the last 90 days, filtered to positions 4–20 with at least 10 impressions. Sorted by opportunity score (impressions × closeness to top 3). "Potential clicks at #1" assumes a 28% click-through rate — an estimate, not a guarantee. Focus on pages near position 4–8 first: they need the least improvement.</p>
+    </div>;
+  }
   if (!["keywords", "questions", "rank", "backlinks", "competitors", "ai_visibility"].includes(report.kind)) return <ExtendedResults report={report} domain={domain} />;
   if (report.provider === "Google Autocomplete + Search Console" && report.kind === "keywords") {
     return <div className="research-table-wrap"><table className="research-table"><thead><tr><th>Keyword</th><th>Impressions</th><th>Clicks</th><th>Avg. position</th><th>Related searches</th></tr></thead><tbody>{report.result.length ? report.result.map((item, index) => {

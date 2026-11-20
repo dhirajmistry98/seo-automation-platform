@@ -136,6 +136,77 @@ export async function freeRankPositions(db: Db, organizationId: unknown, domain:
   }));
 }
 
+/**
+ * Quick-wins report: GSC keywords at positions 4–20 with meaningful impressions.
+ * These are "almost top-3" keywords — a targeted content or on-page update can push
+ * them onto page 1. Returns null when Search Console is not connected.
+ */
+export async function freeQuickWins(
+  db: Db,
+  organizationId: unknown,
+  domain: string,
+): Promise<{ items: Array<Record<string, unknown>>; total: number } | { error: string } | null> {
+  const context = await searchConsoleContext(db, organizationId, domain);
+  if (!context) return null;
+  const end = new Date(Date.now() - 3 * 86_400_000);
+  const start = new Date(end.getTime() - 87 * 86_400_000); // 90-day window
+  const endpoint = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(context.property)}/searchAnalytics/query`;
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${context.accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
+        dimensions: ["query", "page"],
+        rowLimit: 25_000,
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch { return { error: "Search Console did not respond. Try again shortly." }; }
+  if (!response.ok) return { error: await googleApiError(response, "Search Console data could not be read.") };
+  const payload = await response.json().catch(() => ({})) as { rows?: Array<{ keys?: string[]; clicks?: number; impressions?: number; ctr?: number; position?: number }> };
+  const rows = payload.rows || [];
+
+  // Aggregate per query (a keyword may rank via multiple pages — keep the best-ranking page)
+  const byQuery = new Map<string, { keyword: string; page: string; impressions: number; clicks: number; position: number; ctr: number }>();
+  for (const row of rows) {
+    const keyword = row.keys?.[0];
+    const page = row.keys?.[1];
+    if (!keyword || !page) continue;
+    const pos = row.position ?? 0;
+    const imp = row.impressions ?? 0;
+    if (pos < 1 || pos > 20 || imp < 10) continue; // skip top-3 and very weak signals
+    const existing = byQuery.get(keyword);
+    if (!existing || pos < existing.position) {
+      byQuery.set(keyword, { keyword, page, impressions: imp, clicks: row.clicks ?? 0, position: Math.round(pos * 10) / 10, ctr: Math.round((row.ctr ?? 0) * 10_000) / 100 });
+    }
+  }
+
+  // Keep positions 4–20 and sort by opportunity: impressions weighted by closeness to top 3
+  const candidates = [...byQuery.values()].filter((r) => r.position >= 4 && r.position <= 20);
+  const maxImp = Math.max(...candidates.map((r) => r.impressions), 1);
+  candidates.sort((a, b) => {
+    const scoreA = (a.impressions / maxImp) * Math.max(0, (21 - a.position) / 17);
+    const scoreB = (b.impressions / maxImp) * Math.max(0, (21 - b.position) / 17);
+    return scoreB - scoreA;
+  });
+
+  const items = candidates.slice(0, 100).map((r) => ({
+    keyword: r.keyword,
+    position: r.position,
+    impressions: r.impressions,
+    clicks: r.clicks,
+    ctr: r.ctr,
+    page: r.page,
+    // Potential extra clicks if keyword reaches position 1 (avg CTR ~28%)
+    potential_clicks: Math.round(r.impressions * 0.28),
+  }));
+  return { items, total: candidates.length };
+}
+
 /** Cannibalization report (last 28 days of Search Console data), or null when Search Console is not connected. */
 export async function freeCannibalization(db: Db, organizationId: unknown, domain: string): Promise<{ items: ReturnType<typeof findCannibalization> } | { error: string } | null> {
   const context = await searchConsoleContext(db, organizationId, domain);

@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { researchSource } from "@/lib/integrations/research-policy";
-import { FREE_PROVIDER, FREE_RESEARCH_KINDS, freeCannibalization, freeKeywordIdeas, freeQuestionIdeas, freeRankPositions } from "@/lib/integrations/free-research";
+import { FREE_PROVIDER, FREE_RESEARCH_KINDS, freeCannibalization, freeKeywordIdeas, freeQuestionIdeas, freeQuickWins, freeRankPositions } from "@/lib/integrations/free-research";
 import { DOMAIN_TARGET_KINDS, EXTENDED_RESEARCH_KINDS, isExtendedResearchKind, parseBacklinkSummary, runExtendedResearch, type BacklinkMode, type ExtendedResearchKind, type GridSize } from "@/lib/integrations/research-reports";
 import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice, DataForSeoAccountError } from "@/lib/integrations/dataforseo";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
@@ -12,8 +12,8 @@ import { ensureSeoIndexes } from "@/lib/seo/indexes";
 import { parseGeoPoint, serpLocation } from "@/lib/seo/geo-target";
 
 type Context = { params: Promise<{ domain: string }> };
-type ResearchKind = "keywords" | "questions" | "rank" | "backlinks" | "competitors" | "ai_visibility" | "cannibalization" | ExtendedResearchKind;
-const BASE_KINDS = ["keywords", "questions", "rank", "backlinks", "competitors", "ai_visibility", "cannibalization"];
+type ResearchKind = "keywords" | "questions" | "rank" | "quick_wins" | "backlinks" | "competitors" | "ai_visibility" | "cannibalization" | ExtendedResearchKind;
+const BASE_KINDS = ["keywords", "questions", "rank", "quick_wins", "backlinks", "competitors", "ai_visibility", "cannibalization"];
 const GRID_SPACINGS_KM = [0.5, 1, 2, 5];
 function error(message: string, status = 400) { return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } }); }
 /** Saved primary keywords (comma list or array), trimmed and de-duplicated, for share of voice. */
@@ -51,7 +51,7 @@ export async function POST(request: Request, context: Context) {
   if (![...BASE_KINDS, ...EXTENDED_RESEARCH_KINDS].includes(kind)) return error("Choose a supported research report.");
   // Keyword and question research only looks up search terms, so it does not need site ownership.
   // Domain reports (positions, backlinks, competitors, AI mentions) still require a verified website.
-  if (!website.verifiedAt && kind !== "keywords" && kind !== "questions" && kind !== "cannibalization") return error("Verify ownership of this website before running domain reports. Keyword demand and AEO questions work without verification.", 409);
+  if (!website.verifiedAt && kind !== "keywords" && kind !== "questions" && kind !== "cannibalization" && kind !== "quick_wins") return error("Verify ownership of this website before running domain reports. Keyword demand and AEO questions work without verification.", 409);
   const locationCode = Number.isSafeInteger(body.locationCode) ? Number(body.locationCode) : Number(website.rankTrackingLocationCode || 2356);
   const countryLocationCode = Number.isSafeInteger(body.countryLocationCode) ? Number(body.countryLocationCode) : Number(website.rankTrackingCountryLocationCode || website.rankTrackingLocationCode || 2356);
   const countryCode = typeof body.countryCode === "string" && /^[a-z]{2}$/i.test(body.countryCode) ? body.countryCode.toUpperCase() : String(website.rankTrackingCountryCode || "IN").toUpperCase();
@@ -79,6 +79,7 @@ export async function POST(request: Request, context: Context) {
   if (!Number.isSafeInteger(locationCode) || locationCode < 1 || locationCode > 999_999_999_999 || !Number.isSafeInteger(countryLocationCode) || countryLocationCode < 1 || countryLocationCode > 999_999_999_999 || !/^[A-Z]{2}$/.test(countryCode)) return error("Choose a valid provider location.");
   if (kind === "ai_visibility" && platform === "chat_gpt" && (countryLocationCode !== 2840 || languageCode !== "en")) return error("ChatGPT mention data is currently available only for United States English. Select United States and en.");
   if (kind === "cannibalization") return runCannibalization();
+  if (kind === "quick_wins") return runQuickWins();
   const freeKind = (FREE_RESEARCH_KINDS as readonly string[]).includes(kind);
   const paidConfigured = isDataForSeoConfigured();
   if (!paidConfigured && !freeKind) return error("This report requires an external data provider. Keyword demand, AEO questions, positions and cannibalization work for free.", 503);
@@ -125,6 +126,21 @@ export async function POST(request: Request, context: Context) {
     await db.collection("seo_research_reports").insertOne(report);
     await db.collection("audit_logs").insertOne({ ownerId: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, action: "seo.research.requested", kind: "cannibalization", query: domain, provider: report.provider, createdAt: fetchedAt });
     return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice: "Cannibalization uses your Search Console data for the last 28 days: searches where two or more of your pages each get at least 10% of the impressions." }, { headers: { "Cache-Control": "no-store" } });
+  }
+  async function runQuickWins() {
+    const limited = await consumeRateLimit(db, "seo-research", `${String(website!.organizationId)}:${domain}`, 20, 60 * 60_000);
+    if (!limited.allowed) return error(`Research limit reached for this website. Try again in ${limited.retryAfterSeconds} seconds.`, 429);
+    const result = await freeQuickWins(db, website!.organizationId, domain);
+    if (!result) return error("Quick wins use your Google Search Console data. Connect Search Console for this website under Integrations, then run the report again.", 409);
+    if ("error" in result) return error(result.error, 502);
+    const fetchedAt = new Date();
+    const report = { ownerId: session!.user!.id, userId: session!.user!.id, createdBy: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, kind: "quick_wins", query: domain, locationCode, locationName, countryCode, countryName, countryLocationCode, languageCode, provider: "Google Search Console", searchConsoleConnected: true, providerCostUsd: 0, source: "manual", fetchedAt, result: result.items };
+    await db.collection("seo_research_reports").insertOne(report);
+    await db.collection("audit_logs").insertOne({ ownerId: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, action: "seo.research.requested", kind: "quick_wins", query: domain, provider: report.provider, createdAt: fetchedAt });
+    const notice = result.total > 100
+      ? `Found ${result.total} keywords near the top 10 — showing the top 100 by opportunity. Each has 10+ impressions in the last 90 days.`
+      : `Found ${result.total} keyword${result.total === 1 ? "" : "s"} at positions 4–20 with 10+ impressions in the last 90 days.`;
+    return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice: notice }, { headers: { "Cache-Control": "no-store" } });
   }
   try {
     let providerResult: Pick<Awaited<ReturnType<typeof dataForSeoPost>>, "cost"> & Partial<Awaited<ReturnType<typeof dataForSeoPost>>> = { cost: 0 };

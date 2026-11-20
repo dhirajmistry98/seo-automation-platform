@@ -1166,3 +1166,9 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
 .ai-row-err td { color:#b91c1c; }
 .ai-empty { font-size:13px; color:#70675e; padding:30px 0; text-align:center; }
 @media (max-width:700px) { .ai-task-grid { grid-template-columns:1fr 1fr; } .ai-kpi-row { grid-template-columns:1fr 1fr; } }
+.ai-kb-domains { display:flex; flex-direction:column; gap:4px; margin-bottom:16px; }
+.ai-kb-domain-row { display:flex; align-items:center; justify-content:space-between; border:1px solid #e4ddd5; border-radius:7px; padding:8px 12px; font-size:12px; background:#fffdfa; }
+.ai-kb-delete { display:inline-flex; align-items:center; justify-content:center; border:none; background:transparent; padding:4px; border-radius:5px; color:#b91c1c; cursor:pointer; }
+.ai-kb-delete:hover { background:#fef2f2; }
+.ai-kb-form { border-top:1px solid #e4ddd5; padding-top:16px; display:flex; flex-direction:column; gap:12px; }
+.ai-success { font-size:12px; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 12px; margin:0; }

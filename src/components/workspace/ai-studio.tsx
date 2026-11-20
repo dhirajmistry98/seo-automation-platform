@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Bot, ChevronDown, Cpu, Layers, Loader2, MessageSquare, RefreshCw, Send, Settings2, Sparkles, Zap } from "lucide-react";
+import { Bot, ChevronDown, Cpu, Database, Layers, Loader2, MessageSquare, RefreshCw, Send, Settings2, Sparkles, Trash2, Upload, Zap } from "lucide-react";
 import type { AiConfig, AiMode, AiTask } from "@/lib/ai/types";
 import type { GeminiModel } from "@/lib/ai/models";
 
@@ -54,6 +54,50 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
   const [taskError, setTaskError] = useState("");
   const [taskMeta, setTaskMeta] = useState<{ model: string; mode: string; tokens: number; costUsd: number; durationMs: number } | null>(null);
 
+  // Knowledge Base (config tab)
+  const [kbDomains, setKbDomains] = useState<string[]>([]);
+  const [kbLoading, setKbLoading] = useState(false);
+  const [kbIngestDomain, setKbIngestDomain] = useState(websites[0]?.domain ?? "");
+  const [kbIngestType, setKbIngestType] = useState<string>("content");
+  const [kbIngestContent, setKbIngestContent] = useState("");
+  const [kbIngesting, setKbIngesting] = useState(false);
+  const [kbError, setKbError] = useState("");
+  const [kbSuccess, setKbSuccess] = useState("");
+
+  const loadKbDomains = useCallback(async () => {
+    setKbLoading(true);
+    try {
+      const res = await fetch("/api/ai/ingest");
+      if (res.ok) { const d = await res.json(); setKbDomains(d.domains ?? []); }
+    } finally { setKbLoading(false); }
+  }, []);
+
+  const ingestContent = useCallback(async () => {
+    setKbIngesting(true);
+    setKbError("");
+    setKbSuccess("");
+    try {
+      const res = await fetch("/api/ai/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: kbIngestDomain, type: kbIngestType, content: kbIngestContent }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setKbError(data.error ?? "Ingest failed."); return; }
+      setKbSuccess(`Content ingested for ${kbIngestDomain}.`);
+      setKbIngestContent("");
+      void loadKbDomains();
+    } catch { setKbError("Network error."); }
+    finally { setKbIngesting(false); }
+  }, [kbIngestDomain, kbIngestType, kbIngestContent, loadKbDomains]);
+
+  const deleteKbDomain = useCallback(async (domain: string) => {
+    try {
+      const res = await fetch(`/api/ai/ingest?domain=${encodeURIComponent(domain)}`, { method: "DELETE" });
+      if (res.ok) setKbDomains((prev) => prev.filter((d) => d !== domain));
+    } catch { /* ignore */ }
+  }, []);
+
   // Chat tab
   const [chatDomain, setChatDomain] = useState(websites[0]?.domain ?? "");
   const [chatInput, setChatInput] = useState("");
@@ -62,6 +106,7 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
+  useEffect(() => { if (tab === "config") void loadKbDomains(); }, [tab, loadKbDomains]);
 
   const saveConfig = useCallback(async (patch: Partial<Pick<AiConfig, "mode" | "model">>) => {
     setSaving(true);
@@ -336,6 +381,63 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
                   {connectionStatus.ok ? "Connected ✓" : `Failed: ${connectionStatus.error}`}
                 </span>
               )}
+            </div>
+          </div>
+
+          <div className="ai-config-section">
+            <h3><Database size={14} style={{ display: "inline", marginRight: 6 }} />Knowledge Base</h3>
+            <p>Ingest website content so the AI can answer grounded questions about your sites. Used by LangChain RAG mode.</p>
+
+            {kbLoading ? (
+              <p className="ai-saving"><Loader2 size={13} className="ai-spin" /> Loading…</p>
+            ) : kbDomains.length > 0 ? (
+              <div className="ai-kb-domains">
+                {kbDomains.map((d) => (
+                  <div key={d} className="ai-kb-domain-row">
+                    <span>{d}</span>
+                    <button className="ai-kb-delete" onClick={() => void deleteKbDomain(d)} title={`Remove all ingested data for ${d}`}>
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="ai-empty">No content ingested yet.</p>
+            )}
+
+            <div className="ai-kb-form">
+              <div className="ai-form-row">
+                <label>Website</label>
+                <div className="ai-select-wrap">
+                  <select value={kbIngestDomain} onChange={(e) => setKbIngestDomain(e.target.value)} disabled={!websites.length}>
+                    {!websites.length && <option value="">No websites added</option>}
+                    {websites.map((w) => <option key={w.domain} value={w.domain}>{w.name}</option>)}
+                  </select>
+                  <ChevronDown size={14} />
+                </div>
+              </div>
+              <div className="ai-form-row">
+                <label>Content type</label>
+                <div className="ai-select-wrap">
+                  <select value={kbIngestType} onChange={(e) => setKbIngestType(e.target.value)}>
+                    <option value="content">Content / copy</option>
+                    <option value="audit">Audit findings</option>
+                    <option value="keyword">Keyword data</option>
+                    <option value="search_console">Search Console data</option>
+                    <option value="research">Research notes</option>
+                  </select>
+                  <ChevronDown size={14} />
+                </div>
+              </div>
+              <div className="ai-form-row">
+                <label>Content to ingest</label>
+                <textarea placeholder="Paste page content, audit data, or keyword research…" rows={5} value={kbIngestContent} onChange={(e) => setKbIngestContent(e.target.value)} />
+              </div>
+              {kbError && <p className="ai-error">{kbError}</p>}
+              {kbSuccess && <p className="ai-success">{kbSuccess}</p>}
+              <button className="workspace-primary-link ai-run-btn" onClick={ingestContent} disabled={kbIngesting || !kbIngestContent.trim() || !kbIngestDomain || !hasApiKey}>
+                {kbIngesting ? <><Loader2 size={14} className="ai-spin" /> Ingesting…</> : <><Upload size={14} /> Ingest content</>}
+              </button>
             </div>
           </div>
 

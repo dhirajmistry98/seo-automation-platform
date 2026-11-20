@@ -354,14 +354,14 @@ test("search visibility reports transparent GEO, AEO and LLMO signals from crawl
   assert.equal(page.searchSignals?.hasAuthorAttribution, true);
   assert.equal(page.searchSignals?.hasFaqSchema, true);
   assert.equal(page.searchSignals?.directAnswerBlockCount, 1);
-  assert.deepEqual(report.scores, { geo: 100, aeo: 100, llmo: 100 });
+  assert.deepEqual(report.scores, { geo: 100, aeo: 100, llmo: 100, eeat: 83 });
   assert.ok(report.limitations.some((item) => item.includes("do not predict inclusion")));
 });
 
 test("search visibility reports an empty sample without inventing readiness results", () => {
   const report = analyzeSearchVisibility([]);
   assert.equal(report.pageCount, 0);
-  assert.deepEqual(report.scores, { geo: 0, aeo: 0, llmo: 0 });
+  assert.deepEqual(report.scores, { geo: 0, aeo: 0, llmo: 0, eeat: 0 });
   assert.equal(report.recommendations.length, 0);
 });
 

@@ -10,7 +10,7 @@ import { WebsiteOrganizationSelector } from "@/components/workspace/website-orga
 import { WebsiteSeoLocationField } from "@/components/workspace/seo-location-selector";
 import { getWebsiteSeoTarget } from "@/lib/seo/target";
 import { seoCrawlPageLimit } from "@/lib/seo/crawler";
-import { ArrowLeft, Download, Save } from "lucide-react";
+import { ArrowLeft, Download, Save, Zap, Search } from "lucide-react";
 import { WebsiteDeleteControl } from "@/components/workspace/website-delete-control";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -85,6 +85,10 @@ export default async function WebsiteSettingsPage({ params, searchParams }: { pa
     <section className="website-settings-card">
       <Link href="/dashboard/websites" className="website-settings-back"><ArrowLeft size={14} /> Back to websites</Link>
       <a className="website-settings-export" href={`/api/sites/${encodeURIComponent(website.domain)}/report?download=1`}><Download size={14} /> Export site data</a>
+      <div className="action-engine-tools">
+        <Link href={`/dashboard/websites/${encodeURIComponent(website.domain)}/action-engine`} className="action-engine-tool-link"><Zap size={13} /> Action Engine</Link>
+        <Link href={`/dashboard/websites/${encodeURIComponent(website.domain)}/diagnose`} className="action-engine-tool-link"><Search size={13} /> Root-Cause Detective</Link>
+      </div>
       <p className="workspace-eyebrow">WEBSITE CONFIGURATION</p>
       <h1>{website.name || website.domain}</h1>
       <p className="website-settings-intro">Set the crawl and market details used by audits and future connected services.</p>

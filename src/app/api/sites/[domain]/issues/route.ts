@@ -7,6 +7,7 @@ import { findAccessibleWebsite } from "@/lib/organizations";
 import { auditHtml } from "@/lib/seo/audit";
 import { fetchPublicHtml } from "@/lib/seo/crawler";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
+import { searchConsoleContext } from "@/lib/integrations/free-research";
 
 // Rules that compare several pages can only be verified by a full crawl.
 const CROSS_PAGE_RULES = new Set(["hreflang.return_missing", "internal.broken_link", "internal.not_linked_from_crawl", "internal.redirecting_link", "metadata.description_duplicate", "metadata.title_duplicate"]);
@@ -77,10 +78,48 @@ export async function PATCH(request: Request, context: Context) {
   } else {
     status = body.action === "ignore" ? "ignored" : "open";
   }
+  // Capture GSC rank snapshot for the affected page so users can track improvement after the fix.
+  let rankAtResolution: { snapshotDate: string; keywords: Array<{ query: string; position: number; impressions: number }> } | undefined;
+  if (status === "resolved" && typeof issue.pageUrl === "string") {
+    try {
+      const gscCtx = await searchConsoleContext(db, website.organizationId, domain);
+      if (gscCtx) {
+        const end = new Date(Date.now() - 3 * 86_400_000);
+        const start = new Date(end.getTime() - 27 * 86_400_000);
+        const response = await fetch(
+          `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(gscCtx.property)}/searchAnalytics/query`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${gscCtx.accessToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              startDate: start.toISOString().slice(0, 10),
+              endDate: end.toISOString().slice(0, 10),
+              dimensions: ["query"],
+              dimensionFilterGroups: [{ filters: [{ dimension: "page", operator: "equals", expression: issue.pageUrl }] }],
+              rowLimit: 5,
+            }),
+            cache: "no-store",
+            signal: AbortSignal.timeout(5_000),
+          }
+        );
+        if (response.ok) {
+          type GscRow = { keys?: string[]; position?: number; impressions?: number };
+          const payload = await response.json() as { rows?: GscRow[] };
+          const keywords = (payload.rows ?? [])
+            .sort((a, b) => (b.impressions ?? 0) - (a.impressions ?? 0))
+            .slice(0, 5)
+            .map((row) => ({ query: row.keys?.[0] ?? "", position: Math.round((row.position ?? 0) * 10) / 10, impressions: row.impressions ?? 0 }))
+            .filter((k) => k.query);
+          if (keywords.length > 0) rankAtResolution = { snapshotDate: now.toISOString().slice(0, 10), keywords };
+        }
+      }
+    } catch {}
+  }
+
   await db.collection("seo_issues").updateOne(issueFilter,
-    { $set: { status, updatedAt: now, ...(status === "resolved" ? { resolvedAt: now, resolvedBy: session.user.id, verificationAuditId: verifiedByAuditId } : {}), ...(body.action === "reopen" ? { reopenedAt: now } : {}) },
-      ...(status !== "resolved" ? { $unset: { resolvedAt: "", resolvedBy: "", verificationAuditId: "" } } : {}) });
+    { $set: { status, updatedAt: now, ...(status === "resolved" ? { resolvedAt: now, resolvedBy: session.user.id, verificationAuditId: verifiedByAuditId, ...(rankAtResolution ? { rankAtResolution } : {}) } : {}), ...(body.action === "reopen" ? { reopenedAt: now } : {}) },
+      ...(status !== "resolved" ? { $unset: { resolvedAt: "", resolvedBy: "", verificationAuditId: "", rankAtResolution: "" } } : {}) });
   await db.collection("seo_issue_history").insertOne({ ownerId: session.user.id, organizationId: website.organizationId, websiteDomain: domain, issueId: issue._id, action: status, actorId: session.user.id, verifiedByAuditId, changedAt: now });
   await db.collection("audit_logs").insertOne({ ownerId: session.user.id, organizationId: website.organizationId, websiteDomain: domain, action: `seo.issue.${status}`, issueId: String(issue._id), verificationAuditId: verifiedByAuditId, createdAt: now });
-  return NextResponse.json({ updated: true, status, verifiedByAuditId });
+  return NextResponse.json({ updated: true, status, verifiedByAuditId, ...(rankAtResolution ? { rankAtResolution } : {}) });
 }

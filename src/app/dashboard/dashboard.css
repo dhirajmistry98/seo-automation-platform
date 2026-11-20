@@ -1230,6 +1230,23 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
 .redirect-301 { background:#fef3c7; color:#92400e; }
 .redirect-302 { background:#e0e7ff; color:#3730a3; }
 
+/* ── WordPress fix panel (issue → push fix → verify) ── */
+.wp-fix-btn { display:inline-flex; align-items:center; gap:5px; margin-top:7px; border:1px solid #ddd7d0; border-radius:5px; background:#fffaf0; padding:3px 9px; color:#49423b; font-size:10px; cursor:pointer; }
+.wp-fix-btn:hover { border-color:#ff6a00; color:#ff6a00; background:#fff7f1; }
+.wp-fix-panel { margin-top:8px; border:1px solid #ddd7d0; border-radius:6px; background:#fff; padding:12px; }
+.wp-fix-panel-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.wp-fix-panel-header strong { font-size:11px; color:#49423b; }
+.wp-fix-cancel { border:none; background:none; padding:2px 5px; color:#70675e; font-size:12px; cursor:pointer; }
+.wp-fix-cancel:hover { color:#b91c1c; }
+.wp-fix-current { margin:0 0 6px; color:#70675e; font-size:10px; }
+.wp-fix-textarea { width:100%; border:1px solid #cfc7be; border-radius:4px; padding:7px 9px; font-size:11px; font-family:inherit; resize:vertical; color:#211e1a; }
+.wp-fix-textarea:focus { outline:none; border-color:#ff6a00; }
+.wp-fix-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:7px; }
+.wp-fix-apply { display:inline-flex; align-items:center; gap:6px; border:0; background:#080706; padding:5px 12px; color:#f3efea; font-size:11px; border-radius:4px; cursor:pointer; }
+.wp-fix-apply:hover { background:#302b27; }
+.wp-fix-apply:disabled { opacity:.4; cursor:default; }
+.wp-fix-hint { font-size:10px; color:#9a9088; }
+
 /* ── Fix & Verify rank impact ── */
 .rank-impact { margin-top:8px; border:1px solid #ded8d1; border-radius:6px; background:#fff; overflow:hidden; }
 .rank-impact-header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:#faf8f5; border-bottom:1px solid #ded8d1; }

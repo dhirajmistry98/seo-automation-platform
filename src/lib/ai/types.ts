@@ -7,6 +7,9 @@ export type AiTask =
   | "content-optimize"
   | "audit-summary"
   | "report-narrative"
+  | "content-brief"
+  | "eeat-audit"
+  | "schema-suggest"
   | "chat";
 
 export interface AiConfig {
@@ -27,6 +30,10 @@ export interface AiGenContext {
   reportData?: unknown;
   question?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
+  targetAudience?: string;
+  wordCountTarget?: string;
+  competitors?: string;
+  pageType?: string;
 }
 
 export interface AiGenRequest {

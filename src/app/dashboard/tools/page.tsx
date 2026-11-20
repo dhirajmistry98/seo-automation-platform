@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, BarChart3, FileBarChart, FileSearch, Gauge, Globe, LineChart, Link2, ListTodo, MapPinned, Megaphone, Network, Radar, ScanSearch, Search, ShieldCheck, Sparkles, Split, Target } from "lucide-react";
+import { Activity, ArrowRightLeft, BarChart3, Braces, FileBarChart, FileSearch, Gauge, Globe, Globe2, LineChart, Link2, ListTodo, MapPinned, Megaphone, Radar, ScanSearch, Search, Sparkles, Split, Target } from "lucide-react";
 import { SiteAuditControls } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
@@ -27,10 +27,11 @@ const liveTools = [
   { name: "Backlink analytics & gap", description: "Referring domains, anchors, new and lost backlinks, and sites that link to competitors but not to you.", icon: Link2, state: "Analyse links", href: "/dashboard/research" },
   { name: "Advertising research", description: "The paid Google keywords and ads of your website or a competitor.", icon: Megaphone, state: "Research ads", href: "/dashboard/research" },
   { name: "Keyword cannibalization", description: "Searches where two or more of your pages compete, from your Search Console data. Free.", icon: Split, state: "Find conflicts", href: "/dashboard/research" },
-];
-const plannedTools = [
-  { name: "Content and internal link opportunities", description: "Deeper clustering and recommendations need broader crawl and content analysis.", icon: Network },
-  { name: "Approval workflows", description: "Review and approve automated changes before they are applied.", icon: ShieldCheck },
+  { name: "Schema Generator", description: "Build JSON-LD structured data for any page — Article, FAQ, Product, LocalBusiness, Event and more.", icon: Braces, state: "Generate schema", href: "/dashboard/tools/schema" },
+  { name: "hreflang Builder", description: "Generate hreflang link tags and sitemap XML for international pages. Validates language codes.", icon: Globe2, state: "Build tags", href: "/dashboard/tools/hreflang" },
+  { name: "Redirect Manager", description: "Store 301/302 redirect rules per site. Export as nginx, Apache .htaccess, Vercel JSON or CSV.", icon: ArrowRightLeft, state: "Manage redirects", href: "/dashboard/tools/redirects" },
+  { name: "Content Brief (AI)", description: "AI-generated brief for writers: outline, schema recommendation, semantic keywords, CTAs, checklist.", icon: Sparkles, state: "Open AI Studio", href: "/dashboard/ai" },
+  { name: "E-E-A-T Audit (AI)", description: "AI-scored audit of experience, expertise, authority, and trustworthiness signals on any page.", icon: Sparkles, state: "Open AI Studio", href: "/dashboard/ai" },
 ];
 
 export default async function SeoToolsPage() {
@@ -55,6 +56,5 @@ export default async function SeoToolsPage() {
         return <article className="workspace-site-card workspace-tool-site" key={site.domain}><span className="workspace-site-mark"><FileSearch size={17} /></span><div className="workspace-site-identity"><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "DNS verification required"}</small></div><Link className="workspace-site-settings" href="/dashboard/websites">Website page</Link>{(canAudit || canManage || canManageTasks) && <SiteAuditControls domain={site.domain} siteUrl={site.url} verifiedAt={site.verifiedAt} lastAudit={site.lastAudit} canManageSite={canManage} canManageTasks={canManageTasks} canRunAudit={canAudit} />}{site.lastAudit && <SiteIssueManager domain={site.domain} canManage={canManageIssues} />}</article>;
       })}</div> : <div className="workspace-site-empty"><span><FileSearch size={18} /></span><div><strong>{workspace.available ? "Add a website to use SEO tools" : "Website tools are unavailable"}</strong><p>{workspace.available ? "Site audits and action plans become available after domain verification." : "Start MongoDB or check MONGODB_URI, then refresh this page."}</p></div>{workspace.available && <Link href="/dashboard/websites">Add a website</Link>}</div>}
     </section>
-    <section className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">PROVIDER DEPENDENCIES</p><h2>Still in the roadmap</h2><p>These reports need additional analysis, history, and verified workflows. The app will not show sample data as real results.</p></div></div><div className="workspace-tool-grid">{plannedTools.map(({ name, description, icon: Icon }) => <article className="workspace-tool-card is-planned" key={name}><span><Icon size={18} /></span><div><h3>{name}</h3><p>{description}</p></div><small>Planned</small></article>)}</div></section>
   </>;
 }

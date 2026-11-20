@@ -29,6 +29,9 @@ const TASKS: Array<{ id: AiTask; label: string; description: string; fields: str
   { id: "meta-description", label: "Meta Description", description: "Write 3 click-worthy meta descriptions.", fields: ["keyword", "title", "content"] },
   { id: "keywords", label: "Keyword Ideas", description: "Suggest 15 keywords in three tiers.", fields: ["description", "title"] },
   { id: "content-optimize", label: "Content Optimisation", description: "Analyse content for SEO improvements.", fields: ["keyword", "content"] },
+  { id: "content-brief", label: "Content Brief", description: "Full writer brief: outline, schema, CTAs, checklist.", fields: ["keyword", "pageType", "targetAudience", "wordCountTarget", "competitors"] },
+  { id: "eeat-audit", label: "E-E-A-T Audit", description: "Score experience, expertise, authority, trust.", fields: ["url", "title", "content"] },
+  { id: "schema-suggest", label: "Schema Suggestion", description: "Recommend and generate JSON-LD markup.", fields: ["url", "title", "pageType", "description"] },
   { id: "audit-summary", label: "Audit Summary", description: "Plain-language summary of audit findings.", fields: ["domain"] },
   { id: "report-narrative", label: "Report Narrative", description: "Executive summary for a client report.", fields: ["domain"] },
 ];
@@ -256,6 +259,31 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
               <div className="ai-form-row">
                 <label>Page content</label>
                 <textarea placeholder="Paste the page body text to analyse" rows={5} value={taskFields.content ?? ""} onChange={(e) => setTaskFields((p) => ({ ...p, content: e.target.value }))} />
+              </div>
+            )}
+
+            {task.fields.includes("pageType") && (
+              <div className="ai-form-row">
+                <label>Page type</label>
+                <input type="text" placeholder="e.g. blog post, product page, landing page" value={taskFields.pageType ?? ""} onChange={(e) => setTaskFields((p) => ({ ...p, pageType: e.target.value }))} />
+              </div>
+            )}
+            {task.fields.includes("targetAudience") && (
+              <div className="ai-form-row">
+                <label>Target audience</label>
+                <input type="text" placeholder="e.g. small business owners, fitness beginners" value={taskFields.targetAudience ?? ""} onChange={(e) => setTaskFields((p) => ({ ...p, targetAudience: e.target.value }))} />
+              </div>
+            )}
+            {task.fields.includes("wordCountTarget") && (
+              <div className="ai-form-row">
+                <label>Target word count</label>
+                <input type="text" placeholder="e.g. 1,000–1,500 words" value={taskFields.wordCountTarget ?? ""} onChange={(e) => setTaskFields((p) => ({ ...p, wordCountTarget: e.target.value }))} />
+              </div>
+            )}
+            {task.fields.includes("competitors") && (
+              <div className="ai-form-row">
+                <label>Competitor URLs to outperform</label>
+                <textarea placeholder="One URL per line (optional)" rows={2} value={taskFields.competitors ?? ""} onChange={(e) => setTaskFields((p) => ({ ...p, competitors: e.target.value }))} />
               </div>
             )}
 

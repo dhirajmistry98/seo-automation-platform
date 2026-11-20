@@ -92,6 +92,70 @@ Write 2-3 paragraphs:
 - Identify clear opportunities for the next period
 Professional, positive but honest tone. Do not fabricate numbers.`;
 
+    case "content-brief":
+      return `Create a detailed SEO content brief for a writer.
+
+Domain: ${ctx.domain ?? "unknown"}
+Target keyword: ${ctx.keyword || "unknown"}
+Page type: ${ctx.pageType || "article / blog post"}
+Target audience: ${ctx.targetAudience || "general"}
+Target word count: ${ctx.wordCountTarget || "1,000–1,500 words"}
+Competing pages to outperform: ${ctx.competitors || "none provided"}
+
+Produce the following sections:
+1. **Goal** – one sentence: what this page must achieve in search
+2. **Target keyword + 5 semantic variations** – natural phrases to include
+3. **Search intent** – informational / transactional / navigational + reasoning
+4. **Suggested title tag** (50–60 chars, keyword near front)
+5. **Suggested meta description** (120–155 chars)
+6. **Recommended H1** (keyword-focused, compelling)
+7. **Outline** – H2 and H3 headings with 1-line brief per section
+8. **Schema markup type** – which type to add and why
+9. **Internal linking** – 3 types of pages to link to/from
+10. **Calls to action** – what the reader should do next
+11. **Quality checklist** – 5 things to verify before publishing
+
+Use bullet points and clear headers. Be specific, not generic.`;
+
+    case "eeat-audit":
+      return `Audit this page for Google's E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) signals.
+
+Domain: ${ctx.domain ?? "unknown"}
+URL: ${ctx.url ?? "unknown"}
+Page title: ${ctx.title || "unknown"}
+Page content excerpt:
+${truncate(ctx.content || "none provided", 2000)}
+
+Score each of the four E-E-A-T dimensions from 0–10 and explain the score:
+
+**Experience (0–10):** Does the content show first-hand experience?
+**Expertise (0–10):** Is the author qualified? Are claims accurate and specific?
+**Authoritativeness (0–10):** Is the site/author recognised in the niche?
+**Trustworthiness (0–10):** Is the page accurate, transparent, and secure?
+
+Then provide:
+- **Top 3 fixes** to improve E-E-A-T (specific, actionable, prioritised)
+- **Schema markup to add** (Person/Organization/Article/Review – which and why)
+- **Content signals to add** (byline, credentials, citations, date, About page, etc.)
+- **Overall E-E-A-T verdict**: Strong / Adequate / Needs work – in one sentence`;
+
+    case "schema-suggest":
+      return `Recommend structured data (schema.org JSON-LD) for this page and generate ready-to-use code.
+
+Domain: ${ctx.domain ?? "unknown"}
+URL: ${ctx.url ?? "unknown"}
+Page title: ${ctx.title || "unknown"}
+Page type: ${ctx.pageType || "unknown"}
+Content summary: ${truncate(ctx.description || ctx.content || "none", 600)}
+
+1. **Recommend the best schema type(s)** for this page (choose from: Article, FAQPage, Product, LocalBusiness, Organization, BreadcrumbList, Event, Review, HowTo, WebSite, Person). Explain why each is appropriate.
+
+2. **Generate complete JSON-LD** for each recommended type. Use realistic placeholder values based on the page details above. Mark every field that the user must replace with [REPLACE: description].
+
+3. **Implementation note**: tell the user exactly where in the HTML to place each block.
+
+Output the JSON-LD blocks inside fenced code blocks (json). Keep the explanation brief.`;
+
     case "chat":
       return ctx.question?.trim() || "Hello, how can you help with SEO?";
 
@@ -102,11 +166,13 @@ Professional, positive but honest tone. Do not fabricate numbers.`;
 
 export function taskOutputTokens(task: AiTask): number {
   if (task === "chat") return 2048;
+  if (task === "content-brief" || task === "eeat-audit" || task === "schema-suggest") return 2048;
   if (task === "keywords" || task === "content-optimize") return 1024;
   return 768;
 }
 
 export function taskTemperature(task: AiTask): number {
   if (task === "keywords" || task === "chat") return 0.7;
+  if (task === "schema-suggest") return 0.3;
   return 0.4;
 }

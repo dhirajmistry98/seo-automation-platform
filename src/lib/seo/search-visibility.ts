@@ -63,8 +63,8 @@ function sanitizeCrawlerAccess(input: unknown): SearchCrawlerAccess | null {
 export type SearchVisibilityReport = {
   version: string;
   pageCount: number;
-  scores: { geo: number; aeo: number; llmo: number };
-  dimensions: { geo: VisibilityDimension; aeo: VisibilityDimension; llmo: VisibilityDimension };
+  scores: { geo: number; aeo: number; llmo: number; eeat: number };
+  dimensions: { geo: VisibilityDimension; aeo: VisibilityDimension; llmo: VisibilityDimension; eeat: VisibilityDimension };
   recommendations: string[];
   limitations: string[];
   crawlerAccess: SearchCrawlerAccess | null;
@@ -180,18 +180,27 @@ export function analyzeSearchVisibility(input: unknown, crawlerAccessInput?: unk
     { id: "llmo.provenance", label: "Authorship and provenance", test: (page) => page.hasAuthorAttribution && page.hasPublicationDate, evidence: "Author and publication-date signals were both present in saved metadata or structured data.", recommendation: "Identify the responsible author or organization and dates where they are genuine and useful." },
     { id: "llmo.accessible_page", label: "HTTP and index directives", test: (page) => page.isIndexable, evidence: "The response succeeded and no page-level noindex directive was recorded; robots.txt and AI crawler policies are not inspected here.", recommendation: "Review page-level robots directives intentionally. This does not confirm AI crawler access or model retrieval." },
   ]);
-  const dimensions = { geo, aeo, llmo };
+  const eeat = dimension(pages, [
+    { id: "eeat.author_identity", label: "Author identity signals", test: (page) => page.hasAuthorAttribution, evidence: "Author attribution was present in structured data or crawl metadata.", recommendation: "Add a Person schema with name and credentials, or a byline linking to an About page, on every authored page." },
+    { id: "eeat.organization_identity", label: "Organization identity", test: (page) => page.hasOrganizationIdentity, evidence: "Organization, LocalBusiness, Brand or WebSite JSON-LD was found.", recommendation: "Add Organization or LocalBusiness structured data with name, url, logo, description, and sameAs social profiles." },
+    { id: "eeat.publication_date", label: "Publication & update date", test: (page) => page.hasPublicationDate, evidence: "A publication or modification date was detected in structured data.", recommendation: "Add datePublished and dateModified to Article or BlogPosting schema so readers and algorithms can assess freshness." },
+    { id: "eeat.outbound_references", label: "Outbound citations", test: (page) => page.hasOutboundReferences, evidence: "At least one external link was found.", recommendation: "Link to authoritative sources (studies, official docs, credible news) where claims need verification." },
+    { id: "eeat.structured_data_quality", label: "Structured data present", test: (page) => page.structuredDataValid, evidence: "At least one valid JSON-LD block was found.", recommendation: "Add accurate Article, Review or Product schema to reinforce the page's topic and authorship." },
+    { id: "eeat.content_depth", label: "Sufficient content depth", test: (page) => page.hasUsefulContent, evidence: "Page has 80+ visible words.", recommendation: "Ensure each page provides meaningful, accurate content that serves user intent and demonstrates topical expertise." },
+  ]);
+  const dimensions = { geo, aeo, llmo, eeat };
   const recommendations = pages.length ? [...new Set(Object.values(dimensions).flatMap((item) => item.signals.filter((signal) => signal.status !== "supported").map((signal) => signal.recommendation)))].slice(0, 12) : [];
   return {
     version: SEARCH_VISIBILITY_VERSION,
     pageCount: pages.length,
-    scores: { geo: geo.score, aeo: aeo.score, llmo: llmo.score },
+    scores: { geo: geo.score, aeo: aeo.score, llmo: llmo.score, eeat: eeat.score },
     dimensions,
     recommendations,
     limitations: [
       "These are first-party technical and content-structure heuristics from the sampled crawl, not search rankings or measured AI citations.",
       "Outbound links are not verified for authority or factual support. Scores do not predict inclusion, citations, traffic or ranking changes.",
       "Robots.txt observations cover only homepage directives in the fetched file. They do not confirm bot behavior, other paths, off-site mentions, model training or retrieval.",
+      "E-E-A-T signals are measured from crawl data only. Actual E-E-A-T assessment by Google includes off-site reputation signals not visible here.",
     ],
     crawlerAccess: sanitizeCrawlerAccess(crawlerAccessInput),
   };

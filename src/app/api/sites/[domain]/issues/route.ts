@@ -1,5 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
+
+export const maxDuration = 30;
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";

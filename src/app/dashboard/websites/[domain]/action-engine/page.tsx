@@ -8,6 +8,7 @@ import { findAccessibleWebsite } from "@/lib/organizations";
 import { searchConsoleContext } from "@/lib/integrations/free-research";
 
 export const instant = false;
+export const maxDuration = 30;
 
 function gscRange() {
   const end = new Date(Date.now() - 3 * 86_400_000);

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+
+export const maxDuration = 30;
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { decryptWordPressToken } from "@/lib/integrations/wordpress";

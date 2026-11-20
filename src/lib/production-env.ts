@@ -86,7 +86,7 @@ export function assertProductionEnvironment() {
     throw new Error("ABLY_API_KEY must be a valid server API key.");
   }
   if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length < 20) {
-    throw new Error("GEMINI_API_KEY looks invalid — verify the key from Google AI Studio.");
+    console.warn("GEMINI_API_KEY looks short — verify the key from Google AI Studio. AI features may not work.");
   }
   validPair(process.env.RAZORPAY_KEY_ID, process.env.RAZORPAY_KEY_SECRET, "RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET");
   if (process.env.CRON_SECRET && process.env.CRON_SECRET.length < 32) {

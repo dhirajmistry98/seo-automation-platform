@@ -18,13 +18,6 @@ function llm(modelId: string, task: AiGenRequest["task"]) {
   });
 }
 
-function extractUsage(meta: Record<string, unknown> | undefined, modelId: string): AiUsageMeta {
-  const promptTokens = Number((meta as { input_tokens?: number } | undefined)?.input_tokens ?? 0);
-  const completionTokens = Number((meta as { output_tokens?: number } | undefined)?.output_tokens ?? 0);
-  const totalTokens = promptTokens + completionTokens;
-  return { promptTokens, completionTokens, totalTokens, estimatedCostUsd: estimateCost(modelId, promptTokens, completionTokens) };
-}
-
 /** Non-chat generation: single prompt → structured output via a RunnableSequence chain. */
 export async function langchainGenerate(req: AiGenRequest, ragContext = ""): Promise<AiGenResponse> {
   const start = Date.now();

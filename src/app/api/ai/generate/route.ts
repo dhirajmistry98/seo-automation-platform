@@ -12,7 +12,8 @@ import type { AiGenRequest } from "@/lib/ai/types";
 
 export const maxDuration = 60;
 const noStore = { "Cache-Control": "no-store" };
-const fail = (msg: string, status = 400) => NextResponse.json({ error: msg }, { status, headers: noStore });
+const fail = (msg: string, status = 400, extra?: Record<string, string>) =>
+  NextResponse.json({ error: msg }, { status, headers: { ...noStore, ...extra } });
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return sameOriginError();
@@ -20,8 +21,8 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return fail("Authentication required.", 401);
 
   const db = (await clientPromise).db();
-  const { allowed } = await consumeRateLimit(db, "ai:generate", session.user.id, 20, 60_000);
-  if (!allowed) return fail("Too many AI requests. Please wait a moment.", 429);
+  const rateLimitResult = await consumeRateLimit(db, "ai:generate", session.user.id, 20, 60_000);
+  if (!rateLimitResult.allowed) return fail("Too many AI requests. Please wait a moment.", 429, { "Retry-After": String(rateLimitResult.retryAfterSeconds) });
 
   const parsed = await readJsonLimited<{ task?: unknown; mode?: unknown; model?: unknown; context?: unknown }>(request, 16_384);
   if (!parsed.ok) return fail("Invalid request body.", parsed.status);

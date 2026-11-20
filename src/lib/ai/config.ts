@@ -2,6 +2,8 @@ import type { Db } from "mongodb";
 import { DEFAULT_MODEL } from "./models";
 import type { AiConfig, AiMode, AiTask, AiUsageMeta, AiUsageRecord } from "./types";
 
+const globalForAiIndexes = globalThis as typeof globalThis & { aiIndexesPromise?: Promise<void> };
+
 export async function getAiConfig(db: Db, userId: string): Promise<AiConfig> {
   const doc = await db.collection("ai_config").findOne({ userId });
   return {
@@ -61,13 +63,16 @@ export async function getUsageStats(db: Db, userId: string, limitDays = 30) {
 }
 
 export async function ensureAiIndexes(db: Db): Promise<void> {
-  await Promise.all([
-    db.collection("ai_usage").createIndex({ userId: 1, createdAt: -1 }, { name: "ai_usage_user_time" }),
-    db.collection("ai_usage").createIndex({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400, name: "ai_usage_ttl" }),
-    db.collection("ai_config").createIndex({ userId: 1 }, { unique: true, name: "ai_config_user" }),
-    db.collection("ai_documents").createIndex({ userId: 1, domain: 1, type: 1 }, { name: "ai_docs_lookup" }),
-    db.collection("ai_documents").createIndex({ content: "text" }, { name: "ai_docs_text" }),
-  ]).catch(() => undefined);
+  if (!globalForAiIndexes.aiIndexesPromise) {
+    globalForAiIndexes.aiIndexesPromise = Promise.all([
+      db.collection("ai_usage").createIndex({ userId: 1, createdAt: -1 }, { name: "ai_usage_user_time" }),
+      db.collection("ai_usage").createIndex({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400, name: "ai_usage_ttl" }),
+      db.collection("ai_config").createIndex({ userId: 1 }, { unique: true, name: "ai_config_user" }),
+      db.collection("ai_documents").createIndex({ userId: 1, domain: 1, type: 1 }, { name: "ai_docs_lookup" }),
+      db.collection("ai_documents").createIndex({ content: "text" }, { name: "ai_docs_text" }),
+    ]).then(() => undefined).catch((err) => { globalForAiIndexes.aiIndexesPromise = undefined; throw err; });
+  }
+  await globalForAiIndexes.aiIndexesPromise;
 }
 
 export function truncate(value: unknown, maxChars: number): string {

@@ -7,14 +7,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-// Ingest only needs read access — "websites.view" covers owners and all members.
 import { ingestDocument, listIngestedDomains, deleteDocuments } from "@/lib/ai/rag";
 import { ensureAiIndexes } from "@/lib/ai/config";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 const noStore = { "Cache-Control": "no-store" };
-const fail = (msg: string, status = 400) => NextResponse.json({ error: msg }, { status, headers: noStore });
+const fail = (msg: string, status = 400, extra?: Record<string, string>) =>
+  NextResponse.json({ error: msg }, { status, headers: { ...noStore, ...extra } });
 
 const ALLOWED_TYPES = ["audit", "keyword", "content", "search_console", "research"] as const;
 type DocType = typeof ALLOWED_TYPES[number];
@@ -33,8 +33,8 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return fail("Authentication required.", 401);
 
   const db = (await clientPromise).db();
-  const { allowed } = await consumeRateLimit(db, "ai:ingest", session.user.id, 60, 60_000);
-  if (!allowed) return fail("Too many ingest requests.", 429);
+  const ingestLimit = await consumeRateLimit(db, "ai:ingest", session.user.id, 60, 60_000);
+  if (!ingestLimit.allowed) return fail("Too many ingest requests.", 429, { "Retry-After": String(ingestLimit.retryAfterSeconds) });
 
   const parsed = await readJsonLimited<{ domain?: unknown; type?: unknown; content?: unknown; metadata?: unknown }>(request, 65_536);
   if (!parsed.ok) return fail("Invalid request body.", parsed.status);

@@ -5,14 +5,15 @@ import { getAiConfig, recordUsage, ensureAiIndexes, safeMode, zeroUsage } from "
 import { isValidModel } from "@/lib/ai/models";
 import { geminiGenerate } from "@/lib/ai/gemini";
 import { langchainChat } from "@/lib/ai/langchain";
-import { retrieveContext } from "@/lib/ai/rag";
+import { retrieveContext, withRagContext } from "@/lib/ai/rag";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import type { AiGenRequest } from "@/lib/ai/types";
 
 export const maxDuration = 60;
 const noStore = { "Cache-Control": "no-store" };
-const fail = (msg: string, status = 400) => NextResponse.json({ error: msg }, { status, headers: noStore });
+const fail = (msg: string, status = 400, extra?: Record<string, string>) =>
+  NextResponse.json({ error: msg }, { status, headers: { ...noStore, ...extra } });
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return sameOriginError();
@@ -20,8 +21,8 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return fail("Authentication required.", 401);
 
   const db = (await clientPromise).db();
-  const { allowed } = await consumeRateLimit(db, "ai:chat", session.user.id, 30, 60_000);
-  if (!allowed) return fail("Too many messages. Please wait a moment.", 429);
+  const rateLimitResult = await consumeRateLimit(db, "ai:chat", session.user.id, 30, 60_000);
+  if (!rateLimitResult.allowed) return fail("Too many messages. Please wait a moment.", 429, { "Retry-After": String(rateLimitResult.retryAfterSeconds) });
 
   const parsed = await readJsonLimited<{ question?: unknown; mode?: unknown; model?: unknown; domain?: unknown; history?: unknown }>(request, 32_768);
   if (!parsed.ok) return fail("Invalid request body.", parsed.status);
@@ -40,14 +41,17 @@ export async function POST(request: Request) {
   const model = isValidModel(parsed.value.model) ? parsed.value.model : config.model;
   const domain = typeof parsed.value.domain === "string" ? parsed.value.domain : undefined;
 
-  const context: AiGenRequest["context"] = { question, history, domain };
-  const req: AiGenRequest = { task: "chat", mode, model, context };
-
-  // RAG: pull relevant site data to ground the assistant's answer.
+  // RAG: pull relevant site data to ground the assistant's answer for both modes.
   let ragContext = "";
   if (domain) {
     ragContext = await retrieveContext(db, session.user.id, domain, question).catch(() => "");
   }
+
+  // For raw mode, inject the RAG context into the question so geminiGenerate receives it.
+  // For LangChain mode, ragContext is passed as a separate argument and injected by the chain.
+  const contextQuestion = ragContext && mode === "raw" ? withRagContext(question, ragContext) : question;
+  const context: AiGenRequest["context"] = { question: contextQuestion, history, domain };
+  const req: AiGenRequest = { task: "chat", mode, model, context };
 
   let response;
   try {

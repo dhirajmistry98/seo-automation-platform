@@ -85,6 +85,9 @@ export function assertProductionEnvironment() {
   if (process.env.ABLY_API_KEY && !/^[^.\s:]+\.[^.\s:]+:[^\s:]+$/.test(process.env.ABLY_API_KEY)) {
     throw new Error("ABLY_API_KEY must be a valid server API key.");
   }
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length < 20) {
+    throw new Error("GEMINI_API_KEY looks invalid — verify the key from Google AI Studio.");
+  }
   validPair(process.env.RAZORPAY_KEY_ID, process.env.RAZORPAY_KEY_SECRET, "RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET");
   if (process.env.CRON_SECRET && process.env.CRON_SECRET.length < 32) {
     throw new Error("CRON_SECRET must contain at least 32 characters when scheduled audits are enabled.");

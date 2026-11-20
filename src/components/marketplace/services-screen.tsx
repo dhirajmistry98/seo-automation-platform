@@ -81,11 +81,11 @@ export function ServicesMarketplaceScreen() {
     try {
       const response = await fetch(`/api/marketplace/services/v1${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await readJson(response);
-      if (!response.ok) throw new Error(data.error || "The request could not be completed.");
+      if (!response.ok) throw new Error(data.error || "The action could not be completed. Please try again.");
       setMessage(success);
       await refresh(query, category);
       return data as Record<string, unknown>;
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "The request could not be completed."); return null; }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "The action could not be completed. Please try again."); return null; }
     finally { setBusy(false); }
   }
 

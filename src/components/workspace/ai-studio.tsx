@@ -86,11 +86,11 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
         body: JSON.stringify({ domain: kbIngestDomain, type: kbIngestType, content: kbIngestContent }),
       });
       const data = await res.json();
-      if (!res.ok) { setKbError(data.error ?? "Ingest failed."); return; }
+      if (!res.ok) { setKbError(data.error ?? "Content could not be saved to the knowledge base. Please try again."); return; }
       setKbSuccess(`Content ingested for ${kbIngestDomain}.`);
       setKbIngestContent("");
       void loadKbDomains();
-    } catch { setKbError("Network error."); }
+    } catch { setKbError("Could not reach the server. Check your internet connection and try again."); }
     finally { setKbIngesting(false); }
   }, [kbIngestDomain, kbIngestType, kbIngestContent, loadKbDomains]);
 
@@ -106,6 +106,7 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
   const [chatInput, setChatInput] = useState("");
   const [chatHistory, setChatHistory] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
@@ -155,19 +156,26 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ task: selectedTask, context }),
       });
-      const data = await res.json();
-      if (!res.ok) { setTaskError(data.error ?? "Generation failed."); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = typeof data?.error === "string" && data.error.trim() ? data.error : "AI generation failed. Please try again or switch to a different model in settings.";
+        setTaskError(detail);
+        return;
+      }
       setTaskResult(data.result ?? "");
       setTaskMeta({ model: data.model, mode: data.mode, tokens: data.usage?.totalTokens ?? 0, costUsd: data.usage?.estimatedCostUsd ?? 0, durationMs: data.durationMs ?? 0 });
       void refreshUsage();
-    } catch { setTaskError("Network error. Please try again."); }
-    finally { setGenerating(false); }
+    } catch (err) {
+      void err;
+      setTaskError("Could not reach the server. Check your internet connection and try again.");
+    } finally { setGenerating(false); }
   }, [selectedTask, taskDomain, taskFields, refreshUsage]);
 
   const sendChat = useCallback(async () => {
     const q = chatInput.trim();
     if (!q || chatLoading) return;
     setChatInput("");
+    setChatError("");
     const newHistory = [...chatHistory, { role: "user" as const, content: q }];
     setChatHistory(newHistory);
     setChatLoading(true);
@@ -177,12 +185,19 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, domain: chatDomain || undefined, history: chatHistory.slice(-10) }),
       });
-      const data = await res.json();
-      const answer = res.ok ? (data.answer ?? "") : (data.error ?? "Error.");
-      setChatHistory([...newHistory, { role: "assistant", content: answer }]);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = typeof data?.error === "string" && data.error.trim() ? data.error : "The AI assistant could not respond. Please try again.";
+        setChatError(detail);
+        setChatHistory(newHistory);
+      } else {
+        setChatHistory([...newHistory, { role: "assistant" as const, content: data.answer ?? "" }]);
+      }
       void refreshUsage();
-    } catch { setChatHistory([...newHistory, { role: "assistant", content: "Network error. Please try again." }]); }
-    finally { setChatLoading(false); }
+    } catch (err) {
+      void err;
+      setChatError("Could not reach the server. Check your internet connection and try again.");
+    } finally { setChatLoading(false); }
   }, [chatInput, chatHistory, chatDomain, chatLoading, refreshUsage]);
 
   const task = TASKS.find((t) => t.id === selectedTask)!;
@@ -352,6 +367,13 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
             <div ref={chatEndRef} />
           </div>
 
+          {chatError && (
+            <div className="ai-error" role="alert" style={{ margin: "8px 12px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
+              <span><strong>Error:</strong> {chatError}</span>
+              <button type="button" onClick={() => setChatError("")} aria-label="Dismiss error" style={{ background: "none", border: 0, cursor: "pointer", color: "inherit", padding: 0, fontSize: "16px", lineHeight: 1 }}>×</button>
+            </div>
+          )}
+
           <form className="ai-chat-input" onSubmit={(e) => { e.preventDefault(); void sendChat(); }}>
             <input type="text" placeholder="Ask an SEO question…" value={chatInput} onChange={(e) => setChatInput(e.target.value)} disabled={chatLoading || !hasApiKey} />
             <button type="submit" disabled={!chatInput.trim() || chatLoading || !hasApiKey} aria-label="Send">
@@ -469,8 +491,8 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
                 <label>Content to ingest</label>
                 <textarea placeholder="Paste page content, audit data, or keyword research…" rows={5} value={kbIngestContent} onChange={(e) => setKbIngestContent(e.target.value)} />
               </div>
-              {kbError && <p className="ai-error">{kbError}</p>}
-              {kbSuccess && <p className="ai-success">{kbSuccess}</p>}
+              {kbError && <p className="ai-error" role="alert">{kbError}</p>}
+              {kbSuccess && <p className="ai-success" role="status">{kbSuccess}</p>}
               <button className="workspace-primary-link ai-run-btn" onClick={ingestContent} disabled={kbIngesting || !kbIngestContent.trim() || !kbIngestDomain || !hasApiKey}>
                 {kbIngesting ? <><Loader2 size={14} className="ai-spin" /> Ingesting…</> : <><Upload size={14} /> Ingest content</>}
               </button>

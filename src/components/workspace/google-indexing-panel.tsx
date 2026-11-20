@@ -43,7 +43,7 @@ export function GoogleIndexingPanel({ domain, property, siteUrl, canManage }: { 
   async function post(body: Record<string, unknown>) {
     const response = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ property, ...body }) });
     const data = await readJson(response);
-    if (!response.ok) throw new Error(data.error || "Request failed.");
+    if (!response.ok) throw new Error(data.error || "The Google Search Console request failed. Check that your GSC account is connected.");
     return data;
   }
 
@@ -53,13 +53,13 @@ export function GoogleIndexingPanel({ domain, property, siteUrl, canManage }: { 
       const data = await post({ action: "submit_sitemap", sitemapUrl });
       setMessage({ text: `Sitemap sent to Google: ${data.sitemap}. Google usually reads it within a few hours to a few days.`, ok: true });
       await load();
-    } catch (error) { setMessage({ text: error instanceof Error ? error.message : "Submission failed.", ok: false }); } finally { setBusy(""); }
+    } catch (error) { setMessage({ text: error instanceof Error ? error.message : "Sitemap could not be submitted. Check your Search Console connection and try again.", ok: false }); } finally { setBusy(""); }
   }
 
   async function inspect() {
     setBusy("inspect"); setMessage(null); setInspection(null);
     try { setInspection(await post({ action: "inspect", url: pageUrl }) as Inspection); }
-    catch (error) { setMessage({ text: error instanceof Error ? error.message : "Inspection failed.", ok: false }); } finally { setBusy(""); }
+    catch (error) { setMessage({ text: error instanceof Error ? error.message : "URL inspection failed. Check your Search Console connection and try again.", ok: false }); } finally { setBusy(""); }
   }
 
   const indexed = inspection?.verdict === "PASS";

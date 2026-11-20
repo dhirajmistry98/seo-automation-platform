@@ -54,9 +54,9 @@ export function BookingCartScreen() {
     try {
       const response = await fetch(`${api}/booking-cart/checkout`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ brandId: form.get("brandId"), brief: form.get("brief"), deadline: form.get("deadline"), usageRights: form.get("usageRights"), message: form.get("message") }) });
       const data = await readJson(response);
-      if (!response.ok && !arr(data.failed).length) throw new Error(str(data.error) || "Checkout failed.");
+      if (!response.ok && !arr(data.failed).length) throw new Error(str(data.error) || "Your order could not be placed. Please review your cart and try again.");
       setResult(data); await load();
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "Checkout failed."); }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Your order could not be placed. Please review your cart and try again."); }
     finally { setBusy(false); }
   }
 

@@ -72,7 +72,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
   async function post(path: string, body: Item) {
     const response = await fetch(`${api}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const payload = await readJson(response) as Item;
-    if (!response.ok) throw new Error(str(payload.error) || "The request could not be completed.");
+    if (!response.ok) throw new Error(str(payload.error) || "Could not complete this action. Please try again.");
     return payload;
   }
 

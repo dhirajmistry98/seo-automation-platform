@@ -55,10 +55,10 @@ export function RedirectManagerClient({ websites }: { websites: Array<{ domain: 
         body: JSON.stringify({ source: newSource, destination: newDest, type: newType, note: newNote }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Failed to save."); return; }
+      if (!res.ok) { setError(data.error ?? "The redirect rule could not be saved. Check the source and destination URLs and try again."); return; }
       setNewSource(""); setNewDest(""); setNewNote("");
       void loadRedirects(domain);
-    } catch { setError("Network error."); }
+    } catch { setError("Could not reach the server. Check your internet connection and try again."); }
     finally { setSaving(false); }
   };
 

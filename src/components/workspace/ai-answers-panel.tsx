@@ -48,7 +48,7 @@ export function AiAnswersPanel({ domain, canRun }: { domain: string; canRun: boo
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/ai-answers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompts: list, brand, platforms }) });
       const data = await readJson(response);
-      if (!response.ok) throw new Error(data.error || "The AI answer check failed.");
+      if (!response.ok) throw new Error(data.error || "Could not check AI visibility for this keyword. Please try again.");
       setReports((current) => [data.report, ...current].slice(0, 5));
     } catch (error) { setMessage(error instanceof Error ? error.message : "The AI answer check failed."); }
     finally { setBusy(false); }

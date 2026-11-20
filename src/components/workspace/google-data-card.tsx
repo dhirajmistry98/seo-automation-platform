@@ -92,17 +92,17 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     setBusy(true); setMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/search-console`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ property, dimension }) });
-      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Search Console report failed.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load the Search Console report. Check that your property is connected.");
       setRows(data.report.rows || []); setSearchComparison(data.report.comparisonRows || []); setSearchOpportunityCount((data.report.queryOpportunities || []).length); setMessage(`${data.report.rowCount} rows from ${data.report.startDate} through ${data.report.endDate}; compared with the previous period.`);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Search Console report failed."); } finally { setBusy(false); }
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Could not load the Search Console report. Check that your property is connected."); } finally { setBusy(false); }
   }
   async function runAnalytics() {
     setBusy(true); setAnalyticsMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/analytics`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ propertyId: analyticsPropertyId }) });
-      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Analytics report failed.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load the Google Analytics report. Check that your GA4 property is connected.");
       setAnalyticsReport(data.report); setAnalyticsMessage(`GA4 Organic Search report loaded for ${data.report.dateRange.startDate} through ${data.report.dateRange.endDate}, compared with the prior period.`);
-    } catch (error) { setAnalyticsMessage(error instanceof Error ? error.message : "Analytics report failed."); } finally { setBusy(false); }
+    } catch (error) { setAnalyticsMessage(error instanceof Error ? error.message : "Could not load the Google Analytics report. Check that your GA4 property is connected."); } finally { setBusy(false); }
   }
   async function loadMerchantAccounts() {
     setMerchantMessage("");
@@ -120,30 +120,30 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     setBusy(true); setMerchantMessage("");
     try {
       const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantRegisterId.trim() }) });
-      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Registration failed.");
+      const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not register with Merchant Center. Verify the account ID and that you are an admin of that account.");
       setMerchantNeedsRegistration(false); setMerchantMessage(data.message || "Registered.");
-    } catch (error) { setMerchantMessage(error instanceof Error ? error.message : "Registration failed."); } finally { setBusy(false); }
+    } catch (error) { setMerchantMessage(error instanceof Error ? error.message : "Could not register with Merchant Center. Verify the account ID and that you are an admin of that account."); } finally { setBusy(false); }
   }
   async function runMerchantReport() {
     setBusy(true); setMerchantMessage("");
-    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantAccountId }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Merchant report failed."); setMerchantRows(data.report.results || []); setMessage(`Merchant report loaded for ${data.startDate} through ${data.endDate}.`); }
-    catch (error) { setMerchantMessage(error instanceof Error ? error.message : "Merchant report failed."); } finally { setBusy(false); }
+    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/merchant-center`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: merchantAccountId }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load the Merchant Center report. Check your account connection and try again."); setMerchantRows(data.report.results || []); setMessage(`Merchant report loaded for ${data.startDate} through ${data.endDate}.`); }
+    catch (error) { setMerchantMessage(error instanceof Error ? error.message : "Could not load the Merchant Center report. Check your account connection and try again."); } finally { setBusy(false); }
   }
   async function loadBusinessAccounts() {
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { cache: "no-store" }); const data = await readJson(response);
-    if (!response.ok) throw new Error(data.error || "Could not list Business Profile accounts.");
+    if (!response.ok) throw new Error(data.error || "Could not load your Business Profile accounts. Check that your Google account is still connected.");
     const next = data.accounts || []; setBusinessAccounts(next); setBusinessAccount(next[0]?.name || ""); if (next[0]?.name) await loadBusinessLocations(next[0].name);
   }
   async function loadBusinessLocations(account: string) {
     if (!account) return;
     const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile?account=${encodeURIComponent(account)}`, { cache: "no-store" }); const data = await readJson(response);
-    if (!response.ok) throw new Error(data.error || "Could not list Business Profile locations.");
+    if (!response.ok) throw new Error(data.error || "Could not load locations for the selected Business Profile account.");
     const next = data.locations || []; setBusinessLocations(next); setBusinessLocation(next[0]?.name || "");
   }
   async function runBusinessReport() {
     setBusy(true); setMessage("");
-    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locationName: businessLocation }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Business Profile report failed."); setBusinessSeries(data.report); setMessage(`Business Profile report loaded through ${data.endDate.year}-${data.endDate.month}-${data.endDate.day}.`); }
-    catch (error) { setMessage(error instanceof Error ? error.message : "Business Profile report failed."); } finally { setBusy(false); }
+    try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locationName: businessLocation }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load the Business Profile report. Check your location selection and try again."); setBusinessSeries(data.report); setMessage(`Business Profile report loaded through ${data.endDate.year}-${data.endDate.month}-${data.endDate.day}.`); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Could not load the Business Profile report. Check your location selection and try again."); } finally { setBusy(false); }
   }
   return <details className="google-data-card"><summary><BarChart3 size={15} /> Google integrations & reports <span>{services.filter((item) => item.status === "connected").length} connected</span></summary>
     <div className="google-data-content"><p>Connect Google-owned data for this website. Each connection uses read or service-specific API access approved on Google&apos;s consent screen.</p>

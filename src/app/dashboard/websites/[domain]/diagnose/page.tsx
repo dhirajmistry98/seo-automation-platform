@@ -9,6 +9,16 @@ import { searchConsoleContext } from "@/lib/integrations/free-research";
 
 export const instant = false;
 
+function diagnoseDates() {
+  const end = new Date(Date.now() - 3 * 86_400_000);
+  const start = new Date(end.getTime() - 112 * 86_400_000);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+    ninetyDaysAgo: new Date(Date.now() - 90 * 86_400_000),
+  };
+}
+
 function fmtDate(value: unknown) {
   if (!value) return "—";
   try { return new Date(String(value)).toLocaleDateString(undefined, { day: "numeric", month: "short" }); } catch { return "—"; }
@@ -31,6 +41,8 @@ export default async function DiagnosePage({ params }: { params: Promise<{ domai
   const { website } = await findAccessibleWebsite(db, session.user.id, domain, "reports.read");
   if (!website) notFound();
 
+  const { startDate, endDate, ninetyDaysAgo } = diagnoseDates();
+
   // Fetch audit history, pagespeed history, and new critical issues in parallel
   const [audits, pagespeedResults, newCritical] = await Promise.all([
     db.collection("seo_audits")
@@ -50,7 +62,7 @@ export default async function DiagnosePage({ params }: { params: Promise<{ domai
         organizationId: website.organizationId,
         websiteDomain: domain,
         severity: { $in: ["critical", "warning"] },
-        firstDetectedAt: { $gte: new Date(Date.now() - 90 * 86_400_000) },
+        firstDetectedAt: { $gte: ninetyDaysAgo },
       })
       .sort({ firstDetectedAt: -1 })
       .limit(20)
@@ -64,16 +76,14 @@ export default async function DiagnosePage({ params }: { params: Promise<{ domai
   try {
     const gscCtx = await searchConsoleContext(db, website.organizationId, domain);
     if (gscCtx) {
-      const end = new Date(Date.now() - 3 * 86_400_000);
-      const start = new Date(end.getTime() - 112 * 86_400_000); // 16 weeks
       const response = await fetch(
         `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(gscCtx.property)}/searchAnalytics/query`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${gscCtx.accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            startDate: start.toISOString().slice(0, 10),
-            endDate: end.toISOString().slice(0, 10),
+            startDate,
+            endDate,
             dimensions: ["date"],
             rowLimit: 500,
           }),

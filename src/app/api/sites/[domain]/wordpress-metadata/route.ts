@@ -58,7 +58,7 @@ export async function POST(request: Request, context: { params: Promise<{ domain
     await db.collection("audit_logs").insertOne({ ownerId: session.user.id, organizationId: website.organizationId, websiteDomain: domain, action: "integration.wordpress.metadata_updated", wordpressPostId: postId, fields: Object.keys(metadata), createdAt: now });
     return NextResponse.json({ updated: true, postId, fields: Object.keys(metadata), updatedAt: now }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("WordPress metadata update failed:", error);
-    return NextResponse.json({ error: error instanceof Error && error.message.includes("network") ? error.message : "WordPress could not be reached safely. Check the public HTTPS URL and plugin connection." }, { status: 502 });
+    console.error("WordPress metadata update failed:", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: "WordPress could not be reached. Check the public HTTPS URL and plugin connection." }, { status: 502 });
   }
 }

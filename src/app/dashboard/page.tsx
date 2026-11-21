@@ -3,8 +3,9 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, ArrowRight, BarChart3, CheckCircle2, ClipboardList, FileText, Globe2, HeartPulse, Link2, ListTodo, LockKeyhole, MapPin, Radar } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, CheckCircle2, ClipboardList, FileText, Globe2, HeartPulse, Link2, ListTodo, LockKeyhole, MapPin, Radar, Search } from "lucide-react";
 import { SearchTrendChart } from "@/components/workspace/search-trend-chart";
+import { TopKeywordsTable } from "@/components/workspace/top-keywords-table";
 import { getWorkspaceData } from "@/lib/workspace-data";
 import { OverviewSearchRefresh } from "@/components/workspace/overview-search-refresh";
 
@@ -36,6 +37,8 @@ export default async function DashboardOverview() {
   let openTaskCount = 0;
   let connectedCount = 0;
   let latestSearchReport: StoredSearchReport | null = null;
+  let dateReport: StoredSearchReport | null = null;
+  let queryReport: StoredSearchReport | null = null;
   let latestAiReport: StoredAiReport | null = null;
   let latestAnswers: StoredAnswerReport | null = null;
   let latestReadinessReport: StoredReadinessReport | null = null;
@@ -56,6 +59,8 @@ export default async function DashboardOverview() {
       ]);
       latestAnswers = (answerReports[0] as unknown as StoredAnswerReport | undefined) ?? null;
       latestSearchReport = searchReports[0] || null;
+      dateReport = searchReports.find((report) => report.dimension === "date") || null;
+      queryReport = searchReports.find((report) => report.dimension === "query") || null;
       latestAiReport = aiReports[0] || null;
       latestReadinessReport = readinessReports[0] || null;
     }
@@ -70,7 +75,7 @@ export default async function DashboardOverview() {
   const priorClicks = (latestSearchReport?.comparisonRows || []).reduce((sum, row) => sum + (Number.isFinite(row.clicks?.previous) ? Number(row.clicks?.previous) : 0), 0);
   const clicksChange = priorClicks > 0 ? ((organicClicks - priorClicks) / priorClicks) * 100 : null;
   const aiResultCount = latestAiReport?.result?.length ?? 0;
-  const trendRows = latestSearchReport?.dimension === "date" ? searchRows.filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.keys?.[0] || "")).sort((a, b) => (a.keys?.[0] || "").localeCompare(b.keys?.[0] || "")).slice(-21) : [];
+  const trendRows = dateReport ? (dateReport.rows || []).filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.keys?.[0] || "")).sort((a, b) => (a.keys?.[0] || "").localeCompare(b.keys?.[0] || "")).slice(-21) : [];
   const firstName = session.user.name?.trim().split(/\s+/)[0] || "there";
   const aiPercent = latestAnswers && latestAnswers.summary.answered ? Math.round((latestAnswers.summary.mentioned / latestAnswers.summary.answered) * 100) : 0;
   const kpis = [
@@ -80,7 +85,7 @@ export default async function DashboardOverview() {
     { href: "/dashboard/integrations", icon: Link2, label: "CONNECTED SOURCES", value: connectedCount || "—", note: connectedCount ? "Google data connections" : "Connect a reporting source" },
   ];
   return <>
-    <header className="workspace-page-heading">
+    <header className="workspace-page-heading ws2-hero">
       <div><p className="workspace-eyebrow"><span /> SEO STUDIO WORKSPACE</p><h1>Welcome back, <span className="workspace-name-accent">{firstName}</span>.</h1><p>Track your SEO performance and grow your online presence.</p></div>
       <Link href="/dashboard/websites" className="workspace-primary-link">Add a website</Link>
     </header>
@@ -104,7 +109,7 @@ export default async function DashboardOverview() {
             <div><dt>Click-through rate</dt><dd>{organicImpressions ? `${organicCtr.toFixed(1)}%` : "—"}</dd><small>Clicks ÷ impressions</small></div>
           </dl>
           {trendRows.length > 1 && <SearchTrendChart rows={trendRows} />}
-          {trendRows.length < 2 && <p className="workspace-insight-note">This saved report uses the “{latestSearchReport.dimension}” dimension. Run a date-based report to see a daily trend.</p>}
+          {trendRows.length < 2 && !dateReport && <p className="workspace-insight-note">This saved report uses the “{latestSearchReport.dimension}” dimension. Run a date-based report to see a daily trend.</p>}
           <OverviewSearchRefresh domain={latestSearchReport.websiteDomain} property={latestSearchReport.property} startDate={latestSearchReport.startDate} endDate={latestSearchReport.endDate} dimension={latestSearchReport.dimension} />
         </> : <div className="workspace-insight-empty"><span><BarChart3 size={18} /></span><div><strong>No organic search report yet</strong><p>Connect Search Console for a verified site, then run a report to load actual clicks, impressions and position.</p><Link href="/dashboard/integrations">Connect or run a report <ArrowRight size={13} /></Link></div></div>}
         <p className="workspace-insight-footnote">Search Console data is refreshed when a report is run and may be delayed by Google; it is not minute-by-minute analytics.</p>
@@ -121,6 +126,10 @@ export default async function DashboardOverview() {
         <div className="workspace-ai-actions"><Link href="/dashboard/research">Run a new AI mentions report <ArrowRight size={13} /></Link><Link href="/dashboard/visibility">Open readiness details</Link></div>
         <p className="workspace-insight-footnote">Readiness scores inspect the latest crawl’s structure and metadata. They are not measured rankings, citations or answers in AI products.</p>
       </article>
+    </section>
+    <section className="workspace-section ws2-keywords" aria-labelledby="top-keywords-title">
+      <div className="workspace-section-heading"><div><h2 id="top-keywords-title">Top Keywords</h2><p>{queryReport ? `${queryReport.websiteDomain} · ${queryReport.startDate} – ${queryReport.endDate}` : "Real queries from Google Search Console"}</p></div></div>
+      {queryReport?.rows?.length ? <TopKeywordsTable domain={queryReport.websiteDomain} rows={queryReport.rows.filter((row) => row.keys?.[0]).map((row) => ({ keyword: row.keys![0], clicks: Number(row.clicks) || 0, impressions: Number(row.impressions) || 0, ctr: Number(row.ctr) || 0, position: Number(row.position) || 0 }))} /> : <div className="workspace-insight-empty"><span><Search size={18} /></span><div><strong>No keyword report yet</strong><p>Run a Search Console report by “query” to see the keywords your site actually ranks for.</p><Link href="/dashboard/integrations">Run a keyword report <ArrowRight size={13} /></Link></div></div>}
     </section>
     <section className="workspace-section workspace-overview-sites" aria-labelledby="recent-sites-title">
       <div className="workspace-section-heading"><div><p className="workspace-eyebrow">WEBSITE PORTFOLIO</p><h2 id="recent-sites-title">Your websites</h2><p>Open a site to audit it, review findings, and manage its setup.</p></div><Link className="workspace-text-link" href="/dashboard/websites">View all websites <ArrowRight size={14} /></Link></div>

@@ -1,8 +1,10 @@
+import type { CSSProperties } from "react";
 import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Activity, ArrowRight, BarChart3, CheckCircle2, FileText, Globe2, ListTodo, LockKeyhole, MapPin, Radar } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, CheckCircle2, ClipboardList, FileText, Globe2, HeartPulse, Link2, ListTodo, LockKeyhole, MapPin, Radar } from "lucide-react";
+import { SearchTrendChart } from "@/components/workspace/search-trend-chart";
 import { getWorkspaceData } from "@/lib/workspace-data";
 import { OverviewSearchRefresh } from "@/components/workspace/overview-search-refresh";
 
@@ -69,22 +71,26 @@ export default async function DashboardOverview() {
   const clicksChange = priorClicks > 0 ? ((organicClicks - priorClicks) / priorClicks) * 100 : null;
   const aiResultCount = latestAiReport?.result?.length ?? 0;
   const trendRows = latestSearchReport?.dimension === "date" ? searchRows.filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.keys?.[0] || "")).sort((a, b) => (a.keys?.[0] || "").localeCompare(b.keys?.[0] || "")).slice(-21) : [];
-  const trendPoints = (key: "clicks" | "impressions") => {
-    const values = trendRows.map((row) => Math.max(0, Number(row[key]) || 0));
-    const max = Math.max(1, ...values);
-    return values.map((value, index) => `${values.length > 1 ? (index / (values.length - 1)) * 720 : 360},${88 - (value / max) * 70}`).join(" ");
-  };
+  const firstName = session.user.name?.trim().split(/\s+/)[0] || "there";
+  const aiPercent = latestAnswers && latestAnswers.summary.answered ? Math.round((latestAnswers.summary.mentioned / latestAnswers.summary.answered) * 100) : 0;
+  const kpis = [
+    { href: "/dashboard/websites", icon: Globe2, label: "WEBSITES", value: websites.length, note: websites.length ? "In your workspace" : "Add your first website" },
+    { href: "/dashboard/tools", icon: HeartPulse, label: "SEO HEALTH", value: latestAudit?.score ?? "—", note: latestAudit ? "Latest completed audit" : "Available after an audit" },
+    { href: "/dashboard/tools", icon: ClipboardList, label: "OPEN TASKS", value: openTaskCount, note: openTaskCount ? "Need attention" : "No open tasks" },
+    { href: "/dashboard/integrations", icon: Link2, label: "CONNECTED SOURCES", value: connectedCount || "—", note: connectedCount ? "Google data connections" : "Connect a reporting source" },
+  ];
   return <>
     <header className="workspace-page-heading">
-      <div><p className="workspace-eyebrow"><span /> SEO STUDIO WORKSPACE</p><h1>Welcome back, {session.user.name?.trim().split(/\s+/)[0] || "there"}.</h1><p>Your SEO work, sites, and team activity in one place.</p></div>
+      <div><p className="workspace-eyebrow"><span /> SEO STUDIO WORKSPACE</p><h1>Welcome back, <span className="workspace-name-accent">{firstName}</span>.</h1><p>Track your SEO performance and grow your online presence.</p></div>
       <Link href="/dashboard/websites" className="workspace-primary-link">Add a website</Link>
     </header>
     {!ready && <div className="workspace-alert" role="status">Workspace data is temporarily unavailable. Check the database connection and refresh this page.</div>}
-    <section className="workspace-kpis" aria-label="Workspace summary">
-      <article><span>WEBSITES</span><strong>{websites.length}</strong><small>{websites.length ? "In your workspace" : "Add your first website"}</small></article>
-      <article><span>SEO HEALTH</span><strong>{latestAudit?.score ?? "—"}</strong><small>{latestAudit ? "Latest completed audit" : "Available after an audit"}</small></article>
-      <article><span>OPEN TASKS</span><strong>{openTaskCount}</strong><small>{openTaskCount ? "Need attention" : "No open tasks"}</small></article>
-      <article><span>CONNECTED SOURCES</span><strong>{connectedCount || "—"}</strong><small>{connectedCount ? "Google data connections" : "Connect a reporting source"}</small></article>
+    <section className="workspace-kpis workspace-kpis-icons" aria-label="Workspace summary">
+      {kpis.map(({ href, icon: Icon, label, value, note }) => <Link href={href} key={label} className="workspace-kpi-card">
+        <span className="workspace-kpi-icon"><Icon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
+        <span className="workspace-kpi-body"><span>{label}</span><strong>{value}</strong><small>{note}</small></span>
+        <ArrowRight size={15} className="workspace-kpi-arrow" aria-hidden="true" />
+      </Link>)}
     </section>
     <section className="workspace-performance-grid" aria-label="Organic search and AI visibility overview">
       <article className="workspace-insight-card workspace-organic-card">
@@ -97,14 +103,7 @@ export default async function DashboardOverview() {
             <div><dt>Average position</dt><dd>{organicPositionImpressions ? (organicPositionWeight / organicPositionImpressions).toFixed(1) : "—"}</dd><small>Lower is a stronger position</small></div>
             <div><dt>Click-through rate</dt><dd>{organicImpressions ? `${organicCtr.toFixed(1)}%` : "—"}</dd><small>Clicks ÷ impressions</small></div>
           </dl>
-          {trendRows.length > 1 && <div className="workspace-organic-chart">
-            <svg viewBox="0 0 720 100" role="img" aria-label="Daily clicks and impressions trend from the latest Search Console report" preserveAspectRatio="none">
-              <path d="M0 90H720M0 55H720M0 20H720" />
-              <polyline className="is-impressions" points={trendPoints("impressions")} />
-              <polyline className="is-clicks" points={trendPoints("clicks")} />
-            </svg>
-            <div><span className="is-impressions">Impressions</span><span className="is-clicks">Clicks</span><small>Each line is scaled to its own range to show movement.</small></div>
-          </div>}
+          {trendRows.length > 1 && <SearchTrendChart rows={trendRows} />}
           {trendRows.length < 2 && <p className="workspace-insight-note">This saved report uses the “{latestSearchReport.dimension}” dimension. Run a date-based report to see a daily trend.</p>}
           <OverviewSearchRefresh domain={latestSearchReport.websiteDomain} property={latestSearchReport.property} startDate={latestSearchReport.startDate} endDate={latestSearchReport.endDate} dimension={latestSearchReport.dimension} />
         </> : <div className="workspace-insight-empty"><span><BarChart3 size={18} /></span><div><strong>No organic search report yet</strong><p>Connect Search Console for a verified site, then run a report to load actual clicks, impressions and position.</p><Link href="/dashboard/integrations">Connect or run a report <ArrowRight size={13} /></Link></div></div>}
@@ -112,6 +111,7 @@ export default async function DashboardOverview() {
       </article>
       <article className="workspace-insight-card workspace-ai-card">
         <header><div><p className="workspace-eyebrow"><Radar size={13} /> GEO · AEO · LLMO</p><h2>AI Visibility</h2><p>Provider mentions and crawl-based readiness</p></div><Link href="/dashboard/research" aria-label="Open AI visibility research">Open</Link></header>
+        <div className="workspace-ai-ring" style={{ "--ai-pct": aiPercent } as CSSProperties} role="img" aria-label={`AI visibility ${aiPercent}%`}><div><strong>{aiPercent}%</strong><small>{latestAnswers ? "of AI answers mention you" : "AI Visibility"}</small></div></div>
         {latestAnswers ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Radar size={18} /></span><div><strong>{latestAnswers.summary.mentioned}/{latestAnswers.summary.answered}</strong><p>AI answers mention “{latestAnswers.brand}” · {latestAnswers.summary.cited} cite {latestAnswers.websiteDomain}</p><small>{latestAnswers.summary.platforms.map((item) => item.label).join(", ")} · {reportTime(latestAnswers.createdAt)}</small><Link href={`/dashboard/visibility/${encodeURIComponent(latestAnswers.websiteDomain)}#ai-answers`}>Check AI answers again <ArrowRight size={13} /></Link></div></div> : latestAiReport ? <div className="workspace-ai-mentions"><span className="workspace-ai-icon"><Radar size={18} /></span><div><strong>{metric(aiResultCount)}</strong><p>matching rows in the latest {latestAiReport.platform === "chat_gpt" ? "ChatGPT" : "Google AI Overviews"} provider report</p><small>{latestAiReport.websiteDomain} · {latestAiReport.countryName || latestAiReport.locationName || "saved market"} · {reportTime(latestAiReport.fetchedAt)}</small></div></div> : <div className="workspace-insight-empty workspace-ai-empty"><span><Radar size={18} /></span><div><strong>No AI answers checked yet</strong><p>Ask ChatGPT, Claude, Gemini and Perplexity your customers’ questions and see whether they mention or cite you.</p><Link href={websites[0] ? `/dashboard/visibility/${encodeURIComponent(websites[0].domain)}#ai-answers` : "/dashboard/visibility"}>Check AI answers <ArrowRight size={13} /></Link></div></div>}
         <div className="workspace-readiness-heading"><strong>Latest crawl-based readiness</strong>{latestReadinessReport && <small>{latestReadinessReport.websiteDomain} · {reportTime(latestReadinessReport.calculatedAt)}</small>}</div>
         <div className="workspace-readiness-list">{(["geo", "aeo", "llmo"] as const).map((key) => {

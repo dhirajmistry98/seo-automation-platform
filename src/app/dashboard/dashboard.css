@@ -2101,3 +2101,20 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
 .ws-search-foot { margin: 0; border-top: 1px solid #f3ede7; padding: 8px 14px; color: #9a9088; font-size: 11px; }
 .ws-search-foot kbd { display: inline-block; margin: 0 2px; border: 1px solid #e6ddd3; border-radius: 4px; padding: 0 4px; font: inherit; font-size: 10px; }
 @media (max-width: 1000px) { .workspace-search-form { flex: 1 1 100%; max-width: none; } .ws-search-panel { min-width: 0; } }
+
+/* ── "Choose what to do next": compact inline rows ── */
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 20px; grid-template-areas: "icon title arrow" "icon desc arrow";
+  align-items: center; align-content: center; column-gap: 14px; row-gap: 3px;
+  min-height: 0; border: 1px solid #f1e8df; border-radius: 16px; background: #fff; padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(8,7,6,.03);
+}
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a:hover { border-color: #ffc9a3; transform: none; box-shadow: 0 8px 22px rgba(8,7,6,.07); }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a > span { grid-area: icon; width: 44px; height: 44px; border-radius: 12px; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links strong { grid-area: title; align-self: end; font-size: 14.5px; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links small { grid-area: desc; align-self: start; font-size: 12.5px; line-height: 1.45; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a > svg { grid-area: arrow; align-self: center; justify-self: end; color: #c9bdb1; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a:hover > svg { color: #ff6a00; transform: translateX(3px); }
+@media (max-width: 1200px) { .workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: 1fr; } }

@@ -48,7 +48,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
         {manageableOrgs.length > 1 ? <select name="organizationId" defaultValue="" aria-label="Add to workspace">{manageableOrgs.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select> : manageableOrgs[0] && <input type="hidden" name="organizationId" value={manageableOrgs[0].id} />}
         <input id="website-domain" name="domain" type="text" placeholder="https://yourwebsite.com" autoComplete="url" required maxLength={2048} aria-label="Website address" />
         <SubmitButton>Add a website</SubmitButton>
-      </form> : <p className="workspace-alert">Website setup is unavailable until MongoDB is running and reachable.</p>}
+      </form> : <p className="workspace-alert">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</p>}
       {message && <p className={`workspace-form-message${["invalid", "unavailable"].includes(query.site || "") ? " is-error" : ""}`} role="status">{message}</p>}
       <p className="ws2-site-try">Or try: <Link href="/dashboard/seo-checker">Quick SEO check</Link><Link href="/dashboard/rank-a-page">Rank a page</Link><Link href="/dashboard/visibility">Check AI answers</Link></p>
     </section>
@@ -80,7 +80,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
           {(canAudit || canManage || canManageTasks) && <SiteAuditControls domain={site.domain} siteUrl={site.url} verifiedAt={site.verifiedAt} lastAudit={site.lastAudit} canManageSite={canManage} canManageTasks={canManageTasks} canRunAudit={canAudit} />}
           {site.lastAudit && <SiteIssueManager domain={site.domain} canManage={canManageIssues} />}
         </article>;
-      })}</div> : <div className="workspace-site-empty"><span><Globe2 size={18} /></span><div><strong>{workspace.available ? "No websites yet" : "Website list unavailable"}</strong><p>{workspace.available ? "Add a public domain above, then verify the DNS record before running the first audit." : "The application could not read website data from MongoDB."}</p></div></div>}
+      })}</div> : <div className="workspace-site-empty"><span><Globe2 size={18} /></span><div><strong>{workspace.available ? "You haven’t added a website yet" : "Your websites can’t load right now"}</strong><p>{workspace.available ? "Type your website address in the box at the top of this page and press “Add a website”. Your site will then appear here." : "We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support."}</p></div></div>}
     </section>
   </>;
 }

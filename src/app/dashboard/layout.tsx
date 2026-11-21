@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <WorkspaceSearch />
         <div className="ws2-actions"><Link href="/influencer-marketing" className="ws2-pill"><UsersRound size={15} aria-hidden="true" /><span>Influencer Marketing</span></Link><Link href="/marketplace/services" className="ws2-pill"><BriefcaseBusiness size={15} aria-hidden="true" /><span>Expert Services</span></Link><WorkspaceNotifications /><Link href="/dashboard/account" className="ws2-profile" aria-label="Open account settings"><UserAvatar src={user.image} name={user.name || user.email || firstName} /><strong>{user.name || "Account"}</strong></Link><form action={signOutAction}><SubmitButton className="ws2-signout" aria-label="Sign out"><LogOut size={15} aria-hidden="true" /><span>Sign out</span></SubmitButton></form></div>
       </header>
-      <main className="workspace-main workspace-main-redesign workspace-route-main ws2-main">{siteCount === null && <div className="workspace-alert" role="status">Workspace database is unavailable. Start MongoDB or update <code>MONGODB_URI</code>, then refresh.</div>}{children}<footer className="workspace-footer"><span>{BRAND.name} · SEO workspace</span><Link href="/">Back to the website</Link></footer></main>
+      <main className="workspace-main workspace-main-redesign workspace-route-main ws2-main">{siteCount === null && <div className="workspace-alert" role="status">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</div>}{children}<footer className="workspace-footer"><span>{BRAND.name} · SEO workspace</span><Link href="/">Back to the website</Link></footer></main>
     </div>
   </div>;
 }

@@ -42,7 +42,7 @@ export default async function SeoToolsPage() {
   const { websites, memberships } = workspace;
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> MEASURE & IMPROVE</p><h1>SEO tools</h1><p>Run available analysis and review each site&apos;s findings and action plan.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><Search size={15} /> Open SEO research</Link></header>
-    {!workspace.available && <div className="workspace-alert" role="status">SEO tools are paused because website data could not be loaded from MongoDB.</div>}
+    {!workspace.available && <div className="workspace-alert" role="status">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</div>}
     <section className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">READY TO USE</p><h2>Live tools</h2><p>Run them from a verified website. Results are saved in that website’s history.</p></div></div>
       <div className="workspace-tool-grid">{liveTools.map(({ name, description, icon: Icon, state, href }) => <Link className="workspace-tool-card" href={href} key={name}><span><Icon size={18} aria-hidden="true" /></span><div><h3>{name}</h3><p>{description}</p></div><small>{state}</small></Link>)}</div>
     </section>
@@ -54,7 +54,7 @@ export default async function SeoToolsPage() {
         const canManageTasks = hasOrganizationPermission(role, "tasks.manage");
         const canManageIssues = hasOrganizationPermission(role, "issues.manage");
         return <article className="workspace-site-card workspace-tool-site" key={site.domain}><span className="workspace-site-mark"><FileSearch size={17} /></span><div className="workspace-site-identity"><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "DNS verification required"}</small></div><Link className="workspace-site-settings" href="/dashboard/websites">Website page</Link>{(canAudit || canManage || canManageTasks) && <SiteAuditControls domain={site.domain} siteUrl={site.url} verifiedAt={site.verifiedAt} lastAudit={site.lastAudit} canManageSite={canManage} canManageTasks={canManageTasks} canRunAudit={canAudit} />}{site.lastAudit && <SiteIssueManager domain={site.domain} canManage={canManageIssues} />}</article>;
-      })}</div> : <div className="workspace-site-empty"><span><FileSearch size={18} /></span><div><strong>{workspace.available ? "Add a website to use SEO tools" : "Website tools are unavailable"}</strong><p>{workspace.available ? "Site audits and action plans become available after domain verification." : "Start MongoDB or check MONGODB_URI, then refresh this page."}</p></div>{workspace.available && <Link href="/dashboard/websites">Add a website</Link>}</div>}
+      })}</div> : <div className="workspace-site-empty"><span><FileSearch size={18} /></span><div><strong>{workspace.available ? "Add your website to use the SEO tools" : "SEO tools can’t load right now"}</strong><p>{workspace.available ? "Once your website is added and you’ve confirmed you own it, you can scan it for problems and get a step-by-step fix list." : "We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support."}</p></div>{workspace.available && <Link href="/dashboard/websites">Add your website</Link>}</div>}
     </section>
   </>;
 }

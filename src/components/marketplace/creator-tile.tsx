@@ -1,6 +1,8 @@
 import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
-import { BadgeCheck, Camera, MapPin, Star, UserRound } from "lucide-react";
+import { BadgeCheck, Star } from "lucide-react";
+
+const InstagramGlyph = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>;
 
 type Item = Record<string, unknown>;
 const obj = (value: unknown): Item => value && typeof value === "object" && !Array.isArray(value) ? value as Item : {};
@@ -28,20 +30,16 @@ export function CreatorTile({ creator, basePath = "/influencer-marketing" }: { c
   const cover = arr(instagram.recentMedia).map((media) => str(media.thumbnailUrl) || str(media.mediaUrl)).find(Boolean) || "";
   const avatar = str(instagram.profilePictureUrl);
   const categories = Array.isArray(creator.categories) ? creator.categories.map(String) : [];
-  return <Link className="mp-creator-tile" href={`${basePath}/creators/${encodeURIComponent(str(creator._id))}`}>
-    <div className="mp-creator-tile-cover">
-      {cover ? <SafeImage src={cover} alt="" fill sizes="(max-width: 700px) 50vw, 260px" unoptimized /> : <span className="mp-creator-tile-cover-empty"><Camera size={22} /></span>}
-      <span className="mp-creator-tile-followers"><Camera size={12} /> {compactCount(instagram.verifiedFollowers)}</span>
-    </div>
-    <div className="mp-creator-tile-body">
-      <div className="mp-creator-tile-head">
-        {avatar ? <SafeImage className="mp-creator-tile-avatar" src={avatar} alt="" width={30} height={30} unoptimized /> : <span className="mp-creator-tile-avatar is-empty"><UserRound size={14} /></span>}
-        <strong>{str(creator.displayName)}</strong><BadgeCheck size={14} aria-label="Instagram verified" />
-        <RatingBadge rating={creator.rating} />
-      </div>
-      <small className="mp-creator-tile-meta">{categories.slice(0, 2).join(" · ") || "Creator"}</small>
-      <small className="mp-creator-tile-meta"><MapPin size={12} /> {str(creator.location) || "India"}</small>
-      <span className="mp-creator-tile-price">From <b>{formatInr(typeof creator.fromPricePaise === "number" ? creator.fromPricePaise : creator.ratePaise)}</b></span>
-    </div>
+  const name = str(creator.displayName) || "Creator";
+  const image = cover || avatar;
+  return <Link className="mp-creator-tile mp-creator-tile-v2" href={`${basePath}/creators/${encodeURIComponent(str(creator._id))}`} aria-label={`${name}, ${compactCount(instagram.verifiedFollowers)} Instagram followers, from ${formatInr(typeof creator.fromPricePaise === "number" ? creator.fromPricePaise : creator.ratePaise)}`}>
+    {image ? <SafeImage className="mp-tile-photo" src={image} alt="" fill sizes="(max-width: 700px) 50vw, 300px" unoptimized /> : <span className="mp-tile-photo mp-tile-initials" aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>}
+    <span className="mp-tile-shade" aria-hidden="true" />
+    <span className="mp-tile-badge"><InstagramGlyph />{compactCount(instagram.verifiedFollowers)}<BadgeCheck size={13} aria-label="Instagram verified" /></span>
+    {Boolean(creator.rating) && <span className="mp-tile-rating"><RatingBadge rating={creator.rating} /></span>}
+    <span className="mp-tile-info">
+      <span className="mp-tile-text"><strong>{name}</strong><small>{categories.slice(0, 3).map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join(", ") || "Creator"}{str(creator.location) ? ` · ${str(creator.location)}` : ""}</small></span>
+      <b className="mp-tile-price">{formatInr(typeof creator.fromPricePaise === "number" ? creator.fromPricePaise : creator.ratePaise)}</b>
+    </span>
   </Link>;
 }

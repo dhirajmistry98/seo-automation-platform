@@ -964,3 +964,27 @@
 .mp-review-scores strong { font-size:18px; }
 .mp-respond-by { display:inline-flex; gap:5px; align-items:center; border-radius:99px; background:#fff4e5; padding:3px 9px; color:#9a5b00; font-size:11px; font-weight:650; }
 .mp-respond-by.is-expired { background:#f6e7e5; color:#a33a2b; }
+
+/* ── Collabstr-style creator tile: full photo with overlaid details ── */
+.mp-creator-tile.mp-creator-tile-v2 { position: relative; display: block; overflow: hidden; aspect-ratio: 4 / 5; border: 0; border-radius: 16px; background: #2a2622; padding: 0; color: #fff; text-decoration: none; box-shadow: 0 6px 20px rgba(8,7,6,.10); isolation: isolate; transition: transform .2s ease, box-shadow .2s ease; }
+.mp-creator-tile.mp-creator-tile-v2:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(8,7,6,.18); }
+.mp-creator-tile-v2 .mp-tile-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.mp-creator-tile-v2:hover img.mp-tile-photo { transform: scale(1.04); }
+.mp-creator-tile-v2 .mp-tile-initials { display: grid; place-items: center; background: linear-gradient(140deg, #ff8a3d, #c2410c); color: rgba(255,255,255,.9); font-size: 64px; font-weight: 800; }
+.mp-creator-tile-v2 .safe-image-fallback { z-index: -2; background: linear-gradient(140deg, #d9c8b8, #a8917c); }
+.mp-tile-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(to bottom, rgba(0,0,0,.28) 0%, transparent 28%, transparent 52%, rgba(0,0,0,.78) 100%); }
+.mp-tile-badge { position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: rgba(20,18,16,.62); padding: 6px 11px; font-size: 13px; font-weight: 700; backdrop-filter: blur(6px); }
+.mp-tile-badge svg:last-child { color: #7dd3fc; }
+.mp-tile-rating { position: absolute; top: 12px; right: 12px; }
+.mp-tile-rating .mp-rating { border-color: transparent; background: rgba(255,255,255,.92); color: #1d1a17; }
+.mp-tile-info { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 16px; }
+.mp-tile-text { display: grid; min-width: 0; gap: 3px; }
+.mp-tile-text strong { overflow: hidden; font-size: 16px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.mp-tile-text small { overflow: hidden; color: rgba(255,255,255,.82); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.mp-tile-price { flex: none; font-size: 16px; font-weight: 800; }
+.mp-discover-tile { position: relative; display: grid; gap: 10px; align-content: start; }
+.mp-discover-tile > .mp-heart { position: absolute; top: 10px; right: 10px; z-index: 2; }
+.mp-discover-tile:has(> .mp-heart) .mp-tile-rating { top: 54px; }
+.mp-discover-own { position: absolute; top: 12px; right: 12px; z-index: 2; border-radius: 999px; background: #fff1e7; padding: 6px 11px; color: #a8380a; font-size: 12px; font-weight: 700; text-decoration: none; }
+.mp-discover-tile:has(> .mp-discover-own) .mp-tile-rating { top: 50px; }
+.mp-discover-tile > .marketplace-form { border: 1px solid #efe5db; border-radius: 14px; background: #fff; padding: 12px; }

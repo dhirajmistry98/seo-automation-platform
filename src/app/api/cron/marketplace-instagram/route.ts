@@ -1,5 +1,6 @@
 import clientPromise from "@/lib/mongodb";
 import { ensureMarketplaceIndexes } from "@/lib/marketplace/core";
+import { mirrorInstagramImages } from "@/lib/marketplace/media-mirror";
 import { decryptToken, encryptToken, fetchInstagramAnalytics, fetchInstagramInsights, fetchInstagramMedia, fetchInstagramProfile, refreshInstagramToken } from "@/lib/marketplace/meta";
 
 export async function POST(request: Request) {
@@ -26,11 +27,13 @@ export async function POST(request: Request) {
     if (String(profile.user_id || profile.id) !== connection.providerUserId) throw new Error("Instagram account identity changed.");
     const eligible = typeof profile.followers_count === "number" && Number.isSafeInteger(profile.followers_count) && profile.followers_count >= 0;
     if (!eligible) throw new Error("Meta did not return a valid follower count.");
-    const recentMedia = await fetchInstagramMedia(token, connection.providerUserId, api).catch(() => null);
+    const fetchedMedia = await fetchInstagramMedia(token, connection.providerUserId, api).catch(() => null);
+    const mirrored = await mirrorInstagramImages(db, String(connection.userId), profile.profile_picture_url, fetchedMedia);
+    const recentMedia = mirrored.recentMedia;
     const previous = await db.collection("mp_influencers").findOne({ userId: connection.userId });
     const oldInstagram = previous?.instagram && typeof previous.instagram === "object" ? previous.instagram as Record<string, unknown> : {};
     const mediaSnapshot = recentMedia === null ? { ...(Array.isArray(oldInstagram.recentMedia) ? { recentMedia: oldInstagram.recentMedia } : {}), ...(oldInstagram.mediaFetchedAt ? { mediaFetchedAt: oldInstagram.mediaFetchedAt } : {}) } : { recentMedia, mediaFetchedAt: now };
-    await db.collection("mp_influencers").updateOne({ userId: connection.userId }, { $set: { instagram: { providerUserId: connection.providerUserId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: profile.profile_picture_url || null, ...mediaSnapshot, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: previous?.status || "draft", updatedAt: now } });
+    await db.collection("mp_influencers").updateOne({ userId: connection.userId }, { $set: { instagram: { providerUserId: connection.providerUserId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: mirrored.profilePictureUrl, ...mediaSnapshot, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: previous?.status || "draft", updatedAt: now } });
     await db.collection("mp_social_connections").updateOne({ _id: connection._id }, { $set: { username: profile.username, accessTokenEncrypted: encryptToken(token), expiresAt, nextCheckAt: new Date(now.getTime() + 86_400_000), lastCheckedAt: now, lastError: null, updatedAt: now }, $unset: { lockUntil: "" } });
     const analytics = await fetchInstagramAnalytics(token, connection.providerUserId, api).catch(() => null);
     if (analytics) await db.collection("mp_influencers").updateOne({ userId: connection.userId }, { $set: { "instagram.analytics": analytics } });

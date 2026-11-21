@@ -3,6 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import { ensureMarketplaceIndexes, statusAfterVerification } from "@/lib/marketplace/core";
 import { instagramHandleMatches } from "@/lib/marketplace/instagram-handle";
 import { encryptToken, exchangeInstagramCode, exchangeUnifiedCode, fetchInstagramAnalytics, fetchInstagramMedia, fetchInstagramProfile, hashState, listAssignedInstagramAccounts, metaConfig, type InstagramApi } from "@/lib/marketplace/meta";
+import { mirrorInstagramImages } from "@/lib/marketplace/media-mirror";
 
 export async function GET(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -50,7 +51,8 @@ export async function GET(request: Request) {
     await db.collection("mp_social_connections").updateOne({ userId: session.user.id, provider: "instagram" }, { $set: { providerUserId: exchange.userId, api, username: profile.username, accessTokenEncrypted: encryptToken(exchange.token), expiresAt: exchange.expiresAt, nextCheckAt: new Date(now.getTime() + 86_400_000), updatedAt: now }, $setOnInsert: { createdAt: now } }, { upsert: true });
     // A successful Meta verification lists the creator straight away; an admin's rejection or suspension stays in force.
     const listedStatus = statusAfterVerification(creator.status);
-    await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { instagram: { providerUserId: exchange.userId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: profile.profile_picture_url || null, recentMedia, mediaFetchedAt: now, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: listedStatus, updatedAt: now } });
+    const mirrored = await mirrorInstagramImages(db, session.user.id, profile.profile_picture_url, recentMedia);
+    await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { instagram: { providerUserId: exchange.userId, username: profile.username, accountType: profile.account_type, verifiedFollowers: profile.followers_count, mediaCount: profile.media_count ?? null, profilePictureUrl: mirrored.profilePictureUrl, recentMedia: mirrored.recentMedia ?? recentMedia, mediaFetchedAt: now, verifiedAt: now, source: "meta_api" }, instagramUsername: profile.username, status: listedStatus, updatedAt: now } });
     // Public analytics (average Reel views, audience location and age) are best-effort and never block verification.
     const analytics = await Promise.race([fetchInstagramAnalytics(exchange.token, exchange.userId, api), new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000))]).catch(() => null);
     if (analytics) await db.collection("mp_influencers").updateOne({ userId: session.user.id }, { $set: { "instagram.analytics": analytics } });

@@ -6,17 +6,13 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { ArrowRight, BadgeCheck, Heart, Users, BriefcaseBusiness, Camera, CircleAlert, Clock3, Inbox, MapPin, Megaphone, MessageSquareText, Package, Plus, RefreshCw, Search, Send, ShieldCheck, ShoppingCart, Trash2, UserRound, X } from "lucide-react";
 import { LocationInput } from "@/components/marketplace/location-input";
 import { CAMPAIGN_CATEGORIES, COMPENSATION_LABEL, type Compensation } from "@/lib/marketplace/campaigns";
-import { RatingBadge } from "./creator-tile";
+import { CreatorTile } from "./creator-tile";
 import { readJson } from "@/lib/read-json";
 
 type View = "overview" | "influencer" | "brand" | "discover" | "campaigns" | "campaign" | "inbox" | "admin";
 type Item = Record<string, unknown>;
 type Data = Record<string, unknown>;
 const api = "/api/marketplace/v1";
-/** Instagram glyph for "open on Instagram" links (lucide no longer ships brand icons). */
-function InstagramGlyph() {
-  return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4.2" /><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" /></svg>;
-}
 /** Heart toggle used on creator and campaign cards to save or unsave. */
 function SaveHeart({ saved, busy, label, onToggle }: { saved: boolean; busy: boolean; label: string; onToggle: () => void }) {
   return <button type="button" className={`mp-heart${saved ? " is-saved" : ""}`} aria-pressed={saved} aria-label={saved ? `Remove ${label} from Saved` : `Save ${label}`} title={saved ? "Saved" : "Save"} disabled={busy} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onToggle(); }}><Heart size={18} aria-hidden="true" fill={saved ? "currentColor" : "none"} /></button>;
@@ -460,48 +456,17 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
           <div className="marketplace-discovery-intro"><div><span className="marketplace-eyebrow">VERIFIED INSTAGRAM CREATORS</span><h2>Find the right creator for your next campaign.</h2><p>Every creator has their Instagram account verified through Meta, whatever their audience size. See creator-approved portfolio images and verified account data.</p></div><div className="marketplace-discovery-source"><Camera size={17} /><span>Instagram</span><BadgeCheck size={15} /></div></div>
           <div className="marketplace-creator-category-row" aria-label="Filter creators by niche">{["", "Beauty", "Fashion", "Lifestyle", "Food", "Travel", "Fitness", "Technology", "Home"].map((category) => <button type="button" key={category || "all"} className={directoryCategory === category ? "is-active" : ""} onClick={() => setDirectoryCategory(category)}>{category || "All niches"}</button>)}</div>
           <SectionTitle eyebrow="CREATOR PROFILES" title="Browse approved partners" aside={<span className="marketplace-count">{Number(data.influencersTotal || 0)} profiles</span>} />
-          {discoveredInfluencers.length ? <div className="marketplace-card-grid">{discoveredInfluencers.map((item) => {
-            const instagram = obj(item.instagram);
-            const instagramUrl = str(item.instagramUsername).replace(/^@/, "");
-            const recentMedia = arr(instagram.recentMedia).slice(0, 4);
-            const picture = str(instagram.profilePictureUrl);
+          {discoveredInfluencers.length ? <div className="mp-creator-tile-grid mp-discover-grid">{discoveredInfluencers.map((item) => {
             const alreadyInCart = cartIds.includes(str(item._id));
-            return <article className="marketplace-card marketplace-creator-card" key={str(item._id)}>
-              <div className="marketplace-creator-gallery" aria-label={`${str(item.displayName)} recent Instagram posts`}>
-                {recentMedia.length ? recentMedia.map((media, index) => {
-                  const imageUrl = str(media.thumbnailUrl) || str(media.mediaUrl);
-                  const permalink = str(media.permalink);
-                  return imageUrl ? <a key={str(media.id) || `${str(item._id)}-${index}`} href={permalink || (instagramUrl ? `https://www.instagram.com/${encodeURIComponent(instagramUrl)}/` : undefined)} target="_blank" rel="noopener noreferrer" aria-label={`Open Instagram post ${index + 1} by ${str(item.displayName)}`}><SafeImage src={imageUrl} alt="" fill sizes="(max-width: 760px) 45vw, 18vw" unoptimized /></a> : <span key={`${str(item._id)}-${index}`} />;
-                }) : <div className="marketplace-creator-gallery-empty"><Camera size={25} /><span>Creator portfolio</span><small>Media appears after the creator authorizes profile access.</small></div>}
-                <span className="marketplace-creator-follower-badge"><Camera size={14} /> {Number(instagram.verifiedFollowers).toLocaleString("en-IN")} followers</span>
-                {!item.isOwn && <SaveHeart saved={alreadyInCart} busy={cartBusyId === str(item._id)} label={str(item.displayName)} onToggle={() => void (alreadyInCart ? removeCreatorFromCart(str(item._id)) : addCreatorToCart(str(item._id)))} />}
-              </div>
-              <div className="marketplace-creator-card-body">
-                <div className="marketplace-creator-person">
-                  {picture ? <SafeImage className="marketplace-creator-avatar" src={picture} alt="" width={48} height={48} unoptimized /> : <span className="marketplace-creator-avatar marketplace-creator-avatar-empty"><UserRound size={20} /></span>}
-                  <div><div className="marketplace-creator-name-line"><h3>{str(item.displayName)}</h3><BadgeCheck size={16} aria-label={`Instagram verified through Meta${instagram.verifiedAt ? `, checked ${date(instagram.verifiedAt)}` : ""}`}><title>{`Verified through Meta${instagram.verifiedAt ? ` · checked ${date(instagram.verifiedAt)}` : ""}`}</title></BadgeCheck><RatingBadge rating={item.rating} />{item.isOwn ? <span className="mp-own-badge">Your profile</span> : null}</div><small>{instagramUrl ? `@${instagramUrl}` : "Instagram creator"}{str(item.tier) ? ` · ${str(item.tier)} creator` : ""}</small></div>
-                </div>
-                {str(item.bio) && <p>{str(item.bio)}</p>}
-                <div className="mp-creator-facts">
-                  {str(item.location) && <span><MapPin size={13} aria-hidden="true" /> {str(item.location).split(",")[0]}</span>}
-                  <span><UserRound size={13} aria-hidden="true" /> {Number(instagram.verifiedFollowers || 0).toLocaleString("en-IN")} followers</span>
-                  {typeof instagram.mediaCount === "number" && instagram.mediaCount > 0 && <span><Camera size={13} aria-hidden="true" /> {instagram.mediaCount.toLocaleString("en-IN")} posts</span>}
-                </div>
-                {Array.isArray(item.categories) && item.categories.length > 0 && <div className="marketplace-chip-row">{item.categories.slice(0, 4).map((category) => <span key={String(category)}>{String(category)}</span>)}</div>}
-                <footer className="mp-creator-price"><span>From</span><strong>{money(typeof item.fromPricePaise === "number" ? item.fromPricePaise : item.ratePaise)}</strong><small>{Array.isArray(item.packages) && item.packages.length ? `${item.packages.length} package${item.packages.length === 1 ? "" : "s"}` : "Custom collaboration"}</small></footer>
-                <div className="mp-creator-card-actions">
-                  <Link className="marketplace-primary" href={`${basePath}/creators/${encodeURIComponent(str(item._id))}`}>View profile <ArrowRight size={15} aria-hidden="true" /></Link>
-                  {item.isOwn
-                    ? <Link className="marketplace-secondary" href={`${basePath}/creator`}>Edit profile</Link>
-                    : <Link className="marketplace-secondary" href={`${basePath}/creators/${encodeURIComponent(str(item._id))}#packages`}>Book a package</Link>}
-                  {instagramUrl && <a className="mp-instagram-icon" href={`https://www.instagram.com/${encodeURIComponent(instagramUrl)}/`} target="_blank" rel="noopener noreferrer" aria-label={`Open @${instagramUrl} on Instagram`} title="Open on Instagram"><InstagramGlyph /></a>}
-                </div>
+            return <article className="mp-discover-tile" key={str(item._id)}>
+              <CreatorTile creator={item} basePath={basePath} />
+              {!item.isOwn && <SaveHeart saved={alreadyInCart} busy={cartBusyId === str(item._id)} label={str(item.displayName)} onToggle={() => void (alreadyInCart ? removeCreatorFromCart(str(item._id)) : addCreatorToCart(str(item._id)))} />}
+              {item.isOwn ? <Link className="mp-discover-own" href={`${basePath}/creator`}>Your profile · Edit</Link> : null}
               {openBrandCampaigns.length > 0 && <form className="marketplace-form" onSubmit={async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); const campaignId = str(form.get("campaignId")); if (campaignId) await mutate(`/campaigns/${campaignId}/invite`, { influencerProfileId: item._id, message: form.get("message") }, "Invitation sent. The creator can respond in their inbox."); }}>
                 <label className="marketplace-field"><span>Invite through a campaign</span><select name="campaignId">{openBrandCampaigns.map((campaign) => <option key={str(campaign._id)} value={str(campaign._id)}>{str(campaign.title)}</option>)}</select></label>
                 <Field label="Invitation note" name="message" placeholder="Why this creator fits your brief" />
                 <button className="marketplace-secondary" disabled={busy}>Send campaign invitation <ArrowRight size={15} /></button>
               </form>}
-              </div>
             </article>;
           })}</div> : <Empty title={directoryQuery ? "No matching creators" : "No verified creators yet"}>{directoryQuery ? "Try a different name, category or location." : "Creator listings appear after official Instagram verification and marketplace approval."}</Empty>}
           {selectedCreator && (() => { const instagram = obj(selectedCreator.instagram); const media = arr(instagram.recentMedia).slice(0, 9); const username = str(selectedCreator.instagramUsername).replace(/^@/, ""); const portfolio = Array.isArray(selectedCreator.portfolio) ? selectedCreator.portfolio.filter((link): link is string => typeof link === "string" && link.startsWith("https://")).slice(0, 6) : []; return <div className="marketplace-profile-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedCreator(null); }}><section role="dialog" aria-modal="true" aria-labelledby="marketplace-profile-dialog-title" className="marketplace-profile-dialog"><button type="button" className="marketplace-profile-dialog-close" aria-label="Close creator profile" onClick={() => setSelectedCreator(null)}><X size={19} /></button><div className="marketplace-profile-dialog-heading">{str(instagram.profilePictureUrl) ? <SafeImage className="marketplace-creator-avatar" src={str(instagram.profilePictureUrl)} alt="" width={64} height={64} unoptimized /> : <span className="marketplace-creator-avatar marketplace-creator-avatar-empty"><UserRound size={24} /></span>}<div><span className="marketplace-card-meta"><BadgeCheck size={15} /> Meta verified · {str(selectedCreator.tier) || "Verified creator"}</span><h2 id="marketplace-profile-dialog-title">{str(selectedCreator.displayName)}</h2><small>{username ? `@${username}` : "Instagram creator"}</small></div></div><p className="marketplace-profile-dialog-bio">{str(selectedCreator.bio) || "This creator has not added a biography yet."}</p><div className="marketplace-profile-dialog-stats"><div><strong>{Number(instagram.verifiedFollowers || 0).toLocaleString("en-IN")}</strong><span>Verified followers</span></div><div><strong>{typeof instagram.mediaCount === "number" ? instagram.mediaCount.toLocaleString("en-IN") : "—"}</strong><span>Instagram posts</span></div><div><strong>{money(selectedCreator.ratePaise)}</strong><span>Starting rate</span></div><div><strong>{str(selectedCreator.location) || "Not listed"}</strong><span>Location</span></div></div><h3>Recent Instagram portfolio</h3>{media.length ? <div className="marketplace-profile-dialog-gallery">{media.map((post, index) => { const imageUrl = str(post.thumbnailUrl) || str(post.mediaUrl); const permalink = str(post.permalink); return imageUrl ? <a key={str(post.id) || index} href={permalink || (username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : undefined)} target="_blank" rel="noopener noreferrer" aria-label={`Open creator post ${index + 1}`}><SafeImage src={imageUrl} alt={str(post.caption) || "Instagram creator portfolio image"} fill sizes="(max-width: 700px) 40vw, 220px" unoptimized /><span>{str(post.mediaType).toLowerCase() === "video" ? "VIDEO" : "INSTAGRAM"}</span></a> : null; })}</div> : <div className="marketplace-profile-dialog-empty"><Camera size={20} /><span>No public media was returned by Meta for this connected account.</span></div>}<div className="marketplace-chip-row">{Array.isArray(selectedCreator.categories) && selectedCreator.categories.map((category) => <span key={String(category)}>{String(category)}</span>)}</div>{portfolio.length > 0 && <div className="marketplace-profile-links">{portfolio.map((link, index) => <a key={link} href={link} target="_blank" rel="noopener noreferrer">Portfolio {index + 1} <ArrowRight size={13} /></a>)}</div>}<div className="marketplace-profile-dialog-actions"><button type="button" className="marketplace-secondary" onClick={() => setSelectedCreator(null)}>Close</button><button type="button" className="marketplace-primary" disabled={cartIds.includes(str(selectedCreator._id)) || cartBusyId === str(selectedCreator._id)} onClick={() => void addCreatorToCart(str(selectedCreator._id))}>{cartIds.includes(str(selectedCreator._id)) ? "In your cart" : cartBusyId === str(selectedCreator._id) ? "Adding…" : "Add to cart"}<ShoppingCart size={15} /></button></div></section></div>; })()}

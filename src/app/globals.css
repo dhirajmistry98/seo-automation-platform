@@ -852,7 +852,7 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 .workspace-empty-state h2 { max-width:13ch; margin-top:9px; color:var(--brand-navy); font-size:clamp(28px,3.8vw,44px); font-weight:500; letter-spacing:-.06em; line-height:1; text-wrap:balance; }
 .workspace-empty-state > p:not(.workspace-eyebrow) { max-width:50ch; margin-top:12px; color:color-mix(in srgb,var(--brand-navy) 70%,transparent); font-size:11px; line-height:1.7; }
 .workspace-primary-link { margin-top:20px; border-color:var(--brand-coral); background:var(--brand-coral); }
-.workspace-primary-link:hover { background:transparent; }
+.workspace-primary-link:hover { background:color-mix(in srgb,var(--brand-coral) 85%,black); }
 .workspace-metric-list { align-self:stretch; border-top:1px solid color-mix(in srgb,var(--brand-navy) 20%,transparent); }
 .workspace-metric-list > div { display:grid; min-height:87px; grid-template-columns:1fr auto; align-content:center; column-gap:12px; border-bottom:1px solid color-mix(in srgb,var(--brand-navy) 20%,transparent); }
 .workspace-metric-list > div > span { display:flex; align-items:center; gap:7px; color:var(--brand-navy); font-size:9px; font-weight:600; }

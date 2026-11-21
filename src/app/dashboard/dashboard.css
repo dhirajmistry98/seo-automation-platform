@@ -1936,7 +1936,7 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
 
 /* ── Brand: show the real logo colors, no accidental selection ── */
 .workspace-shell .workspace-brand { user-select: none; -webkit-user-select: none; }
-.workspace-shell .workspace-brand-logo { filter: none; width: 36px; height: 36px; object-fit: contain; }
+.workspace-shell .workspace-brand-logo { filter: brightness(0); width: 36px; height: 36px; object-fit: contain; }
 .workspace-shell .workspace-brand strong { font-family: var(--font-fraunces), Georgia, serif; font-size: 16px; letter-spacing: -.01em; color: #211e1a; }
 .workspace-shell .workspace-brand small { font-size: 9px; color: #9a9088; }
 .workspace-shell .workspace-sidebar-label { display: none; }

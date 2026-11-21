@@ -31,7 +31,6 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
     } catch { /* counts stay at zero when the database is unreachable */ }
   }
   const latestAudit = websites.find((site) => site.lastAudit?.score !== undefined)?.lastAudit;
-  const firstName = session.user.name?.trim().split(/\s+/)[0] || "there";
   const manageableOrgs = organizations.filter((item) => hasOrganizationPermission(item.role, "websites.manage"));
   const steps = [
     { title: "Add your website", text: "Paste your domain above. Takes seconds.", done: websites.length > 0, href: "#website-domain" },
@@ -42,7 +41,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
   return <>
     <section className="ws2-site-hero" aria-labelledby="site-hero-title">
       <p className="ws2-site-eyebrow">SEO STUDIO WORKSPACE</p>
-      <h1 id="site-hero-title">Welcome back, {firstName}.<span>Which site are we growing?</span></h1>
+      <h1 id="site-hero-title">Which site are we growing?</h1>
       <p className="ws2-site-lede">Add a website to start tracking rankings, health and AI visibility in one place.</p>
       {workspace.available ? <form action={addWebsiteAction} className="ws2-site-form">
         {manageableOrgs.length > 1 ? <select name="organizationId" defaultValue="" aria-label="Add to workspace">{manageableOrgs.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select> : manageableOrgs[0] && <input type="hidden" name="organizationId" value={manageableOrgs[0].id} />}

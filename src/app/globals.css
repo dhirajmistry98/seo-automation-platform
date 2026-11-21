@@ -873,6 +873,14 @@ html,body { background:var(--brand-navy); color:var(--brand-cream); }
 @media (max-width:700px) { .workspace-header-inner { min-height:62px; flex-wrap:wrap; gap:12px; padding:12px 18px; }.workspace-nav { order:3; width:100%; min-height:34px; gap:22px; }.workspace-account-copy { display:none; }.workspace-signout { margin-left:0; }.workspace-main { padding:30px 18px 22px; }.workspace-page-heading { align-items:flex-start; flex-direction:column; }.workspace-status { grid-template-columns:1fr; }.workspace-status-item { min-height:78px; }.workspace-status-item + .workspace-status-item { border-top:1px solid color-mix(in srgb,var(--brand-navy) 18%,transparent); border-left:0; }.workspace-overview { grid-template-columns:1fr; gap:25px; padding:22px; }.workspace-metric-list > div { min-height:70px; }.workspace-footer { flex-direction:column; } }
 @media (max-width:480px) { .login-story { padding:20px; }.login-story-copy { margin:38px 0 28px; }.login-story-copy h1 { font-size:40px; }.login-form-side { padding:22px 16px 32px; }.login-card { padding:22px 17px; }.login-story-footer { font-size:7px; }.workspace-outline-link,.workspace-primary-link { width:100%; } }
 
+/* Fraunces serif for headings — editorial, modern, not generic */
+:root { --font-fraunces: var(--font-fraunces), Georgia, serif; }
+h1, h2, h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
 /* Refined type pairing and a single-row nav that scrolls instead of colliding. */
 :root { --font-display: var(--font-dm-sans), Arial, sans-serif; }
 .site-header-inner { display:flex; min-height:72px; align-items:center; justify-content:space-between; gap:clamp(10px,1.8vw,24px); }

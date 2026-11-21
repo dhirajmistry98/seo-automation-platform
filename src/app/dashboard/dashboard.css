@@ -1729,3 +1729,207 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(8,7,6,0.05);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Reference-match layer — image 12 (SEO Studio mockup)
+   Fraunces headings, vivid orange active sidebar pill, search bar
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Fraunces headings inside dashboard ── */
+.workspace-shell h1,
+.workspace-shell h2,
+.workspace-shell h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* ── Sidebar: match reference exactly ── */
+.workspace-shell .workspace-sidebar {
+  width: 220px;
+  background: #ffffff;
+  border-right: 1px solid #ede8e1;
+  box-shadow: 1px 0 0 rgba(8,7,6,0.03);
+  padding: 18px 10px 20px;
+  gap: 2px;
+  overflow-y: auto;
+}
+.workspace-shell .workspace-sidebar > a {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 0 11px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #625a53;
+  transition: background .15s ease, color .15s ease;
+  text-decoration: none;
+}
+.workspace-shell .workspace-sidebar > a > svg { flex: none; color: #9a9088; transition: color .15s; }
+.workspace-shell .workspace-sidebar > a:hover { background: #f5f0ea; color: #211e1a; }
+.workspace-shell .workspace-sidebar > a:hover > svg { color: #ff6a00; }
+.workspace-shell .workspace-sidebar > a.is-current {
+  background: rgba(255, 106, 0, 0.13);
+  color: #c44400;
+  font-weight: 650;
+  box-shadow: none;
+}
+.workspace-shell .workspace-sidebar > a.is-current > svg { color: #ff6a00; }
+
+/* ── Sidebar label: subtle section divider ── */
+.workspace-shell .workspace-sidebar-label {
+  display: block;
+  padding: 0 11px 8px;
+  color: #b0a89f;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* ── Sidebar footer ── */
+.workspace-shell .workspace-sidebar-foot {
+  margin-top: auto;
+  border-top: 1px solid #ede8e1;
+  padding-top: 14px;
+  font-size: 11px;
+  color: #9a9088;
+}
+
+/* ── Header: search bar styles ── */
+.workspace-search-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 320px;
+  min-height: 38px;
+  border: 1px solid #ddd8d1;
+  border-radius: 999px;
+  background: #faf8f5;
+  padding: 0 14px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.workspace-search-form:focus-within {
+  border-color: #ff6a00;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255,106,0,.1);
+}
+.workspace-search-icon { flex: none; color: #9a9088; }
+.workspace-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #211e1a;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.workspace-search-input::placeholder { color: #b0a89f; }
+.workspace-search-input::-webkit-search-cancel-button { display: none; }
+.workspace-search-kbd {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid #ddd8d1;
+  border-radius: 4px;
+  background: #fff;
+  color: #9a9088;
+  font-size: 10px;
+  font-family: inherit;
+  letter-spacing: 0;
+}
+
+/* ── Header inner: accommodate search bar ── */
+.workspace-shell .workspace-header-inner {
+  gap: 16px;
+  min-height: 64px;
+}
+
+/* ── Page heading: Fraunces + bigger welcome text ── */
+.workspace-shell .workspace-page-heading h1 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(28px, 3.5vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+/* ── Section headings in overview/dashboard ── */
+.workspace-shell .workspace-section-heading h2 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* ── KPI stat numbers: Fraunces for large numbers ── */
+.workspace-shell .workspace-kpis article > strong,
+.workspace-shell .workspace-kpis article strong {
+  font-family: var(--font-fraunces), Georgia, serif;
+  letter-spacing: -0.04em;
+}
+
+/* ── Module card headings ── */
+.workspace-shell .workspace-module-card h4 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ── Research metric large numbers ── */
+.research-metric-grid strong {
+  font-family: var(--font-fraunces), Georgia, serif;
+  letter-spacing: -0.05em;
+}
+
+/* ── Authority index score number ── */
+.authority-index-number {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+/* ── Visibility score big number ── */
+.visibility-score-card > strong {
+  font-family: var(--font-fraunces), Georgia, serif;
+  letter-spacing: -0.06em;
+}
+
+/* ── SEO check score number ── */
+.seo-check-score strong {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+/* ── Action engine rule title ── */
+.action-engine-rule {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 14px;
+  letter-spacing: -0.015em;
+}
+
+/* ── KW opt keyword heading ── */
+.kw-opt-keyword {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+/* ── Provider alert strong heading ── */
+.provider-alert-head strong {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 14px;
+  letter-spacing: -0.015em;
+}
+
+/* ── Diagnose finding strong ── */
+.diagnose-finding-body strong {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}

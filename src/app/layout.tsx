@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Geist_Mono, Lalezar } from "next/font/google";
+import { DM_Sans, Fraunces, Geist_Mono, Lalezar } from "next/font/google";
 import "./globals.css";
 import { ButtonLoadingFeedback } from "@/components/ui/button-loading-feedback";
 import { GoogleTag } from "@/components/analytics/google-tag";
@@ -8,6 +8,13 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
   display: "swap",
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+  axes: ["opsz"],
 });
 
 const lalezar = Lalezar({
@@ -34,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${dmSans.variable} ${lalezar.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${dmSans.variable} ${fraunces.variable} ${lalezar.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}<ButtonLoadingFeedback /><GoogleTag /></body>
     </html>
   );

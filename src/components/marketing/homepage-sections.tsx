@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { Activity, ArrowDown, ArrowRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, Check, ChevronDown, FileCheck2, Info, LockKeyhole, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { BRAND, ROUTES } from "@/lib/marketing";
 import clientPromise from "@/lib/mongodb";
@@ -251,13 +251,13 @@ async function MarketplaceSection() {
               const profilePictureUrl = marketplaceText(instagram.profilePictureUrl);
               const recentMedia = Array.isArray(instagram.recentMedia) ? instagram.recentMedia.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object").slice(0, 3) : [];
               return <article className="landing-marketplace-profile" key={String(creator._id)}>
-                <span className="landing-marketplace-profile-icon">{profilePictureUrl ? <Image src={profilePictureUrl} alt="" fill sizes="38px" unoptimized /> : <UsersRound size={18} aria-hidden="true" />}</span>
+                <span className="landing-marketplace-profile-icon">{profilePictureUrl ? <SafeImage src={profilePictureUrl} alt="" fill sizes="38px" unoptimized /> : <UsersRound size={18} aria-hidden="true" />}</span>
                 <div className="landing-marketplace-profile-main"><div className="landing-marketplace-profile-title"><strong>{marketplaceText(creator.displayName)}</strong><span><BadgeCheck size={13} aria-label="Verified" /> {tier ? `${tier} creator` : "Creator"}</span></div>
                   <small>{username ? `@${username}` : "Instagram creator"} · {followers.toLocaleString("en-IN")} verified followers</small>
                   <p>{marketplaceText(creator.bio) || marketplaceCategories(creator.categories).join(" · ")}</p>
                   <div className="landing-marketplace-profile-meta"><span><MapPin size={13} aria-hidden="true" /> {marketplaceText(creator.location) || "India"}</span>{marketplaceRate(creator.ratePaise) && <strong>From {marketplaceRate(creator.ratePaise)}</strong>}</div>
                 </div>
-                {recentMedia.length > 0 && <div className="landing-marketplace-media-preview">{recentMedia.map((media, index) => { const src = marketplaceText(media.thumbnailUrl) || marketplaceText(media.mediaUrl); return src ? <a key={marketplaceText(media.id) || index} href={marketplaceText(media.permalink) || (username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : undefined)} target="_blank" rel="noopener noreferrer" aria-label={`Open a recent Instagram post by ${marketplaceText(creator.displayName)}`}><Image src={src} alt="" fill sizes="(max-width: 800px) 25vw, 120px" unoptimized /></a> : null; })}</div>}
+                {recentMedia.length > 0 && <div className="landing-marketplace-media-preview">{recentMedia.map((media, index) => { const src = marketplaceText(media.thumbnailUrl) || marketplaceText(media.mediaUrl); return src ? <a key={marketplaceText(media.id) || index} href={marketplaceText(media.permalink) || (username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : undefined)} target="_blank" rel="noopener noreferrer" aria-label={`Open a recent Instagram post by ${marketplaceText(creator.displayName)}`}><SafeImage src={src} alt="" fill sizes="(max-width: 800px) 25vw, 120px" unoptimized /></a> : null; })}</div>}
               </article>;
             })}</div> : <div className="landing-marketplace-empty"><UsersRound size={20} aria-hidden="true" /><div><strong>Creator profiles are being reviewed</strong><p>Verified creators will appear here when they join and complete approval.</p></div></div>}
             <Link href="/login?callbackUrl=%2Finfluencer-marketing%2Fdiscover" className="landing-marketplace-directory-link">Discover creators</Link>

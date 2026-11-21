@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { BadgeCheck, Camera, MapPin, Star, UserRound } from "lucide-react";
 
@@ -30,12 +30,12 @@ export function CreatorTile({ creator, basePath = "/influencer-marketing" }: { c
   const categories = Array.isArray(creator.categories) ? creator.categories.map(String) : [];
   return <Link className="mp-creator-tile" href={`${basePath}/creators/${encodeURIComponent(str(creator._id))}`}>
     <div className="mp-creator-tile-cover">
-      {cover ? <Image src={cover} alt="" fill sizes="(max-width: 700px) 50vw, 260px" unoptimized /> : <span className="mp-creator-tile-cover-empty"><Camera size={22} /></span>}
+      {cover ? <SafeImage src={cover} alt="" fill sizes="(max-width: 700px) 50vw, 260px" unoptimized /> : <span className="mp-creator-tile-cover-empty"><Camera size={22} /></span>}
       <span className="mp-creator-tile-followers"><Camera size={12} /> {compactCount(instagram.verifiedFollowers)}</span>
     </div>
     <div className="mp-creator-tile-body">
       <div className="mp-creator-tile-head">
-        {avatar ? <Image className="mp-creator-tile-avatar" src={avatar} alt="" width={30} height={30} unoptimized /> : <span className="mp-creator-tile-avatar is-empty"><UserRound size={14} /></span>}
+        {avatar ? <SafeImage className="mp-creator-tile-avatar" src={avatar} alt="" width={30} height={30} unoptimized /> : <span className="mp-creator-tile-avatar is-empty"><UserRound size={14} /></span>}
         <strong>{str(creator.displayName)}</strong><BadgeCheck size={14} aria-label="Instagram verified" />
         <RatingBadge rating={creator.rating} />
       </div>

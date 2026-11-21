@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Camera, CircleAlert, Clock3, Heart, MapPin, Megaphone, Trash2, UserRound, Users } from "lucide-react";
 import { readJson } from "@/lib/read-json";
@@ -96,7 +96,7 @@ export function CreatorCartScreen() {
         const creator = obj(cartItem.influencer); const instagram = obj(creator.instagram); const creatorId = str(cartItem.creatorId); const recentMedia = arr(instagram.recentMedia).slice(0, 6); const username = str(creator.instagramUsername).replace(/^@/, "");
         return <article className="creator-cart-card" key={str(cartItem.id)}>
           <div className="creator-cart-card-profile">
-            {str(instagram.profilePictureUrl) ? <Image className="marketplace-creator-avatar" src={str(instagram.profilePictureUrl)} alt="" width={60} height={60} unoptimized /> : <span className="marketplace-creator-avatar marketplace-creator-avatar-empty"><UserRound size={22} /></span>}
+            {str(instagram.profilePictureUrl) ? <SafeImage className="marketplace-creator-avatar" src={str(instagram.profilePictureUrl)} alt="" width={60} height={60} unoptimized /> : <span className="marketplace-creator-avatar marketplace-creator-avatar-empty"><UserRound size={22} /></span>}
             <div><span className="marketplace-card-meta"><BadgeCheck size={14} /> Meta verified · {str(creator.tier) || "Verified creator"}</span><h2>{str(creator.displayName)}</h2><small>{username ? "@" + username : "Instagram creator"}</small></div>
             <button type="button" className="creator-cart-remove" disabled={busyId === creatorId} onClick={() => void removeCreator(creatorId)}><Trash2 size={15} /><span>Remove</span></button>
           </div>
@@ -104,7 +104,7 @@ export function CreatorCartScreen() {
           {str(creator.bio) && <p className="creator-cart-bio">{str(creator.bio)}</p>}
           <div className="marketplace-chip-row">{Array.isArray(creator.categories) && creator.categories.map((category) => <span key={String(category)}>{String(category)}</span>)}</div>
           <h3 className="creator-cart-media-heading">Recent Instagram portfolio</h3>
-          {recentMedia.length ? <div className="creator-cart-media">{recentMedia.map((media, index) => { const image = str(media.thumbnailUrl) || str(media.mediaUrl); return image ? <a key={str(media.id) || index} href={str(media.permalink) || ("https://www.instagram.com/" + encodeURIComponent(username) + "/")} target="_blank" rel="noopener noreferrer" aria-label={"Open Instagram post " + (index + 1) + " by " + str(creator.displayName)}><Image src={image} alt={str(media.caption) || "Creator portfolio post"} fill sizes="(max-width: 720px) 45vw, 190px" unoptimized /></a> : null; })}</div> : <div className="creator-cart-media-empty"><Camera size={18} /> No public media is available from the authorized Instagram connection.</div>}
+          {recentMedia.length ? <div className="creator-cart-media">{recentMedia.map((media, index) => { const image = str(media.thumbnailUrl) || str(media.mediaUrl); return image ? <a key={str(media.id) || index} href={str(media.permalink) || ("https://www.instagram.com/" + encodeURIComponent(username) + "/")} target="_blank" rel="noopener noreferrer" aria-label={"Open Instagram post " + (index + 1) + " by " + str(creator.displayName)}><SafeImage src={image} alt={str(media.caption) || "Creator portfolio post"} fill sizes="(max-width: 720px) 45vw, 190px" unoptimized /></a> : null; })}</div> : <div className="creator-cart-media-empty"><Camera size={18} /> No public media is available from the authorized Instagram connection.</div>}
           {campaigns.length ? <form className="creator-cart-invite" onSubmit={(event) => void invite(creatorId, event)}><label className="marketplace-field"><span>Invite through a campaign</span><select name="campaignId" required>{campaigns.map((campaign) => <option key={str(campaign._id)} value={str(campaign._id)}>{str(campaign.title)}</option>)}</select></label><label className="marketplace-field"><span>Invitation note</span><input name="message" minLength={10} maxLength={1000} required placeholder="Explain why this creator fits your campaign" /></label><button type="submit" className="marketplace-primary" disabled={busyId === creatorId}>{busyId === creatorId ? "Sending…" : "Invite to campaign"}<ArrowRight size={15} /></button></form> : <div className="creator-cart-no-campaign"><span>Create or publish an approved brand campaign to invite this creator.</span><Link href="/influencer-marketing/campaigns">Open campaigns <ArrowRight size={14} /></Link></div>}
         </article>;
       })}</div>

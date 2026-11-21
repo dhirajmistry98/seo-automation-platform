@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, CircleCheck, Clock3, Compass, Eye, Heart, Link2, Megaphone, MessageCircle, Package, Share2, ShoppingCart, Star, Timer, UserPlus, UsersRound } from "lucide-react";
 import { RESPONSE_WINDOW_HOURS, USAGE_RIGHTS, USAGE_RIGHTS_LABEL } from "@/lib/marketplace/booking-cart";
 import { CreatorTile, RatingBadge, StarRow } from "./creator-tile";
@@ -151,11 +151,11 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     <h1 className="creator-marketplace-title">{str(creator.displayName) || "Creator profile"}</h1>
     <div className="mp-profile-subline"><RatingBadge rating={creator.rating} size={15} /><span>{str(creator.location) || "India"}</span>{Number(creator.completedCollaborations || 0) > 0 && <span>{Number(creator.completedCollaborations)} completed collaboration{Number(creator.completedCollaborations) === 1 ? "" : "s"}</span>}</div>
     <div className="creator-marketplace-gallery" aria-label={`${str(creator.displayName)} portfolio`}>
-      {media.slice(0, 3).map((post, index) => { const image = str(post.thumbnailUrl) || str(post.mediaUrl); return image ? <a key={str(post.id) || index} href={str(post.permalink) || instagramUrl || undefined} target="_blank" rel="noopener noreferrer"><Image src={image} alt={str(post.caption) || "Creator Instagram portfolio"} fill sizes="(max-width: 760px) 100vw, 45vw" unoptimized /><span>{str(post.mediaType).toLowerCase() === "video" ? "VIDEO" : "INSTAGRAM"}</span></a> : null; })}
+      {media.slice(0, 3).map((post, index) => { const image = str(post.thumbnailUrl) || str(post.mediaUrl); return image ? <a key={str(post.id) || index} href={str(post.permalink) || instagramUrl || undefined} target="_blank" rel="noopener noreferrer"><SafeImage src={image} alt={str(post.caption) || "Creator Instagram portfolio"} fill sizes="(max-width: 760px) 100vw, 45vw" unoptimized /><span>{str(post.mediaType).toLowerCase() === "video" ? "VIDEO" : "INSTAGRAM"}</span></a> : null; })}
       {!media.length && <div className="creator-marketplace-gallery-empty"><Camera size={28} /><strong>Creator portfolio</strong><span>Recent images are shown when Meta returns public media for this connected account.</span></div>}
       {media.length > 3 && <button type="button" className="creator-marketplace-gallery-count" onClick={() => setShowAllMedia((current) => !current)}><Camera size={15} /> {showAllMedia ? "Hide" : `Show all ${media.length} photos`}</button>}
     </div>
-    {showAllMedia && media.length > 3 && <section className="creator-marketplace-all-media" aria-label="All recent Instagram photos">{media.slice(3).map((post, index) => { const image = str(post.thumbnailUrl) || str(post.mediaUrl); return image ? <a key={str(post.id) || index} href={str(post.permalink) || instagramUrl || undefined} target="_blank" rel="noopener noreferrer"><Image src={image} alt={str(post.caption) || "Creator Instagram portfolio"} fill sizes="(max-width: 760px) 45vw, 220px" unoptimized /></a> : null; })}</section>}
+    {showAllMedia && media.length > 3 && <section className="creator-marketplace-all-media" aria-label="All recent Instagram photos">{media.slice(3).map((post, index) => { const image = str(post.thumbnailUrl) || str(post.mediaUrl); return image ? <a key={str(post.id) || index} href={str(post.permalink) || instagramUrl || undefined} target="_blank" rel="noopener noreferrer"><SafeImage src={image} alt={str(post.caption) || "Creator Instagram portfolio"} fill sizes="(max-width: 760px) 45vw, 220px" unoptimized /></a> : null; })}</section>}
 
     {error && <div className="marketplace-banner is-warn" role="alert"><CircleAlert size={17} /><span>{error}</span></div>}
     {message && <div className="marketplace-banner is-success" role="status"><BadgeCheck size={17} /><span>{message}</span></div>}
@@ -163,7 +163,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     <div className="creator-marketplace-columns">
       <div className="creator-marketplace-main">
         <section className="creator-marketplace-identity">
-          {str(instagram.profilePictureUrl) ? <Image className="creator-marketplace-avatar" src={str(instagram.profilePictureUrl)} alt="" width={76} height={76} unoptimized /> : <span className="creator-marketplace-avatar creator-marketplace-avatar-fallback"><UsersRound size={26} /></span>}
+          {str(instagram.profilePictureUrl) ? <SafeImage className="creator-marketplace-avatar" src={str(instagram.profilePictureUrl)} alt="" width={76} height={76} unoptimized /> : <span className="creator-marketplace-avatar creator-marketplace-avatar-fallback"><UsersRound size={26} /></span>}
           <div><div className="creator-marketplace-name-line"><h2>{str(creator.displayName)}</h2><BadgeCheck size={18} aria-label="Instagram verified" /></div><p>{str(creator.location) || "Location not listed"}{username && <> · <a href={instagramUrl} target="_blank" rel="noopener noreferrer">@{username.replace(/^@/, "")}</a></>}</p><span className="marketplace-card-meta"><BadgeCheck size={14} /> Meta connected · {str(creator.tier) || "Creator"}</span></div>
         </section>
         <p className="creator-marketplace-bio">{str(creator.bio) || "This creator has not added a bio yet."}</p>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { SafeImage } from "@/components/ui/safe-image";
-import { ArrowRight, BadgeCheck, Heart, Users, BriefcaseBusiness, Camera, CircleAlert, Clock3, Inbox, MapPin, Megaphone, MessageSquareText, Package, Plus, RefreshCw, Search, Send, ShieldCheck, ShoppingCart, Trash2, UserRound, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, Heart, HeartPulse, IndianRupee, Shirt, Smile, Sparkles, TrendingUp, Users, BriefcaseBusiness, Camera, CircleAlert, Clock3, Inbox, MapPin, Megaphone, MessageSquareText, Package, Plus, RefreshCw, Search, Send, ShieldCheck, ShoppingCart, Trash2, UserRound, X } from "lucide-react";
 import { LocationInput } from "@/components/marketplace/location-input";
 import { CAMPAIGN_CATEGORIES, COMPENSATION_LABEL, type Compensation } from "@/lib/marketplace/campaigns";
 import { CreatorTile } from "./creator-tile";
@@ -17,6 +17,16 @@ const api = "/api/marketplace/v1";
 function SaveHeart({ saved, busy, label, onToggle }: { saved: boolean; busy: boolean; label: string; onToggle: () => void }) {
   return <button type="button" className={`mp-heart${saved ? " is-saved" : ""}`} aria-pressed={saved} aria-label={saved ? `Remove ${label} from Saved` : `Save ${label}`} title={saved ? "Saved" : "Save"} disabled={busy} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onToggle(); }}><Heart size={18} aria-hidden="true" fill={saved ? "currentColor" : "none"} /></button>;
 }
+const CREATOR_PRESETS = [
+  { label: "New creators", icon: Sparkles, sort: "newest", followers: "", maxRate: "", category: "" },
+  { label: "Most followed", icon: TrendingUp, sort: "followers_desc", followers: "", maxRate: "", category: "" },
+  { label: "Under ₹2,500", icon: IndianRupee, sort: "rate_asc", followers: "", maxRate: "2500", category: "" },
+  { label: "Under ₹10,000", icon: IndianRupee, sort: "rate_asc", followers: "", maxRate: "10000", category: "" },
+  { label: "Micro (10K–50K)", icon: Users, sort: "followers_desc", followers: "10000-50000", maxRate: "", category: "" },
+  { label: "Fashion", icon: Shirt, sort: "followers_desc", followers: "", maxRate: "", category: "Fashion" },
+  { label: "Beauty", icon: Smile, sort: "followers_desc", followers: "", maxRate: "", category: "Beauty" },
+  { label: "Health & Fitness", icon: HeartPulse, sort: "followers_desc", followers: "", maxRate: "", category: "Fitness" },
+];
 const isPausedStatus = (value: unknown) => value === "rejected" || value === "suspended";
 const compensationLabel = (value: unknown) => COMPENSATION_LABEL[(value as Compensation)] ?? "Paid";
 /** Creator state shown in the UI: listed after Meta verification, paused only by moderation. */
@@ -299,7 +309,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
       const response = await fetch(`${api}/cart/${encodeURIComponent(creatorId)}`, { method: "DELETE" });
       const payload = await readJson(response) as Data;
       if (!response.ok) throw new Error(str(payload.error) || "Creator could not be removed from Saved.");
-      setCartIds((current) => current.filter((value) => value !== creatorId));
+      setCartIds((current) => current.filter((value) => value !== creatorId)); window.dispatchEvent(new Event("marketplace:cart-changed"));
       setData((current) => ({ ...current, cartTotal: Math.max(0, Number(current.cartTotal || 0) - (payload.removed ? 1 : 0)) }));
     } catch (caught) { setNotice({ text: caught instanceof Error ? caught.message : "Creator could not be removed from Saved.", tone: "warn" }); }
     finally { setCartBusyId(""); }
@@ -323,7 +333,7 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
       const response = await fetch(`${api}/cart`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ influencerId: creatorId }) });
       const payload = await readJson(response) as Data;
       if (!response.ok) throw new Error(str(payload.error) || "Creator could not be added to your cart.");
-      setCartIds((current) => current.includes(creatorId) ? current : [...current, creatorId]);
+      setCartIds((current) => current.includes(creatorId) ? current : [...current, creatorId]); window.dispatchEvent(new Event("marketplace:cart-changed"));
       setData((current) => ({ ...current, cartTotal: Number(current.cartTotal || 0) + (payload.alreadyAdded ? 0 : 1) }));
       setNotice({ text: payload.alreadyAdded ? "This creator is already in your cart." : "Creator added to your saved creator cart. Review their profile and invite them to a campaign when ready.", tone: "success" });
     } catch (caught) { setNotice({ text: caught instanceof Error ? caught.message : "Creator could not be added to your cart.", tone: "warn" }); }
@@ -448,12 +458,16 @@ export function MarketplaceScreen({ view, id, basePath = "/influencer-marketing"
             <label><span>Location</span><LocationInput value={directoryLocationInput} onChange={setDirectoryLocationInput} placeholder="Any city" /></label>
             <label><span>Budget up to (₹)</span><input type="number" min="0" max="10000000" value={directoryMaxRateInput} onChange={(event) => setDirectoryMaxRateInput(event.target.value)} placeholder="Any budget" /></label>
             <label><span>Followers</span><select value={directoryFollowers} onChange={(event) => setDirectoryFollowers(event.target.value)}>{<><option value="">Any</option><option value="0-1000">Under 1K</option><option value="1000-5000">1K – 5K</option><option value="5000-10000">5K – 10K</option><option value="10000-50000">10K – 50K · Micro</option><option value="50000-100000">50K – 100K · Mid</option><option value="100000-500000">100K – 500K · Macro</option><option value="500000-">500K+ · Mega</option></>}</select></label>
-            <label><span>Sort creators</span><select value={directorySort} onChange={(event) => setDirectorySort(event.target.value)}><option value="followers_desc">Most followers</option><option value="followers_asc">Rising creators</option><option value="rate_asc">Lowest rate</option><option value="rate_desc">Highest rate</option></select></label>
+            <label><span>Sort creators</span><select value={directorySort} onChange={(event) => setDirectorySort(event.target.value)}><option value="followers_desc">Most followers</option><option value="followers_asc">Rising creators</option><option value="rate_asc">Lowest rate</option><option value="rate_desc">Highest rate</option><option value="newest">Newest creators</option></select></label>
             <button type="button" className={`marketplace-filter-apply${directoryLocation === directoryLocationInput.trim() && directoryMaxRate === directoryMaxRateInput.trim() ? " is-applied" : ""}`} onClick={() => { setDirectoryLocation(directoryLocationInput.trim()); setDirectoryMaxRate(directoryMaxRateInput.trim()); }}>Apply filters</button>
           </div>}
         </section>
         {directory === "influencers" && <>
           <div className="marketplace-discovery-intro"><div><span className="marketplace-eyebrow">VERIFIED INSTAGRAM CREATORS</span><h2>Find the right creator for your next campaign.</h2><p>Every creator has their Instagram account verified through Meta, whatever their audience size. See creator-approved portfolio images and verified account data.</p></div><div className="marketplace-discovery-source"><Camera size={17} /><span>Instagram</span><BadgeCheck size={15} /></div></div>
+          <div className="mp-quick-filters" aria-label="Quick filters">{CREATOR_PRESETS.map((preset) => {
+            const active = directorySort === preset.sort && directoryFollowers === preset.followers && directoryMaxRate === preset.maxRate && directoryCategory === preset.category;
+            return <button type="button" key={preset.label} className={active ? "is-active" : ""} aria-pressed={active} onClick={() => { setDirectorySort(preset.sort); setDirectoryFollowers(preset.followers); setDirectoryMaxRate(preset.maxRate); setDirectoryMaxRateInput(preset.maxRate); setDirectoryCategory(preset.category); }}><preset.icon size={15} aria-hidden="true" />{preset.label}</button>;
+          })}</div>
           <div className="marketplace-creator-category-row" aria-label="Filter creators by niche">{["", "Beauty", "Fashion", "Lifestyle", "Food", "Travel", "Fitness", "Technology", "Home"].map((category) => <button type="button" key={category || "all"} className={directoryCategory === category ? "is-active" : ""} onClick={() => setDirectoryCategory(category)}>{category || "All niches"}</button>)}</div>
           <SectionTitle eyebrow="CREATOR PROFILES" title="Browse approved partners" aside={<span className="marketplace-count">{Number(data.influencersTotal || 0)} profiles</span>} />
           {discoveredInfluencers.length ? <div className="mp-creator-tile-grid mp-discover-grid">{discoveredInfluencers.map((item) => {

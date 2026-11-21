@@ -81,7 +81,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     setBusy(true); setError(""); setMessage("");
     try {
       await post("/booking-cart", { influencerProfileId: creatorId, packageIndex: selectedPackage });
-      setCartAdded(true); setMessage("Package added to your cart.");
+      setCartAdded(true); window.dispatchEvent(new Event("marketplace:cart-changed")); setMessage("Package added to your cart.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "The package could not be added to your cart."); }
     finally { setBusy(false); }
   }
@@ -89,6 +89,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
     setBusy(true); setError(""); setMessage("");
     try {
       const payload = await post("/cart", { influencerId: creatorId });
+      window.dispatchEvent(new Event("marketplace:cart-changed"));
       setSaved(true);
       setMessage(payload.alreadyAdded ? "This creator is already in your saved list." : "Creator saved to your shortlist. No payment was taken.");
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Creator could not be saved."); }

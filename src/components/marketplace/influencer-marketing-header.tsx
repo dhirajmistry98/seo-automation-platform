@@ -27,6 +27,21 @@ export function InfluencerMarketingHeader({ brandName, userName, userEmail, show
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const [saved, cart] = await Promise.all([
+        fetch("/api/marketplace/v1/cart", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch("/api/marketplace/v1/booking-cart", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      ]);
+      if (!cancelled) setCounts({ [`${base}/cart`]: Number(saved?.total) || 0, [`${base}/checkout`]: Number(cart?.packageCount) || 0 });
+    };
+    void load();
+    window.addEventListener("focus", load);
+    window.addEventListener("marketplace:cart-changed", load);
+    return () => { cancelled = true; window.removeEventListener("focus", load); window.removeEventListener("marketplace:cart-changed", load); };
+  }, [pathname]);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`) || (href === `${base}/discover` && pathname.startsWith(`${base}/creators/`));
 
   useEffect(() => {
@@ -48,7 +63,7 @@ export function InfluencerMarketingHeader({ brandName, userName, userEmail, show
       </Link>
 
       <nav className="imh-nav" aria-label="Influencer marketing">
-        {primaryLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? "is-active" : ""} aria-current={isActive(href) ? "page" : undefined}><Icon size={16} strokeWidth={1.9} /><span>{label}</span></Link>)}
+        {primaryLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? "is-active" : ""} aria-current={isActive(href) ? "page" : undefined}><Icon size={16} strokeWidth={1.9} /><span>{label}</span>{counts[href] ? <b className="imh-count" aria-label={`${counts[href]} items`}>{counts[href] > 99 ? "99+" : counts[href]}</b> : null}</Link>)}
       </nav>
 
       <div className="imh-actions">

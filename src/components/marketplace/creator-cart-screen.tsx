@@ -44,7 +44,7 @@ export function CreatorCartScreen() {
       const result = await readJson(response) as Item;
       if (!response.ok) throw new Error(str(result.error) || "Creator could not be removed.");
       setItems((current) => current.filter((item) => str(item.creatorId) !== creatorId));
-      setNotice("Creator removed from Saved.");
+      setNotice("Creator removed from Saved."); window.dispatchEvent(new Event("marketplace:cart-changed"));
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Creator could not be removed."); }
     finally { setBusyId(""); }
   }

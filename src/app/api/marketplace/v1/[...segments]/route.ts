@@ -130,7 +130,7 @@ export async function GET(request: Request, context: Context) {
       filter.$or = [{ displayName: { $regex: escaped, $options: "i" } }, { bio: { $regex: escaped, $options: "i" } }, { location: { $regex: escaped, $options: "i" } }, { categories: { $regex: escaped, $options: "i" } }];
     }
     const total = await db.collection("mp_influencers").countDocuments(filter);
-    const sort: Record<string, 1 | -1> = sortBy === "rate_asc" ? { ratePaise: 1, _id: 1 } : sortBy === "rate_desc" ? { ratePaise: -1, _id: 1 } : sortBy === "followers_asc" ? { "instagram.verifiedFollowers": 1, _id: 1 } : { "instagram.verifiedFollowers": -1, _id: 1 };
+    const sort: Record<string, 1 | -1> = sortBy === "newest" ? { _id: -1 } : sortBy === "rate_asc" ? { ratePaise: 1, _id: 1 } : sortBy === "rate_desc" ? { ratePaise: -1, _id: 1 } : sortBy === "followers_asc" ? { "instagram.verifiedFollowers": 1, _id: 1 } : { "instagram.verifiedFollowers": -1, _id: 1 };
     const items = await db.collection("mp_influencers").find(filter, { projection: { verificationNotes: 0, "instagram.providerUserId": 0 } }).sort(sort).skip(skip).limit(pageSize).toArray();
     const ownIds = new Set(items.filter((item) => item.userId === userId).map((item) => String(item._id)));
     const influencers = (await publicCreatorCards(db, items.filter(isActiveCreator))).map((card) => ({ ...card, isOwn: ownIds.has(String(card._id)) }));

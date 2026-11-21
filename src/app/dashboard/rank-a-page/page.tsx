@@ -6,7 +6,8 @@ import { getWorkspaceData } from "@/lib/workspace-data";
 
 export const instant = false;
 
-export default async function RankAPagePage() {
+export default async function RankAPagePage({ searchParams }: { searchParams: Promise<{ url?: string; keyword?: string }> }) {
+  const { url, keyword } = await searchParams;
   await connection();
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -16,6 +17,6 @@ export default async function RankAPagePage() {
     .slice(0, 12);
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> KEYWORD OPTIMIZATION</p><h1>Rank a page</h1><p>Enter a page and the keyword you want it to rank for. Get your current Google position, what is missing on the page, and a step-by-step plan to move up.</p></div></header>
-    <section className="workspace-section"><KeywordOptimizer websites={websites} /></section>
+    <section className="workspace-section"><KeywordOptimizer websites={websites} initialUrl={typeof url === "string" ? url.slice(0, 2048) : undefined} initialKeyword={typeof keyword === "string" ? keyword.slice(0, 200) : undefined} /></section>
   </>;
 }

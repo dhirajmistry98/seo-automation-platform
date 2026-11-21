@@ -20,8 +20,8 @@ const botLabel: Record<string, string> = { allowed_on_root: "Allowed", blocked_o
 const tone = (score: number) => (score >= 80 ? "is-good" : score >= 50 ? "is-fair" : "is-poor");
 const lengthNote = (value: number, min: number, max: number) => (value === 0 ? "missing" : value < min ? "short" : value > max ? "long" : "good");
 
-export function SeoChecker({ websites }: { websites: Array<{ domain: string; url: string }> }) {
-  const [url, setUrl] = useState(websites[0]?.url ?? "");
+export function SeoChecker({ websites, initialUrl }: { websites: Array<{ domain: string; url: string }>; initialUrl?: string }) {
+  const [url, setUrl] = useState(initialUrl || websites[0]?.url || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);

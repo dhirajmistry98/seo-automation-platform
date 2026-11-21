@@ -12,7 +12,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 
 export const instant = false;
 
-export default async function WebsitesPage({ searchParams }: { searchParams: Promise<{ site?: string }> }) {
+export default async function WebsitesPage({ searchParams }: { searchParams: Promise<{ site?: string; domain?: string }> }) {
   await connection();
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -45,7 +45,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Pro
       <p className="ws2-site-lede">Add a website to start tracking rankings, health and AI visibility in one place.</p>
       {workspace.available ? <form action={addWebsiteAction} className="ws2-site-form">
         {manageableOrgs.length > 1 ? <select name="organizationId" defaultValue="" aria-label="Add to workspace">{manageableOrgs.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select> : manageableOrgs[0] && <input type="hidden" name="organizationId" value={manageableOrgs[0].id} />}
-        <input id="website-domain" name="domain" type="text" placeholder="https://yourwebsite.com" autoComplete="url" required maxLength={2048} aria-label="Website address" />
+        <input id="website-domain" name="domain" type="text" placeholder="https://yourwebsite.com" defaultValue={typeof query.domain === "string" ? query.domain.slice(0, 2048) : undefined} autoComplete="url" required maxLength={2048} aria-label="Website address" />
         <SubmitButton>Add a website</SubmitButton>
       </form> : <p className="workspace-alert">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</p>}
       {message && <p className={`workspace-form-message${["invalid", "unavailable"].includes(query.site || "") ? " is-error" : ""}`} role="status">{message}</p>}

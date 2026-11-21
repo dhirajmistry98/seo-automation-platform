@@ -26,9 +26,9 @@ function googleCell(position: number | null | undefined, status?: GoogleStatus) 
 const tone = (score: number) => (score >= 80 ? "is-good" : score >= 55 ? "is-fair" : "is-poor");
 const statusIcon = { pass: CheckCircle2, warn: CircleAlert, fail: XCircle };
 
-export function KeywordOptimizer({ websites }: { websites: Array<{ domain: string; url: string }> }) {
-  const [url, setUrl] = useState(websites[0]?.url ?? "");
-  const [keyword, setKeyword] = useState("");
+export function KeywordOptimizer({ websites, initialUrl, initialKeyword }: { websites: Array<{ domain: string; url: string }>; initialUrl?: string; initialKeyword?: string }) {
+  const [url, setUrl] = useState(initialUrl || websites[0]?.url || "");
+  const [keyword, setKeyword] = useState(initialKeyword || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);

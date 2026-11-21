@@ -6,7 +6,8 @@ import { getWorkspaceData } from "@/lib/workspace-data";
 
 export const instant = false;
 
-export default async function SeoCheckerPage() {
+export default async function SeoCheckerPage({ searchParams }: { searchParams: Promise<{ url?: string }> }) {
+  const { url } = await searchParams;
   await connection();
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -16,6 +17,6 @@ export default async function SeoCheckerPage() {
     .slice(0, 12);
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> CHECK ANY PAGE</p><h1>SEO checker</h1><p>Fetch any public page right now and see its SEO health, on-page details, issues and AI search readiness.</p></div></header>
-    <section className="workspace-section"><SeoChecker websites={websites} /></section>
+    <section className="workspace-section"><SeoChecker websites={websites} initialUrl={typeof url === "string" ? url.slice(0, 2048) : undefined} /></section>
   </>;
 }

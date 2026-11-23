@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SafeImage } from "@/components/ui/safe-image";
-import { Activity, ArrowDown, ChartLine, FileText, Globe, ZoomIn, ArrowUpRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, ChevronDown, FileCheck2, Info, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
+import { Activity, ArrowDown, ChartLine, FileText, Globe, ZoomIn, ArrowUpRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, ChevronDown, FileCheck2, Info, MapPin, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { BRAND, ROUTES } from "@/lib/marketing";
 import clientPromise from "@/lib/mongodb";
 import { LISTABLE_CREATOR_STATUS, profileTier } from "@/lib/marketplace/core";
@@ -8,14 +8,8 @@ import { ScrollCue } from "./scroll-cue";
 import { BrandLogo } from "./brand-logo";
 
 const capabilities = [
-  { icon: ShieldCheck, title: "Technical SEO audits", text: "Crawl verified websites to review indexing, metadata, links, performance and technical issues." },
-  { icon: Search, title: "On-page and content SEO", text: "Review page titles, headings, content structure, internal links and practical optimization opportunities." },
   { icon: BarChart3, title: "Organic search performance", text: "Bring authorized Search Console clicks, impressions, CTR and position reports into your workspace." },
-  { icon: MapPin, title: "Local SEO and rank tracking", text: "Set a supported country, city or region and language for location-aware keyword and rank research." },
-  { icon: Waypoints, title: "Keyword, competitor and backlink research", text: "Use connected provider data to explore demand, competitor gaps and backlink summaries." },
-  { icon: Radar, title: "GEO, AEO and LLMO readiness", text: "Check crawl-based structure signals for generative search, answer engines and language-model discovery." },
   { icon: Bot, title: "AI search visibility research", text: "Run provider-backed AI mention reports where platform, language and country coverage is available." },
-  { icon: Blocks, title: "WordPress SEO management", text: "Connect the separate plugin to manage supported metadata and technical settings with a review history." },
   { icon: FileCheck2, title: "Reports and progress", text: "Keep audits, research snapshots, tasks and approved improvements in one place." },
   { icon: Building2, title: "SEO expert services", text: "Browse professional listings for scoped SEO, local SEO, GEO, AEO, LLMO and WordPress assistance." },
   { icon: UsersRound, title: "Brand and influencer collaborations", text: "Create reviewed profiles, find eligible partners and manage campaign conversations and deliverables." },
@@ -117,7 +111,7 @@ export function GettingStartedSection() {
   return (
     <section id="guidance" className="landing-guidance">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <SectionIntro index="07" eyebrow="A practical guide" title="Start with your site, market and data." text="New to SEO Studio? Explore how the platform works, what it offers, how to improve search visibility and how creator collaborations fit in." />
+        <SectionIntro index="06" eyebrow="A practical guide" title="Start with your site, market and data." text="New to SEO Studio? Explore how the platform works, what it offers, how to improve search visibility and how creator collaborations fit in." />
         <ol className="landing-guidance-grid">
           {steps.map(({ icon: Icon, title, text, href, action }, index) => (
             <li key={title}>
@@ -305,7 +299,7 @@ async function MarketplaceSection() {
   return (
     <section id="marketplace" className="landing-marketplace">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <SectionIntro index="02" eyebrow="Creator partnerships" title="Meet the people behind the next good campaign." text="Brands can discover verified creators. Influencers can find approved businesses and campaigns. Profiles appear here only after review." />
+        <SectionIntro index="01" eyebrow="Creator partnerships" title="Meet the people behind the next good campaign." text="Brands can discover verified creators. Influencers can find approved businesses and campaigns. Profiles appear here only after review." />
         <div className="landing-marketplace-directories">
           <article className="landing-marketplace-directory">
             <header>
@@ -369,7 +363,7 @@ export function FeaturesSection() {
   return (
     <section id="features" className="landing-capabilities">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <SectionIntro index="03" eyebrow="Inside the application" title="Useful signals, clearly organized." text="Start with the evidence. Each area is designed to answer a practical question about your site and search visibility." />
+        <SectionIntro index="02" eyebrow="And more in the workspace" title="Beyond the core audit." text="Alongside the tools above, the workspace brings in search performance, AI visibility, reports, expert services and creator collaborations." />
         <div className="landing-capability-list">
           {capabilities.map(({ icon: Icon, title, text }, index) => (
             <article className="landing-capability" key={title}>
@@ -390,7 +384,7 @@ export function AutomationSection() {
   return (
     <section id="workflow" className="landing-workflow">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <SectionIntro index="04" eyebrow="A careful workflow" title="From finding an issue to making a change." text="Use the evidence, confirm the opportunity, and decide what to do. The review stays with you." light />
+        <SectionIntro index="03" eyebrow="A careful workflow" title="From finding an issue to making a change." text="Use the evidence, confirm the opportunity, and decide what to do. The review stays with you." light />
         <ol className="landing-workflow-steps">
           {workflow.map(({ title, text }, index) => (
             <li key={title}>
@@ -413,7 +407,7 @@ export function IntegrationsSection() {
     <section id="integrations" className="landing-integrations">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="landing-integrations-layout">
-          <SectionIntro index="05" eyebrow="Connected data" title="Know where each signal comes from." text="Connectors are presented with clear availability. Data is shown only after an authorized source is connected." />
+          <SectionIntro index="04" eyebrow="Connected data" title="Know where each signal comes from." text="Connectors are presented with clear availability. Data is shown only after an authorized source is connected." />
           <div className="landing-integration-ledger" role="list" aria-label="Data integrations and availability">
             {integrations.map(({ mark, name, scope, status }) => (
               <div className="landing-integration-row" key={name} role="listitem">
@@ -433,7 +427,7 @@ export function FAQSection() {
   return (
     <section id="faq" className="landing-faq">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[0.72fr_1.28fr]">
-        <SectionIntro index="06" eyebrow="Questions, answered" title="Clarity before you connect." text="A few details about how the products work and what to expect from the platform." />
+        <SectionIntro index="05" eyebrow="Questions, answered" title="Clarity before you connect." text="A few details about how the products work and what to expect from the platform." />
         <div className="landing-faq-list">
           {faqs.map(([question, answer]) => (
             <details className="landing-faq-item" key={question}>

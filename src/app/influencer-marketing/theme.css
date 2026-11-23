@@ -2,7 +2,6 @@
    Only applies while the shell carries data-ws-theme="dark"; light mode is untouched. */
 .influencer-marketing-shell[data-ws-theme="dark"] { color-scheme: dark; --mp-ink: #f1ede8; --mp-muted: #a8a099; --mp-line: #3a3530; --mp-paper: #1d1b19; background: #141311; color: #f1ede8; }
 .imh-theme-toggle { display: inline-grid; flex: none; place-items: center; width: 38px; height: 38px; border: 1px solid var(--mp-line, #ded8d0); border-radius: 50%; background: transparent; color: #e96306; cursor: pointer; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
-.imh-theme-toggle:hover { border-color: #e96306; background: rgba(233,99,6,.08); }
 .imh-theme-toggle:active { transform: scale(.94); }
 .imh-theme-toggle:focus-visible { outline: 2px solid #e96306; outline-offset: 2px; }
 .imh-theme-toggle > svg { grid-area: 1 / 1; transition: opacity .2s ease, transform .3s ease; }
@@ -12,18 +11,8 @@
 .influencer-marketing-shell.is-theme-switching, .influencer-marketing-shell.is-theme-switching * { transition: background-color .25s ease, border-color .25s ease, color .25s ease !important; }
 @media (prefers-reduced-motion: reduce) { .imh-theme-toggle, .imh-theme-toggle > svg { transition: none; } }
 
-/* Generated dark palette (from marketplace.css) */
-/* marketplace.css */
+/* Dark palette: generated, then filtered so already-dark surfaces stay dark */
 .marketplace-shell[data-ws-theme="dark"]{background:#141311}
-[data-ws-theme="dark"] .marketplace-header{border-bottom:1px solid #b9b1aa;background:#dfdbd7;color:#37332f}
-[data-ws-theme="dark"] .marketplace-header-actions a:hover{background:#d4d0cb}
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-account-link,
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-services-link,
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-signout{color:#37332f}
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-account-link:hover,
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-services-link:hover,
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-signout:hover{background:#d4d0cb}
-[data-ws-theme="dark"] .marketplace-session-name{color:#59524c}
 [data-ws-theme="dark"] .marketplace-nav-heading{color:#948b81}
 [data-ws-theme="dark"] .marketplace-sidebar a{color:#c2bdb7}
 [data-ws-theme="dark"] .marketplace-sidebar a:hover,
@@ -42,9 +31,6 @@
 [data-ws-theme="dark"] .marketplace-field select,
 [data-ws-theme="dark"] .marketplace-message-form input,
 [data-ws-theme="dark"] .marketplace-actions input{border:1px solid #49423b}
-[data-ws-theme="dark"] .marketplace-primary,
-[data-ws-theme="dark"] .marketplace-secondary{border:1px solid #c7c1bb;background:#dedbd7}
-[data-ws-theme="dark"] .marketplace-primary:hover{background:#cec9c4}
 [data-ws-theme="dark"] .marketplace-status{background:#121110;color:#c2b7ad}
 [data-ws-theme="dark"] .marketplace-status.is-approved,
 [data-ws-theme="dark"] .marketplace-status.is-accepted,
@@ -67,7 +53,6 @@
 [data-ws-theme="dark"] .marketplace-directory-toolbar .marketplace-tab-row button.is-active{background:#21150d;color:#f4a77b}
 [data-ws-theme="dark"] .marketplace-directory-toolbar .marketplace-tab-row button span{background:#131211}
 [data-ws-theme="dark"] .marketplace-directory-search{border:1px solid #413b35;background:#211e1c}
-[data-ws-theme="dark"] .marketplace-directory-search button{background:#dedad6}
 [data-ws-theme="dark"] .marketplace-directory-search .marketplace-search-clear{border:1px solid #413b35}
 [data-ws-theme="dark"] .marketplace-profile-facts > a{color:#eea581}
 [data-ws-theme="dark"] .marketplace-profile-links a{color:#eea581}
@@ -81,7 +66,6 @@
 [data-ws-theme="dark"] .marketplace-online{color:#95dab3}
 [data-ws-theme="dark"] .marketplace-message{background:#141312}
 [data-ws-theme="dark"] .marketplace-report summary{color:#e5a08a}
-[data-ws-theme="dark"] .marketplace-message-form button{background:#dedbd7}
 [data-ws-theme="dark"] .marketplace-offer a{color:#f4a579}
 [data-ws-theme="dark"] .marketplace-evidence{background:#181715;color:#d6d3cf}
 [data-ws-theme="dark"] .marketplace-attachment-form{border:1px solid #37322d;background:#1b1917}
@@ -96,7 +80,6 @@
 [data-ws-theme="dark"] .influencer-account-brand-symbol{background:#20140c}
 [data-ws-theme="dark"] .influencer-account-identity-row > svg,
 [data-ws-theme="dark"] .influencer-account-connected > svg{color:#95dab3}
-[data-ws-theme="dark"] .influencer-account-avatar{background:#d9d5d1}
 [data-ws-theme="dark"] .influencer-account-connected{border:1px solid #312d28;background:#1c1a18}
 [data-ws-theme="dark"] .influencer-account-note{color:#dab195}
 [data-ws-theme="dark"] .influencer-account-status{background:#121110;color:#c2b7ad}
@@ -108,8 +91,6 @@
 [data-ws-theme="dark"] .influencer-account-brand-list article{background:#211e1c}
 [data-ws-theme="dark"] .influencer-account-quick-link > span:first-child{background:#20140c}
 [data-ws-theme="dark"] .influencer-account-quick-link > svg{color:#eea782}
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-dashboard-back{color:#37332f}
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-dashboard-back:hover{background:#d4d0cb}
 [data-ws-theme="dark"] .marketplace-auto-refresh{border:1px solid #38332e;background:#1b1918;color:#b5aea8}
 [data-ws-theme="dark"] .marketplace-auto-refresh > span svg{color:#96d9b4}
 [data-ws-theme="dark"] .marketplace-auto-refresh > button{color:#eea581}
@@ -117,7 +98,6 @@
 [data-ws-theme="dark"] .creator-marketplace-quiet-action{border:1px solid #3f3a34;background:#211e1c;color:#c6c1bc}
 [data-ws-theme="dark"] .creator-marketplace-gallery{background:#100f0e}
 [data-ws-theme="dark"] .creator-marketplace-gallery > a{background:#100f0e}
-[data-ws-theme="dark"] .creator-marketplace-gallery > a > span{background:rgba(224,221,217,0.76)}
 [data-ws-theme="dark"] .creator-marketplace-gallery-empty{color:#eea581}
 [data-ws-theme="dark"] .creator-marketplace-gallery-empty strong{color:#dbd7d4}
 [data-ws-theme="dark"] .creator-marketplace-gallery-empty span{color:#bdb5ad}
@@ -144,7 +124,6 @@
 [data-ws-theme="dark"] .service-marketplace-icon{background:#20140c}
 [data-ws-theme="dark"] .service-marketplace-search label{border:1px solid #413b35}
 [data-ws-theme="dark"] .service-marketplace-search select{border:1px solid #413b35}
-[data-ws-theme="dark"] .service-marketplace-expert > span{background:#dedad6;color:#2f2b28}
 [data-ws-theme="dark"] .service-marketplace-expert > svg{color:#9ad5aa}
 [data-ws-theme="dark"] .service-marketplace-details summary,
 [data-ws-theme="dark"] .service-marketplace-request summary{color:#f3aa7d}
@@ -180,7 +159,6 @@
 [data-ws-theme="dark"] .marketplace-creator-filters label{color:#c1b6ae}
 [data-ws-theme="dark"] .marketplace-creator-filters input,
 [data-ws-theme="dark"] .marketplace-creator-filters select{border:1px solid #3f3934;background:#211e1c;color:#e2dfdd}
-[data-ws-theme="dark"] .marketplace-filter-apply{border:1px solid #c5beb8;background:#dcd8d4;color:#2f2b28}
 [data-ws-theme="dark"] .marketplace-filter-apply.is-applied{background:#191716;color:#f4a77b}
 [data-ws-theme="dark"] .marketplace-discovery-source{border:1px solid #38332e;background:#211e1c;color:#cfcbc6}
 [data-ws-theme="dark"] .marketplace-discovery-source svg:last-child{color:#98d7b5}
@@ -191,7 +169,6 @@
 [data-ws-theme="dark"] .marketplace-creator-gallery-empty{background:radial-gradient(circle at 50% 25%,#170f09,transparent 50%),#121110;color:#eda882}
 [data-ws-theme="dark"] .marketplace-creator-gallery-empty span{color:#dad7d3}
 [data-ws-theme="dark"] .marketplace-creator-gallery-empty small{color:#c0b6ad}
-[data-ws-theme="dark"] .marketplace-creator-follower-badge{border:1px solid rgba(25,23,21,0.34);background:rgba(224,221,217,0.78);color:#2f2b28}
 [data-ws-theme="dark"] .marketplace-creator-avatar{border:1px solid #3f3326;background:#131210}
 [data-ws-theme="dark"] .marketplace-creator-avatar-empty{color:#f1a67d}
 [data-ws-theme="dark"] .marketplace-creator-name-line > svg{color:#96d9b6}
@@ -205,7 +182,6 @@
 [data-ws-theme="dark"] .marketplace-creator-card-body > footer strong{color:#e5e3e1}
 [data-ws-theme="dark"] .marketplace-creator-actions .marketplace-secondary{border-color:#413b35;background:#211e1c}
 [data-ws-theme="dark"] .marketplace-creator-instagram-link{color:#eea581}
-[data-ws-theme="dark"] .marketplace-profile-overlay{background:rgba(226,222,219,0.66)}
 [data-ws-theme="dark"] .marketplace-profile-dialog{border:1px solid #39342e;background:#1b1918;color:#e7e5e2}
 [data-ws-theme="dark"] .marketplace-profile-dialog-close{border:1px solid #3a3530;background:#23211f;color:#d4d0cc}
 [data-ws-theme="dark"] .marketplace-profile-dialog-heading small{color:#aaa39b}
@@ -214,7 +190,6 @@
 [data-ws-theme="dark"] .marketplace-profile-dialog-stats > div{background:#211e1c}
 [data-ws-theme="dark"] .marketplace-profile-dialog-stats span{color:#aaa39b}
 [data-ws-theme="dark"] .marketplace-profile-dialog-gallery > a{background:#11100f}
-[data-ws-theme="dark"] .marketplace-profile-dialog-gallery > a > span{background:rgba(227,224,220,0.7)}
 [data-ws-theme="dark"] .marketplace-profile-dialog-empty{border:1px dashed #413b35;color:#aaa39b}
 [data-ws-theme="dark"] .marketplace-profile-dialog-actions{border-top:1px solid #37322d}
 [data-ws-theme="dark"] .creator-cart-summary{background:#1c1a18}
@@ -233,8 +208,6 @@
 [data-ws-theme="dark"] .marketplace-instagram-insights{border-top:1px solid rgba(192,185,178,0.14)}
 [data-ws-theme="dark"] .marketplace-instagram-insights > p,
 [data-ws-theme="dark"] .marketplace-instagram-insights > small{color:#aea7a0}
-.marketplace-shell[data-ws-theme="dark"] a.marketplace-primary{color:#2f2b28}
-.influencer-marketing-shell[data-ws-theme="dark"] .influencer-dashboard-back{color:#37332f}
 [data-ws-theme="dark"] .marketplace-conversation-choice:hover{background:#211e1c}
 [data-ws-theme="dark"] .marketplace-conversation-choice.is-active{background:#191716}
 [data-ws-theme="dark"] .marketplace-inbox-process > div{background:#211e1c}
@@ -244,9 +217,7 @@
 [data-ws-theme="dark"] .marketplace-chip-row a{border:1px solid #39342e;background:#151312;color:#c3b6ac}
 [data-ws-theme="dark"] .mp-creator-tile{background:#23211f}
 [data-ws-theme="dark"] .mp-creator-tile-cover{background:#11100f}
-[data-ws-theme="dark"] .mp-creator-tile-followers{background:rgba(223,219,215,0.78);color:#2f2b28}
 [data-ws-theme="dark"] .mp-creator-tile-avatar.is-empty{background:#121110}
-[data-ws-theme="dark"] .mp-home-hero{background:radial-gradient(circle at 85% 10%,rgba(233,99,6,.28),transparent 45%),#dfdbd7;color:#37332f}
 [data-ws-theme="dark"] .mp-home-summary a{background:#1b1918}
 [data-ws-theme="dark"] .mp-home-category-grid a{background:#23211f}
 [data-ws-theme="dark"] .mp-home-category-grid a:hover{background:#1d1b19}
@@ -266,16 +237,6 @@
 [data-ws-theme="dark"] .mp-home-search-field:hover{background:#181615}
 [data-ws-theme="dark"] .mp-home-search-field:focus-within{background:#181615}
 [data-ws-theme="dark"] .mp-home-search-field + .mp-home-search-field::before{background:#100f0e}
-[data-ws-theme="dark"] .mp-home-search > button{color:#2f2b28}
-.influencer-marketing-shell[data-ws-theme="dark"] .imh{border-bottom:1px solid #bdb6ae;background:rgba(223,219,215,0.96);color:#37332f}
-[data-ws-theme="dark"] .imh-nav a:hover{background:#d8d4cf;color:#2f2b28}
-[data-ws-theme="dark"] .imh-nav a.is-active{background:#d5d0cb;color:#2f2b28}
-[data-ws-theme="dark"] .imh-cta{color:#2f2b28}
-.influencer-marketing-shell[data-ws-theme="dark"] .imh .workspace-notification-trigger{border:1px solid #b6aea6;color:#423d38}
-.influencer-marketing-shell[data-ws-theme="dark"] .imh .workspace-notification-trigger:hover{background:#d8d4cf}
-[data-ws-theme="dark"] .imh-avatar-button{border:1px solid #b6aea6}
-[data-ws-theme="dark"] .imh-avatar-button:hover,
-[data-ws-theme="dark"] .imh-avatar-button[aria-expanded="true"]{background:#d8d4cf}
 [data-ws-theme="dark"] .imh-menu{background:#23211f}
 [data-ws-theme="dark"] .imh-menu-identity{border-bottom:1px solid #2c2824}
 [data-ws-theme="dark"] .imh-menu a:hover,
@@ -283,9 +244,7 @@
 [data-ws-theme="dark"] .imh-menu hr{border-top:1px solid #2c2824}
 [data-ws-theme="dark"] .imh-menu button{color:#ea9a85}
 [data-ws-theme="dark"] .imh-menu button svg{color:#ea9a85}
-@media (max-width:760px){
-[data-ws-theme="dark"] .imh-nav{border-top:1px solid #bdb6ae}
-}
+
 [data-ws-theme="dark"] .mp-danger-zone{border-color:#48332b}
 [data-ws-theme="dark"] .mp-danger-zone h3{color:#ed9882}
 [data-ws-theme="dark"] .mp-danger-zone p{color:#b1aaa3}
@@ -299,7 +258,6 @@
 [data-ws-theme="dark"] .mp-verify-facts div{background:#23211f}
 [data-ws-theme="dark"] .mp-package-total{border:1px solid #3c2d24;background:#1c1a18}
 [data-ws-theme="dark"] .mp-package-total strong{color:#ebe9e8}
-[data-ws-theme="dark"] .mp-consent-overlay{background:rgba(226,222,219,0.62)}
 [data-ws-theme="dark"] .mp-consent{background:#1c1a18}
 [data-ws-theme="dark"] .mp-consent-close:hover{background:#131110}
 [data-ws-theme="dark"] .mp-consent > p strong{color:#ebe9e8}
@@ -344,21 +302,16 @@
 [data-ws-theme="dark"] .mp-analytics-card{background:#23211f}
 [data-ws-theme="dark"] .mp-analytics-card > p{color:#a69e96}
 [data-ws-theme="dark"] .mp-analytics-bar{background:#131110}
-[data-ws-theme="dark"] .mp-analytics-bar i{background:#d4d0cb}
 [data-ws-theme="dark"] .mp-analytics-ages small{color:#b1aaa3}
 [data-ws-theme="dark"] .mp-analytics-column{background:#131110}
-[data-ws-theme="dark"] .mp-analytics-column i{background:#d4d0cb}
 [data-ws-theme="dark"] .mp-review-scores > div{color:#dddad7}
 [data-ws-theme="dark"] .mp-review-scores small{color:#b9b3ad}
 [data-ws-theme="dark"] .mp-respond-by{background:#20170c;color:#f4c37b}
 [data-ws-theme="dark"] .mp-respond-by.is-expired{background:#151312;color:#e1978c}
-[data-ws-theme="dark"] .mp-creator-tile.mp-creator-tile-v2{background:#d4cfca;color:#2f2b28}
-[data-ws-theme="dark"] .mp-tile-shade{background:linear-gradient(to bottom, rgba(232,230,227,0.28) 0%, transparent 28%, transparent 52%, rgba(232,230,227,0.78) 100%)}
-[data-ws-theme="dark"] .mp-tile-badge{background:rgba(222,219,215,0.62)}
 [data-ws-theme="dark"] .mp-tile-rating .mp-rating{background:rgba(35,33,31,0.92);color:#e5e3e0}
 [data-ws-theme="dark"] .mp-tile-text small{color:rgba(47,43,40,0.82)}
 [data-ws-theme="dark"] .mp-discover-own{background:#21150c;color:#f49e7b}
 [data-ws-theme="dark"] .mp-discover-tile > .marketplace-form{border:1px solid #2d2925;background:#23211f}
 [data-ws-theme="dark"] .mp-quick-filters button{border:1px solid #3b3530;background:#23211f;color:#dddad7}
-[data-ws-theme="dark"] .mp-quick-filters button.is-active{border-color:#c3bcb6;background:#dad6d2;color:#2f2b28}
 [data-ws-theme="dark"] .mp-quick-brand-head p{color:#ada59e}
+

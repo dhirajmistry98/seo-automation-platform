@@ -919,3 +919,7 @@
 [data-ws-theme="dark"] .workspace-notification-popover article p,
 [data-ws-theme="dark"] .workspace-notification-popover article small,
 [data-ws-theme="dark"] .workspace-notification-empty{color:#aca59e}
+
+/* Logo: the mark is black in light mode, so it must flip to white on dark surfaces */
+[data-ws-theme="dark"] .ws2-brand-logo,
+[data-ws-theme="dark"] .workspace-brand-logo { filter: brightness(0) invert(1); }

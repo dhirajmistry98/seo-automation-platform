@@ -33,7 +33,6 @@ const integrations = [
 ];
 
 const faqs = [
-  ["What are the two products?", "The SEO Application is the central workspace for analysis, research and monitoring. The separate WordPress SEO Plugin manages supported on-page and technical settings in WordPress."],
   ["How can influencers find brand collaborations?", "Create an influencer profile with your portfolio, categories and rates, then connect Instagram for official verification. Once your profile is reviewed, browse approved brands and open campaigns, then apply with a pitch. Creators of every audience size can qualify when their account is connected and reviewed."],
   ["How can brands find and contact influencers?", "Create a brand profile and submit it for review. After approval, publish a campaign, browse verified creator profiles and send an invitation tied to your brief. Private messaging opens after an application or invitation is accepted."],
   ["Can I hire an SEO, GEO, AEO or LLMO specialist?", "Yes. Sign in to browse reviewed expert service listings, send a project brief and compare proposals. Eligible orders can use Razorpay checkout when the deployment has valid merchant credentials; payout transfers are not enabled, and live payment acceptance still requires sandbox and production verification."],
@@ -132,7 +131,7 @@ export function GettingStartedSection() {
 function PrinciplesSection() {
   const items = [
     { icon: Activity, title: "Evidence first", text: "See the data behind each finding." },
-    { icon: ShieldCheck, title: "You stay in control", text: "Review changes before supported updates." },
+    { icon: ShieldCheck, title: "Honest about limits", text: "Scores describe signals, not guaranteed rankings." },
     { icon: Waypoints, title: "One connected workflow", text: "Move from research to approved action." },
   ];
   return (

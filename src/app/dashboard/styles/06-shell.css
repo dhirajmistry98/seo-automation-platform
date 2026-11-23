@@ -138,3 +138,10 @@
 .workspace-shell.ws2 .workspace-route-main .workspace-quick-links a:hover > svg { color: #ff6a00; transform: translateX(3px); }
 @media (max-width: 1200px) { .workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: 1fr; } }
+
+/* ── Header: search centered, actions on the right ── */
+@media (min-width: 1001px) {
+  .ws2-header { display: grid; grid-template-columns: 1fr minmax(320px, 520px) 1fr; }
+  .ws2-header > .workspace-search-form { grid-column: 2; width: 100%; max-width: none; }
+  .ws2-header > .ws2-actions { grid-column: 3; justify-self: end; }
+}

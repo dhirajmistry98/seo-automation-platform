@@ -145,3 +145,15 @@
   .ws2-header > .workspace-search-form { grid-column: 2; width: 100%; max-width: none; }
   .ws2-header > .ws2-actions { grid-column: 3; justify-self: end; }
 }
+
+/* ── Header buttons stay on one line; the search gives up space first ── */
+.ws2-pill, .ws2-signout { white-space: nowrap; flex: none; }
+.ws2-pill span, .ws2-signout span { white-space: nowrap; }
+@media (min-width: 1001px) {
+  .ws2-header { grid-template-columns: minmax(0, 1fr) minmax(200px, 440px) max-content; }
+  .ws2-header > .workspace-search-form { min-width: 0; }
+}
+@media (min-width: 1001px) and (max-width: 1320px) {
+  .ws2-pill { padding: 0 13px; gap: 6px; font-size: 12.5px; }
+  .ws2-actions { gap: 8px; }
+}

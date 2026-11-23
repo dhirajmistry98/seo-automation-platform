@@ -50,7 +50,7 @@ export function WorkspaceSearch() {
   const raw = query.trim();
   const matches = useMemo(() => q
     ? FEATURES.map((entry) => ({ entry, s: score(entry, q) })).filter((m) => m.s > 0).sort((a, b) => b.s - a.s).slice(0, 6).map((m) => m.entry)
-    : FEATURES.slice(0, 6), [q]);
+    : [], [q]);
   const shown = q.length >= 2 ? mine : { websites: [], keywords: [] };
   const yours: Entry[] = [
     ...shown.websites.map((site): Entry => ({ label: site.name, hint: `${site.domain} · ${site.verified ? "Open your site" : "Verify ownership to start"}`, href: `/dashboard/websites/${encodeURIComponent(site.domain)}`, icon: Globe2, terms: "" })),
@@ -121,18 +121,18 @@ export function WorkspaceSearch() {
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
         role="combobox"
-        aria-expanded={open}
+        aria-expanded={open && Boolean(raw)}
         aria-controls={listId}
-        aria-activedescendant={open && items.length ? `${listId}-${active}` : undefined}
+        aria-activedescendant={open && raw && items.length ? `${listId}-${active}` : undefined}
         aria-autocomplete="list"
         aria-label="Search workspace"
       />
       <kbd className="workspace-search-kbd">⌘K</kbd>
-      {open && <div className="ws-search-panel">
+      {open && raw && <div className="ws-search-panel">
         <ul id={listId} role="listbox" aria-label="Search suggestions">
           {yours.length > 0 && <li className="ws-search-group" role="presentation">Your sites and keywords</li>}
           {yours.map((entry, i) => renderItem(entry, i))}
-          <li className="ws-search-group" role="presentation">{q ? (matches.length ? "Features" : `No feature called “${raw}”`) : "Jump to"}</li>
+          <li className="ws-search-group" role="presentation">{matches.length ? "Features" : `No feature called “${raw}”`}</li>
           {matches.map((entry, i) => renderItem(entry, yours.length + i))}
           {actions.length > 0 && <li className="ws-search-group" role="presentation">{looksLikeUrl(raw) ? "Do something with this URL" : "Do something with this keyword"}</li>}
           {actions.map((entry, i) => renderItem(entry, yours.length + matches.length + i))}

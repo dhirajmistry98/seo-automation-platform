@@ -6,6 +6,7 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { ArrowLeft, ArrowRight, BadgeCheck, Camera, CircleAlert, CircleCheck, Clock3, Compass, Eye, Heart, Link2, Megaphone, MessageCircle, Package, Share2, ShoppingCart, Star, Timer, UserPlus, UsersRound } from "lucide-react";
 import { RESPONSE_WINDOW_HOURS, USAGE_RIGHTS, USAGE_RIGHTS_LABEL } from "@/lib/marketplace/booking-cart";
 import { CreatorTile, RatingBadge, StarRow } from "./creator-tile";
+import { QuickBrandForm } from "@/components/marketplace/quick-brand-form";
 import { readJson } from "@/lib/read-json";
 
 type Item = Record<string, unknown>;
@@ -77,6 +78,12 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
   }
 
   const [cartAdded, setCartAdded] = useState(false);
+  async function refreshBrands() {
+    const response = await fetch(`${api}/me`, { cache: "no-store" });
+    if (!response.ok) return;
+    const payload = await readJson(response) as Item;
+    setBrands(arr(payload.brands).filter((brand) => brand.status !== "rejected" && brand.status !== "suspended"));
+  }
   async function addPackageToCart() {
     setBusy(true); setError(""); setMessage("");
     try {
@@ -209,7 +216,7 @@ export function CreatorMarketplaceProfile({ creatorId, basePath = "/influencer-m
             <label className="marketplace-field"><span>Message (optional)</span><textarea name="message" maxLength={1000} rows={2} placeholder="Anything else the creator should know" /></label>
             <div className="marketplace-actions"><button type="button" onClick={() => setBookingOpen(false)}>Cancel</button><button className="marketplace-primary" disabled={busy}>{busy ? "Sending…" : "Send booking request"}</button></div>
             <small className="marketplace-form-note">The creator has {RESPONSE_WINDOW_HOURS} hours to accept, or the request expires. No payment is taken yet; the agreed price is recorded for both sides.</small>
-          </form> : <div className="mp-booking-needs-brand"><p>Create a brand profile to book creators. It takes a minute.</p><Link className="marketplace-secondary" href={`${basePath}/brand`}>Create a brand profile <ArrowRight size={14} /></Link></div>)}
+          </form> : <QuickBrandForm onCreated={refreshBrands} />)}
           {!creator.owner && <button type="button" className="mp-save-button" disabled={busy || saved} onClick={() => void saveCreator()}><Heart size={15} fill={saved ? "currentColor" : "none"} />{saved ? "Saved" : busy ? "Saving…" : "Save creator"}</button>}
           {Boolean(creator.owner) && <p className="creator-marketplace-cart-note">This is how brands see your profile. <Link href={`${basePath}/creator`}>Edit packages</Link></p>}
         </section>

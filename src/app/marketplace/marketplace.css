@@ -1000,3 +1000,7 @@
 .mp-quick-filters button.is-active { border-color: #1d1a17; background: #1d1a17; color: #fff; }
 .mp-quick-filters button svg { color: #ff6a00; }
 .mp-quick-filters button.is-active svg { color: #ffb380; }
+
+.mp-quick-brand { display: grid; gap: 12px; }
+.mp-quick-brand-head strong { font-size: 15px; }
+.mp-quick-brand-head p { margin: 4px 0 0; color: #6f665e; font-size: 13px; line-height: 1.45; }

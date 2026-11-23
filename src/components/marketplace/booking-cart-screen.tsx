@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, CircleAlert, Clock3, ShoppingCart, Trash2, UserRound } from "lucide-react";
 import { readJson } from "@/lib/read-json";
+import { QuickBrandForm } from "@/components/marketplace/quick-brand-form";
 import { RESPONSE_WINDOW_HOURS, USAGE_RIGHTS, USAGE_RIGHTS_LABEL } from "@/lib/marketplace/booking-cart";
 
 type Item = Record<string, unknown>;
@@ -83,7 +84,7 @@ export function BookingCartScreen() {
           <label className="marketplace-field"><span>Message (optional)</span><textarea name="message" maxLength={1000} rows={2} placeholder="Anything else creators should know" /></label>
           <button className="marketplace-primary" disabled={busy}>{busy ? "Sending…" : `Send ${Number(cart.creatorCount)} booking request${Number(cart.creatorCount) === 1 ? "" : "s"}`} <ArrowRight size={16} /></button>
           <small className="marketplace-form-note">No payment is taken yet. Online payment will be added soon; prices are recorded for both sides.</small>
-        </form> : <div className="mp-booking-needs-brand"><p>Create a brand profile to book creators. It takes a minute.</p><Link className="marketplace-secondary" href="/influencer-marketing/brand">Create a brand profile <ArrowRight size={14} /></Link></div>}
+        </form> : <QuickBrandForm onCreated={load} />}
       </aside>
     </div> : <div className="marketplace-empty"><ShoppingCart size={23} /><strong>Your cart is empty</strong><p>Open a creator&apos;s profile, choose a package and tap “Add to cart”. Add packages from several creators and check out once.</p><Link className="marketplace-primary" href="/influencer-marketing/discover">Find creators <ArrowRight size={15} /></Link></div>}
   </div>;

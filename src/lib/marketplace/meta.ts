@@ -1,4 +1,4 @@
-import { ageShares, averageViews, breakdownCounts, topShares, type InstagramAnalytics } from "./instagram-analytics.ts";
+import { ageShares, averageViews, breakdownCounts, topShares, type InstagramAnalytics, type ReelsStatus } from "./instagram-analytics.ts";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 type TokenResponse = { access_token?: string; token_type?: string; expires_in?: number; user_id?: number | string; error?: unknown };
@@ -188,18 +188,24 @@ export async function fetchInstagramAnalytics(token: string, userId: string, api
   };
   const reelViews = async () => {
     const url = new URL(`${host}/${userId}/media`);
-    url.search = new URLSearchParams({ fields: "id,media_product_type", limit: "25" }).toString();
+    url.search = new URLSearchParams({ fields: "id,media_product_type", limit: "50" }).toString();
     const media = ((await get(url)) as { data?: Array<{ id?: unknown; media_product_type?: unknown }> }).data ?? [];
     const reels = media.filter((item) => typeof item.id === "string" && /^[0-9]+$/.test(item.id) && item.media_product_type === "REELS").slice(0, 10);
     const views = await Promise.all(reels.map(async (reel) => {
-      const insightUrl = new URL(`${host}/${String(reel.id)}/insights`);
-      insightUrl.searchParams.set("metric", "views");
-      const body = await get(insightUrl).catch(() => null) as { data?: Array<{ values?: Array<{ value?: unknown }>; total_value?: { value?: unknown } }> } | null;
-      const raw = body?.data?.[0]?.total_value?.value ?? body?.data?.[0]?.values?.[0]?.value;
-      return typeof raw === "number" ? raw : NaN;
+      // "views" is the current Reels metric; older Graph API versions only know "plays".
+      for (const metric of ["views", "plays"]) {
+        const insightUrl = new URL(`${host}/${String(reel.id)}/insights`);
+        insightUrl.searchParams.set("metric", metric);
+        const body = await get(insightUrl).catch(() => null) as { data?: Array<{ values?: Array<{ value?: unknown }>; total_value?: { value?: unknown } }> } | null;
+        const raw = body?.data?.[0]?.total_value?.value ?? body?.data?.[0]?.values?.[0]?.value;
+        if (typeof raw === "number") return raw;
+      }
+      return NaN;
     }));
-    return { average: averageViews(views), sampled: views.filter(Number.isFinite).length };
+    const sampled = views.filter(Number.isFinite).length;
+    const status: ReelsStatus = !reels.length ? "no_reels" : sampled ? "ok" : "unavailable";
+    return { average: averageViews(views), sampled, status };
   };
-  const [countries, ages, reels] = await Promise.all([demographics("country").catch(() => new Map<string, number>()), demographics("age").catch(() => new Map<string, number>()), reelViews().catch(() => ({ average: null, sampled: 0 }))]);
-  return { avgReelViews: reels.average, reelsSampled: reels.sampled, countries: topShares(countries), ages: ageShares(ages), fetchedAt: new Date() };
+  const [countries, ages, reels] = await Promise.all([demographics("country").catch(() => new Map<string, number>()), demographics("age").catch(() => new Map<string, number>()), reelViews().catch(() => ({ average: null, sampled: 0, status: "unavailable" as ReelsStatus }))]);
+  return { avgReelViews: reels.average, reelsSampled: reels.sampled, reelsStatus: reels.status, countries: topShares(countries), ages: ageShares(ages), fetchedAt: new Date() };
 }

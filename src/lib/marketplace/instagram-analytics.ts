@@ -4,7 +4,8 @@
  */
 export const AGE_BUCKETS = ["13-17", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"] as const;
 export type Share = { key: string; percent: number };
-export type InstagramAnalytics = { avgReelViews: number | null; reelsSampled: number; countries: Share[]; ages: Share[]; fetchedAt: Date };
+export type ReelsStatus = "ok" | "no_reels" | "unavailable";
+export type InstagramAnalytics = { avgReelViews: number | null; reelsSampled: number; reelsStatus?: ReelsStatus; countries: Share[]; ages: Share[]; fetchedAt: Date };
 
 type Breakdown = { results?: Array<{ dimension_values?: unknown[]; value?: unknown }> };
 /** Counts per dimension value from a follower_demographics response (last dimension is the breakdown). */

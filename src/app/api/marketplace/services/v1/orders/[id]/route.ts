@@ -1,3 +1,4 @@
+import { isMarketplaceAdmin } from "@/lib/marketplace/admin";
 import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
@@ -15,7 +16,7 @@ const clean = (value: unknown, max: number, min = 1) => {
   const cleaned = value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
   return cleaned.length >= min ? cleaned : "";
 };
-function isAdmin(email?: string | null) { return !!email && (process.env.MARKETPLACE_ADMIN_EMAILS || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean).includes(email.toLowerCase()); }
+function isAdmin(email?: string | null) { return isMarketplaceAdmin(email); }
 function visible(doc: Record<string, unknown>) { const result = { ...doc }; for (const key of ["clientUserId", "expertUserId", "providerPaymentId"]) delete result[key]; return result; }
 
 export async function GET(_request: Request, context: Context) {

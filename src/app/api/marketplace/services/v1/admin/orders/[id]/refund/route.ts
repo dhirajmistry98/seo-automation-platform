@@ -1,3 +1,4 @@
+import { isMarketplaceAdmin } from "@/lib/marketplace/admin";
 import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
@@ -10,7 +11,7 @@ import { marketplacePaymentsEnabled } from "@/lib/marketplace/payments";
 type Context = { params: Promise<{ id: string }> };
 type Refund = { id?: string; payment_id?: string; amount?: number; currency?: string; status?: string; receipt?: string };
 const reply = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
-function isAdmin(email?: string | null) { return !!email && (process.env.MARKETPLACE_ADMIN_EMAILS || "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean).includes(email.toLowerCase()); }
+function isAdmin(email?: string | null) { return isMarketplaceAdmin(email); }
 
 export async function POST(request: Request, context: Context) {
   if (!marketplacePaymentsEnabled()) return reply({ error: "Marketplace refunds are disabled while payment and payout operations are being prepared." }, 503);

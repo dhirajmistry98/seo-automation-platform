@@ -1,3 +1,4 @@
+import { isMarketplaceAdmin } from "@/lib/marketplace/admin";
 import { ObjectId, type Db, type Document } from "mongodb";
 import { RESPONSE_WINDOW_HOURS, parseUsageRights, respondByFrom } from "@/lib/marketplace/booking-cart";
 import clientPromise from "@/lib/mongodb";
@@ -11,7 +12,7 @@ export const error = (message: string, status = 400) => json({ error: message },
 export const record = (item: Record<string, unknown> | null) => item ? { ...item, _id: String(item._id), brandId: item.brandId ? String(item.brandId) : undefined, campaignId: item.campaignId ? String(item.campaignId) : undefined, collaborationId: item.collaborationId ? String(item.collaborationId) : undefined } : null;
 export const records = (items: Record<string, unknown>[]) => items.map((item) => record(item));
 export function admin(email?: string | null) {
-  return !!email && (process.env.MARKETPLACE_ADMIN_EMAILS || "").split(",").map((value) => value.trim().toLowerCase()).filter(Boolean).includes(email.toLowerCase());
+  return isMarketplaceAdmin(email);
 }
 export const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export const notBooking = { kind: { $ne: PACKAGE_BOOKING_KIND } };

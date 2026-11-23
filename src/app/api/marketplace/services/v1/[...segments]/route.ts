@@ -1,3 +1,4 @@
+import { isMarketplaceAdmin } from "@/lib/marketplace/admin";
 import { ObjectId, type Document } from "mongodb";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
@@ -14,10 +15,6 @@ const id = (value: unknown) => typeof value === "string" && /^[\da-f]{24}$/i.tes
 const str = (value: unknown) => typeof value === "string" ? value : "";
 const safeDoc = (item: Document) => Object.fromEntries(Object.entries(item).map(([key, value]) => [key, value instanceof ObjectId ? String(value) : value]));
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-function isMarketplaceAdmin(email?: string | null) {
-  return !!email && (process.env.MARKETPLACE_ADMIN_EMAILS || "").split(",").map((value) => value.trim().toLowerCase()).filter(Boolean).includes(email.toLowerCase());
-}
 
 function requestForParticipant(item: Document, userId: string) {
   const result = safeDoc(item);

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BarChart3, Boxes, BotMessageSquare, BriefcaseBusiness, FileBarChart, Globe2, LayoutGrid, LockKeyhole, Plus, Radar, ScanSearch, Search, Settings2, Target, UsersRound, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, Boxes, BotMessageSquare, BriefcaseBusiness, FileBarChart, Globe2, LayoutGrid, LockKeyhole, Plus, Radar, ScanSearch, Search, Settings2, Target, TrendingUp, UsersRound, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
@@ -44,12 +44,18 @@ export function WorkspaceSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [mine, setMine] = useState<{ websites: Array<{ domain: string; name: string; verified: boolean }>; keywords: Array<{ keyword: string; domain: string; clicks: number; position: number }> }>({ websites: [], keywords: [] });
 
   const q = query.trim().toLowerCase();
   const raw = query.trim();
   const matches = useMemo(() => q
     ? FEATURES.map((entry) => ({ entry, s: score(entry, q) })).filter((m) => m.s > 0).sort((a, b) => b.s - a.s).slice(0, 6).map((m) => m.entry)
     : FEATURES.slice(0, 6), [q]);
+  const shown = q.length >= 2 ? mine : { websites: [], keywords: [] };
+  const yours: Entry[] = [
+    ...shown.websites.map((site): Entry => ({ label: site.name, hint: `${site.domain} · ${site.verified ? "Open your site" : "Verify ownership to start"}`, href: `/dashboard/websites/${encodeURIComponent(site.domain)}`, icon: Globe2, terms: "" })),
+    ...shown.keywords.map((item): Entry => ({ label: item.keyword, hint: `Your keyword · position ${item.position.toFixed(1)} · ${item.clicks} clicks · ${item.domain}`, href: `/dashboard/rank-a-page?keyword=${encodeURIComponent(item.keyword)}&url=${encodeURIComponent(`https://${item.domain}`)}`, icon: TrendingUp, terms: "" })),
+  ];
   const actions: Entry[] = !raw ? [] : looksLikeUrl(raw) ? [
     { label: `Check the SEO of ${raw}`, hint: "Instant health score and issues", href: `/dashboard/seo-checker?url=${encodeURIComponent(raw)}`, icon: ScanSearch, terms: "" },
     { label: `Add ${raw} as a website`, hint: "Track rankings, health and AI visibility", href: `/dashboard/websites?domain=${encodeURIComponent(raw)}#website-domain`, icon: Plus, terms: "" },
@@ -57,7 +63,19 @@ export function WorkspaceSearch() {
     { label: `Rank a page for “${raw}”`, hint: "See your Google position and a plan to move up", href: `/dashboard/rank-a-page?keyword=${encodeURIComponent(raw)}`, icon: Target, terms: "" },
     { label: `Research “${raw}”`, hint: "Keyword volume, competitors and SERP", href: "/dashboard/research", icon: BarChart3, terms: "" },
   ];
-  const items = [...matches, ...actions];
+  const items = [...yours, ...matches, ...actions];
+
+  useEffect(() => {
+    if (q.length < 2) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetch(`/api/workspace/search?q=${encodeURIComponent(q)}`, { signal: controller.signal, cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => { if (data && Array.isArray(data.websites) && Array.isArray(data.keywords)) setMine({ websites: data.websites, keywords: data.keywords }); })
+        .catch(() => undefined);
+    }, 200);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [q]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -112,10 +130,12 @@ export function WorkspaceSearch() {
       <kbd className="workspace-search-kbd">⌘K</kbd>
       {open && <div className="ws-search-panel">
         <ul id={listId} role="listbox" aria-label="Search suggestions">
+          {yours.length > 0 && <li className="ws-search-group" role="presentation">Your sites and keywords</li>}
+          {yours.map((entry, i) => renderItem(entry, i))}
           <li className="ws-search-group" role="presentation">{q ? (matches.length ? "Features" : `No feature called “${raw}”`) : "Jump to"}</li>
-          {matches.map((entry, i) => renderItem(entry, i))}
+          {matches.map((entry, i) => renderItem(entry, yours.length + i))}
           {actions.length > 0 && <li className="ws-search-group" role="presentation">{looksLikeUrl(raw) ? "Do something with this URL" : "Do something with this keyword"}</li>}
-          {actions.map((entry, i) => renderItem(entry, matches.length + i))}
+          {actions.map((entry, i) => renderItem(entry, yours.length + matches.length + i))}
         </ul>
         <p className="ws-search-foot"><kbd>↑</kbd><kbd>↓</kbd> to move · <kbd>Enter</kbd> to open · <kbd>Esc</kbd> to close</p>
       </div>}

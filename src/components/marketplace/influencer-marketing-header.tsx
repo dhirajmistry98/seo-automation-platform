@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/marketing/brand-logo";
 import { WorkspaceNotifications } from "@/components/workspace/workspace-notifications";
 import { signOutAction } from "@/app/login/action";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { ThemeToggle, type WorkspaceTheme } from "@/components/workspace/theme-toggle";
 
 const base = "/influencer-marketing";
 const primaryLinks = [
@@ -23,7 +24,7 @@ function initials(name: string) {
   return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "U";
 }
 
-export function InfluencerMarketingHeader({ brandName, userName, userEmail, showAdmin }: { brandName: string; userName: string; userEmail: string; showAdmin: boolean }) {
+export function InfluencerMarketingHeader({ brandName, userName, userEmail, showAdmin, theme }: { brandName: string; userName: string; userEmail: string; showAdmin: boolean; theme: WorkspaceTheme }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -69,6 +70,7 @@ export function InfluencerMarketingHeader({ brandName, userName, userEmail, show
       <div className="imh-actions">
         <Link href={`${base}/campaigns`} className="imh-cta"><Plus size={15} /><span>Post a campaign</span></Link>
         <WorkspaceNotifications scope="influencer-marketing" />
+        <ThemeToggle initialTheme={theme} className="imh-theme-toggle" />
         <div className="imh-account" ref={menuRef}>
           <button type="button" className="imh-avatar-button" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Account menu" onClick={() => setMenuOpen((open) => !open)}>
             <span className="imh-avatar" aria-hidden="true">{initials(userName || userEmail)}</span>

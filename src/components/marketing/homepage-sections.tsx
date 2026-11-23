@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SafeImage } from "@/components/ui/safe-image";
-import { Activity, ArrowDown, ArrowUpRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, ChevronDown, FileCheck2, Info, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
+import { Activity, ArrowDown, ChartLine, FileText, Globe, ZoomIn, ArrowUpRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, ChevronDown, FileCheck2, Info, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { BRAND, ROUTES } from "@/lib/marketing";
 import clientPromise from "@/lib/mongodb";
 import { LISTABLE_CREATOR_STATUS, profileTier } from "@/lib/marketplace/core";
@@ -171,15 +171,101 @@ function TickerTrack({ label }: { label?: string }) {
   );
 }
 
-export function ProductsSection() {
+export function TickerSection() {
   return (
-    <section id="products" className="landing-ticker" aria-label="What SEO Studio covers">
-      {/* Anchors used by the header and footer links */}
-      <span id="application" className="landing-ticker-anchor" />
-      <span id="wordpress" className="landing-ticker-anchor" />
-      <span id="ecosystem" className="landing-ticker-anchor" />
+    <section className="landing-ticker" aria-label="What SEO Studio covers">
       <div className="landing-ticker-band is-back"><TickerTrack /></div>
       <div className="landing-ticker-band is-front"><TickerTrack label={`Covers ${tickerTopics.join(", ")}`} /></div>
+    </section>
+  );
+}
+
+function AppExample() {
+  const rows: [string, number, number][] = [["Technical", 4, 82], ["On-page", 9, 66], ["Content", 6, 72], ["Local presence", 3, 54]];
+  return (
+    <div className="landing-sp-preview" role="img" aria-label="Example site overview: technical 4 issues, on-page 9, content 6, local presence 3">
+      <p className="landing-sp-preview-label">Site overview · Example</p>
+      {rows.map(([name, issues, width]) => (
+        <div className="landing-sp-row" key={name} aria-hidden="true"><span>{name}</span><i><b style={{ width: `${width}%` }} /></i><em>{issues} issues</em></div>
+      ))}
+    </div>
+  );
+}
+
+function PluginExample() {
+  return (
+    <div className="landing-sp-preview" role="img" aria-label="Example proposed SEO title change awaiting approval">
+      <p className="landing-sp-preview-label">SEO title · Proposed change</p>
+      <div className="landing-sp-old" aria-hidden="true">Plumbing Services | Home</div>
+      <div className="landing-sp-new" aria-hidden="true">Emergency Plumber in Leeds — 24/7, Fixed Prices</div>
+      <div className="landing-sp-approve" aria-hidden="true"><span>Awaiting your approval</span><b>Approve change</b></div>
+    </div>
+  );
+}
+
+export function ProductsSection() {
+  return (
+    <section id="products" className="landing-sp">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="landing-sp-head">
+          <div>
+            <p className="landing-sp-eyebrow"><i aria-hidden="true" /> The product system</p>
+            <h2>Two focused tools.<br /><strong>One clearer way</strong> to work.</h2>
+          </div>
+          <p>Use the application to find and understand opportunities. Use the WordPress plugin to manage supported changes where you publish.</p>
+        </div>
+        <div className="landing-sp-grid">
+          <article id="application" className="landing-sp-card">
+            <span className="landing-sp-pill">Product 01 · Web application</span>
+            <h3>See the <strong>whole search</strong> picture.</h3>
+            <p>Website health, keyword research, competitor context and authorized search data in one practical workspace.</p>
+            <AppExample />
+          </article>
+          <article id="wordpress" className="landing-sp-card">
+            <span className="landing-sp-pill">Product 02 · WordPress plugin</span>
+            <h3>Make <strong>approved updates</strong> where you publish.</h3>
+            <p>Manage metadata and technical SEO settings in WordPress, with a review step and a visible change history.</p>
+            <PluginExample />
+          </article>
+        </div>
+        <p id="ecosystem" className="landing-sp-note"><strong>Connected by authorization.</strong> Shared data and product synchronization depend on implementation and the access you approve.</p>
+      </div>
+    </section>
+  );
+}
+
+const services = [
+  { icon: ChartLine, title: "Technical SEO audits", points: ["Indexing, metadata and links", "Performance and crawl issues"] },
+  { icon: FileText, title: "On-page & content", points: ["Titles, headings and structure", "Internal links and content gaps"] },
+  { icon: Globe, title: "GEO, AEO & LLMO readiness", points: ["Structure signals for AI answers", "Provider-backed AI mention reports"], featured: true },
+  { icon: MapPin, title: "Local SEO & rank tracking", points: ["Any country, city or region", "Location and language aware"] },
+  { icon: ZoomIn, title: "Keyword & competitor research", points: ["Demand and competitor gaps", "Backlink summaries"] },
+  { icon: Blocks, title: "WordPress SEO management", points: ["Titles, schema, sitemaps, redirects", "Review step and change history"] },
+];
+
+export function ServicesSection() {
+  return (
+    <section id="services" className="landing-sp landing-svc">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="landing-sp-head">
+          <div>
+            <p className="landing-sp-eyebrow"><i aria-hidden="true" /> Our services</p>
+            <h2>Realise your search goals<br />with <strong>one workspace</strong></h2>
+          </div>
+          <p>Each area answers one practical question about your site and its visibility — from crawl health to AI answers.</p>
+        </div>
+        <div className="landing-svc-grid">
+          {services.map(({ icon: Icon, title, points, featured }) => (
+            <Link href="#features" className={`landing-svc-card${featured ? " is-featured" : ""}`} key={title}>
+              <span className="landing-svc-icon"><Icon size={30} strokeWidth={1.3} aria-hidden="true" /></span>
+              <span className="landing-svc-go" aria-hidden="true"><ArrowUpRight size={14} /></span>
+              <h3>{title}</h3>
+              <ul>{points.map((point) => <li key={point}>{point}</li>)}</ul>
+            </Link>
+          ))}
+        </div>
+        <p className="landing-svc-foot"><Link href={ROUTES.signIn}>Start free</Link> and connect your first site in minutes — reports, expert services and creator collaborations included.</p>
+      </div>
     </section>
   );
 }
@@ -368,10 +454,10 @@ export function FinalCTA() {
       <span className="landing-bigcta-dot is-two" aria-hidden="true" />
       <div className="landing-bigcta-inner mx-auto max-w-7xl px-5 sm:px-8">
         <p className="landing-bigcta-eyebrow">Let’s grow together</p>
-        <h2>Start your search success story today<span>.</span></h2>
-        <Link href={ROUTES.signIn} className="landing-bigcta-button" aria-label="Start your audit">
+        <h2 aria-label="Start your search success story today.">Start your search success story today<span className="landing-bigcta-stop" aria-hidden="true" /></h2>
+        <Link href={ROUTES.signIn} className="landing-bigcta-button" aria-label="Start free audit">
           <ArrowUpRight size={16} aria-hidden="true" />
-          <span>Start your<br />audit</span>
+          <span>Start free<br />audit</span>
         </Link>
       </div>
     </section>
@@ -421,8 +507,10 @@ export function HomePageContent() {
     <>
       <HeroSection />
       <ScrollCue />
+      <TickerSection />
       <PrinciplesSection />
       <ProductsSection />
+      <ServicesSection />
       <MarketplaceSection />
       <FeaturesSection />
       <AutomationSection />

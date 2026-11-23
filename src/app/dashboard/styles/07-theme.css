@@ -1,7 +1,9 @@
 /* ── Dashboard light / dark theme ──
    Dark overrides are scoped to .workspace-shell[data-ws-theme="dark"], so nothing changes in light mode
    and nothing outside the workspace is affected. Accent colours (orange, status greens/reds) are kept. */
-.workspace-shell[data-ws-theme="dark"] { color-scheme: dark; }
+/* Rules written with the brand variables (muted text, footers, headings) are not hex colours, so they are
+   flipped here: "navy" text becomes light and "cream" surfaces become dark. */
+.workspace-shell[data-ws-theme="dark"] { color-scheme: dark; --brand-navy: #f1ede8; --brand-cream: #1d1b19; color: #f1ede8; }
 .workspace-shell[data-ws-theme="dark"] ::selection { background: rgba(255,106,0,.35); color: #fff; }
 
 /* Theme toggle (sits in the header with the other round buttons) */

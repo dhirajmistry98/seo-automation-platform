@@ -1,0 +1,140 @@
+/* ════════ ws2 shell: full-height sidebar layout (reference mockup) ════════ */
+.workspace-shell.ws2 { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100dvh; background: #fdfaf7; }
+.ws2-side { position: sticky; top: 0; display: flex; height: 100dvh; flex-direction: column; gap: 14px; overflow-y: auto; border-right: 1px solid #efe8e0; background: #fdfaf7; padding: 26px 16px 16px; }
+.ws2-brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 14px; color: #1d1a17; text-decoration: none; user-select: none; -webkit-user-select: none; }
+.ws2-brand-logo { width: 36px; height: 36px; object-fit: contain; filter: brightness(0); }
+.ws2-brand strong, .ws2-brand small { display: block; }
+.ws2-brand strong { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.ws2-brand small { margin-top: 1px; color: #8a8178; font-size: 11px; }
+.workspace-shell.ws2 .workspace-sidebar { position: static; width: auto; height: auto; overflow: visible; border: 0; box-shadow: none; background: transparent; padding: 0; gap: 4px; }
+.workspace-shell.ws2 .workspace-sidebar > a { min-height: 44px; border-radius: 12px; padding: 0 14px; gap: 14px; font-size: 15px; font-weight: 500; color: #1d1a17; }
+.workspace-shell.ws2 .workspace-sidebar > a > svg { color: #ff6a00; }
+.workspace-shell.ws2 .workspace-sidebar > a:hover { background: #fbefe5; }
+.workspace-shell.ws2 .workspace-sidebar > a.is-current { background: #fde6d5; color: #1d1a17; font-weight: 600; }
+.workspace-shell.ws2 .workspace-nav-count { margin-left: auto; display: grid; place-items: center; min-width: 20px; height: 20px; border-radius: 999px; background: #1d1a17; color: #fff; font-size: 11px; padding: 0 6px; }
+.ws2-promo { margin-top: auto; display: grid; gap: 6px; border-radius: 16px; background: linear-gradient(160deg, #fff3ea, #fdf6f0); padding: 18px; color: #1d1a17; }
+.ws2-promo > svg { color: #ff6a00; }
+.ws2-promo strong { font-size: 15px; }
+.ws2-promo p { margin: 0; color: #6f665e; font-size: 12px; line-height: 1.45; }
+.ws2-promo a { justify-self: start; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; border: 1.5px solid #ff6a00; border-radius: 999px; padding: 6px 14px; color: #ff6a00; font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.ws2-promo a:hover { background: #ff6a00; color: #fff; }
+.ws2-user { display: flex; align-items: center; gap: 10px; border-top: 1px solid #efe8e0; margin: 0 -16px; padding: 14px 16px 0; color: #1d1a17; text-decoration: none; }
+.ws2-user > span { display: grid; flex: 1; min-width: 0; }
+.ws2-user strong { font-size: 13.5px; }
+.ws2-user small { overflow: hidden; color: #8a8178; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.ws2-user > svg { color: #8a8178; }
+
+.ws2-body { display: flex; min-width: 0; flex-direction: column; }
+.ws2-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; border-bottom: 1px solid #f1ebe4; background: rgba(253,250,247,.88); backdrop-filter: blur(10px); padding: 12px 32px; }
+.ws2-actions { display: flex; align-items: center; gap: 10px; }
+.ws2-actions form { margin: 0; }
+.ws2-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; border: 1px solid #efe5db; border-radius: 999px; background: #fff; padding: 0 18px; color: #1d1a17; font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: 0 1px 3px rgba(8,7,6,.04); }
+.ws2-pill > svg { color: #ff6a00; }
+.ws2-pill:hover { border-color: #ffc9a3; }
+.ws2-profile { display: inline-flex; align-items: center; gap: 10px; padding: 0 8px; color: #1d1a17; text-decoration: none; font-size: 14.5px; }
+.ws2-signout { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; border: 0; border-radius: 999px; background: #ff6a00; padding: 0 22px; color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 16px rgba(255,106,0,.28); }
+.ws2-signout:hover { background: #ea5f00; }
+.ws2-signout > svg { display: none; }
+.workspace-shell.ws2 .workspace-notification-trigger { width: 42px; height: 42px; border-radius: 50%; border: 1px solid #efe5db; background: #fff; color: #ff6a00; }
+.ws2-main.workspace-main { width: 100%; max-width: 1400px; padding: 26px 32px 40px; }
+
+/* hero wave */
+.ws2-hero { position: relative; isolation: isolate; overflow: hidden; }
+.ws2-hero::before { content: ""; position: absolute; z-index: -1; right: 8%; top: -60px; width: 520px; height: 220px; background: radial-gradient(ellipse at 40% 70%, rgba(255,140,60,.34), rgba(255,170,110,.14) 45%, transparent 70%); filter: blur(6px); border-radius: 50%; pointer-events: none; }
+.ws2-hero h1 { font-size: clamp(30px, 3.4vw, 42px); }
+.ws2-hero .workspace-primary-link { border-radius: 999px; background: #ff6a00; color: #fff; box-shadow: 0 8px 20px rgba(255,106,0,.3); }
+
+/* cards */
+.workspace-shell.ws2 .workspace-insight-card, .workspace-shell.ws2 .ws2-keywords, .workspace-shell.ws2 .workspace-kpi-card { border: 1px solid #f1e8df; border-radius: 18px; background: #fff; box-shadow: 0 4px 18px rgba(8,7,6,.04); }
+.workspace-shell.ws2 .ws2-keywords { padding: 22px; }
+.ws2-kw-tools { display: flex; justify-content: flex-end; gap: 10px; margin: -44px 0 14px auto; width: max-content; max-width: 100%; }
+.ws2-kw-search { display: flex; align-items: center; gap: 8px; min-height: 38px; border: 1px solid #eee5dc; border-radius: 999px; padding: 0 14px; color: #9a9088; }
+.ws2-kw-search input { width: 200px; border: 0; background: transparent; font: inherit; font-size: 13px; outline: none; color: #1d1a17; }
+.ws2-kw-tools select { min-height: 38px; border: 1px solid #eee5dc; border-radius: 999px; background: #fff; padding: 0 12px; font: inherit; font-size: 13px; }
+.ws2-kw-scroll { overflow-x: auto; }
+.ws2-kw-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.ws2-kw-table th { background: #faf6f2; padding: 11px 14px; color: #3a342e; font-weight: 600; text-align: left; }
+.ws2-kw-table td { border-top: 1px solid #f3ede7; padding: 12px 14px; color: #1d1a17; }
+.ws2-kw-source { color: #6f665e; font-size: 12.5px; }
+.ws2-kw-empty { color: #8a8178; text-align: center; }
+
+@media (max-width: 1000px) {
+  .workspace-shell.ws2 { grid-template-columns: 1fr; }
+  .ws2-side { position: sticky; z-index: 25; height: auto; flex-direction: row; align-items: center; overflow-x: auto; border-right: 0; border-bottom: 1px solid #efe8e0; padding: 10px 16px; }
+  .ws2-brand { padding: 0; }
+  .ws2-brand span, .ws2-promo, .ws2-user { display: none; }
+  .workspace-shell.ws2 .workspace-sidebar { flex-direction: row; }
+  .workspace-shell.ws2 .workspace-sidebar > a { flex: none; font-size: 13px; }
+  .ws2-header { position: static; padding: 10px 16px; flex-wrap: wrap; }
+  .ws2-pill span, .ws2-profile strong { display: none; }
+  .ws2-pill { padding: 0 12px; }
+  .ws2-main.workspace-main { padding: 20px 16px 32px; }
+  .ws2-kw-tools { margin: 0 0 12px; width: auto; }
+  .ws2-kw-search { flex: 1; } .ws2-kw-search input { width: 100%; }
+}
+
+/* ── Websites onboarding hero ── */
+.ws2-site-hero { position: relative; isolation: isolate; overflow: hidden; display: grid; justify-items: center; gap: 14px; border: 1px solid #f1e8df; border-radius: 24px; background: #fffdfb; padding: 44px 24px 34px; text-align: center; }
+.ws2-site-hero::before, .ws2-site-hero::after { content: ""; position: absolute; z-index: -1; border-radius: 50%; background: #fde6d5; pointer-events: none; }
+.ws2-site-hero::before { right: -70px; top: -90px; width: 260px; height: 260px; }
+.ws2-site-hero::after { left: -80px; bottom: -110px; width: 230px; height: 230px; opacity: .7; }
+.ws2-site-eyebrow { margin: 0; color: #c2410c; font-size: 11px; font-weight: 700; letter-spacing: .14em; }
+.ws2-site-hero h1 { margin: 0; font-size: clamp(30px, 4vw, 46px); line-height: 1.08; color: #c2410c; }
+.ws2-site-hero h1 span { display: block; color: #c2410c; }
+.ws2-site-lede { max-width: 480px; margin: 0; color: #5c544c; font-size: 15px; line-height: 1.55; }
+.ws2-site-form { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: min(100%, 600px); margin-top: 6px; }
+.ws2-site-form input[name="domain"] { flex: 1 1 260px; min-height: 50px; border: 1.5px solid #2a2520; border-radius: 14px; background: #fff; padding: 0 18px; font: inherit; font-size: 15px; color: #1d1a17; }
+.ws2-site-form input[name="domain"]:focus { outline: none; border-color: #ff6a00; box-shadow: 0 0 0 3px rgba(255,106,0,.14); }
+.ws2-site-form select { min-height: 50px; border: 1px solid #e6ddd3; border-radius: 14px; background: #fff; padding: 0 12px; font: inherit; }
+.ws2-site-form button { min-height: 50px; border: 0; border-radius: 14px; background: #c2410c; padding: 0 26px; color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 10px 22px rgba(194,65,12,.25); }
+.ws2-site-form button:hover { background: #a8380a; }
+.ws2-site-try { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 0; color: #5c544c; font-size: 13px; }
+.ws2-site-try a { color: #c2410c; font-weight: 600; text-decoration: none; }
+.ws2-site-try a:hover { text-decoration: underline; }
+.ws2-site-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 18px 0 0; padding: 0; list-style: none; }
+.ws2-site-steps a { display: flex; align-items: flex-start; gap: 14px; height: 100%; border: 1px solid #f1e8df; border-radius: 18px; background: #fffdfb; padding: 20px; color: #1d1a17; text-decoration: none; }
+.ws2-site-steps a:hover { border-color: #ffc9a3; }
+.ws2-step-num { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border: 1.5px solid #d9cfc5; border-radius: 50%; font-size: 13px; font-weight: 600; }
+.ws2-site-steps .is-current .ws2-step-num { border-color: #1d1a17; background: #1d1a17; color: #ff8a3d; }
+.ws2-site-steps .is-done .ws2-step-num { border-color: #16a34a; background: #16a34a; color: #fff; }
+.ws2-site-steps strong, .ws2-site-steps small { display: block; }
+.ws2-site-steps strong { font-size: 14.5px; }
+.ws2-site-steps small { margin-top: 4px; color: #5c544c; font-size: 12.5px; line-height: 1.45; }
+.ws2-site-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0 0; border: 1px solid #f1e8df; border-radius: 18px; background: #fffdfb; padding: 20px 24px; }
+.ws2-site-stats dt { color: #3a342e; font-size: 11px; font-weight: 700; letter-spacing: .1em; }
+.ws2-site-stats dd { margin: 6px 0 0; font-size: 26px; font-weight: 800; color: #1d1a17; }
+@media (max-width: 760px) { .ws2-site-steps, .ws2-site-stats { grid-template-columns: 1fr 1fr; } .ws2-site-steps { grid-template-columns: 1fr; } }
+
+/* ── Header search suggestions ── */
+.workspace-search-form { position: relative; max-width: 440px; }
+.ws-search-panel { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 60; min-width: 320px; overflow: hidden; border: 1px solid #efe5db; border-radius: 16px; background: #fff; box-shadow: 0 18px 40px rgba(8,7,6,.12); }
+.ws-search-panel ul { max-height: min(60vh, 420px); overflow-y: auto; margin: 0; padding: 6px; list-style: none; }
+.ws-search-group { padding: 10px 10px 4px; color: #9a9088; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.ws-search-panel li[role="option"] { display: flex; align-items: center; gap: 10px; border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+.ws-search-panel li.is-active { background: #fff1e7; }
+.ws-search-item-icon { display: grid; flex: none; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #fbefe5; color: #ff6a00; }
+.ws-search-item-copy { display: grid; flex: 1; min-width: 0; }
+.ws-search-item-copy strong { overflow: hidden; color: #1d1a17; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ws-search-item-copy small { overflow: hidden; color: #8a8178; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ws-search-item-go { flex: none; color: #cfc4b9; }
+.ws-search-panel li.is-active .ws-search-item-go { color: #ff6a00; }
+.ws-search-foot { margin: 0; border-top: 1px solid #f3ede7; padding: 8px 14px; color: #9a9088; font-size: 11px; }
+.ws-search-foot kbd { display: inline-block; margin: 0 2px; border: 1px solid #e6ddd3; border-radius: 4px; padding: 0 4px; font: inherit; font-size: 10px; }
+@media (max-width: 1000px) { .workspace-search-form { flex: 1 1 100%; max-width: none; } .ws-search-panel { min-width: 0; } }
+
+/* ── "Choose what to do next": compact inline rows ── */
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 20px; grid-template-areas: "icon title arrow" "icon desc arrow";
+  align-items: center; align-content: center; column-gap: 14px; row-gap: 3px;
+  min-height: 0; border: 1px solid #f1e8df; border-radius: 16px; background: #fff; padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(8,7,6,.03);
+}
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a:hover { border-color: #ffc9a3; transform: none; box-shadow: 0 8px 22px rgba(8,7,6,.07); }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a > span { grid-area: icon; width: 44px; height: 44px; border-radius: 12px; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links strong { grid-area: title; align-self: end; font-size: 14.5px; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links small { grid-area: desc; align-self: start; font-size: 12.5px; line-height: 1.45; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a > svg { grid-area: arrow; align-self: center; justify-self: end; color: #c9bdb1; }
+.workspace-shell.ws2 .workspace-route-main .workspace-quick-links a:hover > svg { color: #ff6a00; transform: translateX(3px); }
+@media (max-width: 1200px) { .workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .workspace-shell.ws2 .workspace-route-main .workspace-quick-links { grid-template-columns: 1fr; } }

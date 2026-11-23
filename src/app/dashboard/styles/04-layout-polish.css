@@ -1,0 +1,192 @@
+/* ════════════════════════════════════════════════════════════════
+   Monarch-Style Layout Polish
+   Keeps original orange/cream brand colors. Improves spacing,
+   sidebar nav, card cleanliness, and content hierarchy.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar: pill-shaped active item (like Monarch) ── */
+.workspace-shell .workspace-sidebar {
+  background: #ffffff;
+  border-right: 1px solid #ede8e1;
+  box-shadow: 1px 0 0 0 rgba(8,7,6,0.04);
+  padding: 20px 12px;
+  gap: 2px;
+}
+.workspace-shell .workspace-sidebar > a {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #49423b;
+  transition: background .15s ease, color .15s ease;
+}
+.workspace-shell .workspace-sidebar > a:hover {
+  background: #f5f0ea;
+  color: #080706;
+}
+.workspace-shell .workspace-sidebar > a.is-current {
+  background: #fff1e7;
+  color: #080706;
+  font-weight: 650;
+  box-shadow: none;
+}
+.workspace-shell .workspace-sidebar > a > svg {
+  color: #ff6a00;
+}
+.workspace-shell .workspace-sidebar > a.is-current > svg {
+  color: #ff6a00;
+}
+
+/* ── Sidebar footer: cleaner ── */
+.workspace-shell .workspace-sidebar-foot {
+  padding-top: 14px;
+  font-size: 11px;
+  color: #9a9088;
+  border-top: 1px solid #ede8e1;
+  margin-top: auto;
+}
+
+/* ── Main content area: more breathing room ── */
+.workspace-shell .workspace-main-redesign {
+  padding: 36px clamp(24px,4vw,56px) 48px;
+  background: #faf8f5;
+}
+
+/* ── Page heading: bigger presence like Monarch ── */
+.workspace-shell .workspace-page-heading h1 {
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 650;
+  letter-spacing: -.04em;
+  line-height: 1.1;
+  color: #080706;
+}
+
+/* ── Section headings: cleaner, more spaced ── */
+.workspace-section-heading {
+  margin-bottom: 20px;
+}
+.workspace-section-heading h2 {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.025em;
+  color: #211e1a;
+}
+
+/* ── KPI cards: white background with cleaner border ── */
+.workspace-shell .workspace-kpis article {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(8,7,6,0.05);
+}
+
+/* ── Site cards: white, cleaner ── */
+.workspace-shell .workspace-site-card {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(8,7,6,0.05);
+}
+
+/* ── Module cards: white, cleaner ── */
+.workspace-shell .workspace-module-card {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(8,7,6,0.06);
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+.workspace-shell .workspace-module-card:hover {
+  box-shadow: 0 4px 16px rgba(8,7,6,0.1);
+  transform: translateY(-1px);
+}
+
+/* ── Empty site state: Monarch-style dashed card ── */
+.workspace-shell .workspace-site-empty {
+  background: #ffffff;
+  border: 1.5px dashed #cfc7be;
+  border-radius: 10px;
+}
+
+/* ── Insight cards: white ── */
+.workspace-shell .workspace-insight-card {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(8,7,6,0.05);
+}
+
+/* ── Quick links: pill shape like Monarch's filter buttons ── */
+.workspace-quick-links a {
+  border-radius: 999px;
+  transition: background .15s, border-color .15s, transform .12s;
+}
+.workspace-quick-links a:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Tool cards: white, hover lift ── */
+.workspace-tool-card {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(8,7,6,0.05);
+  transition: box-shadow .18s, transform .18s;
+}
+.workspace-tool-card:hover {
+  box-shadow: 0 6px 20px rgba(8,7,6,0.1);
+  transform: translateY(-2px);
+}
+
+/* ── Add site form: white, cleaner ── */
+.workspace-shell .workspace-add-site > div {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 10px;
+}
+
+/* ── Outline button: more Monarch-like (rounder) ── */
+.workspace-outline-link {
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+/* ── Account bar in light header: tighter, cleaner ── */
+.workspace-shell .workspace-header-inner {
+  min-height: 64px;
+}
+
+/* ── Notification badge: more visible ── */
+.workspace-shell .workspace-notification-trigger {
+  border-radius: 10px;
+}
+
+/* ── Status dot on sidebar nav count badge ── */
+.workspace-shell .workspace-sidebar > a .workspace-nav-count {
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+}
+
+/* ── Research / workspace panels: white bg ── */
+.workspace-overview,
+.workspace-integration-site,
+.workspace-integration-role,
+.workspace-account-page,
+.workspace-account-active {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #ede8e1;
+  box-shadow: 0 1px 4px rgba(8,7,6,0.05);
+}
+
+/* ── Google data cards: white ── */
+.google-data-card {
+  background: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(8,7,6,0.05);
+}

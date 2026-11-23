@@ -1,0 +1,208 @@
+/* ════════════════════════════════════════════════════════════════
+   Design Enhancement Layer — Modern SaaS UI
+   Overrides for better readability, depth, and interaction feel.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Fix: primary action button hover (was going fully transparent) ── */
+.workspace-primary-link:hover { background: #e85f00; color: #080706; }
+.workspace-shell .workspace-route-main .workspace-primary-link:hover { background: #e85f00; color: #080706; box-shadow: 0 4px 12px rgb(255 106 0 / 30%); }
+
+/* ── Global transitions on interactive elements ── */
+.workspace-primary-link,
+.workspace-outline-link,
+.seo-check-input button,
+.kw-opt-fields button,
+.google-indexing-row button,
+.site-verification-box button,
+.site-audit-box button,
+.research-export,
+.visibility-run-button,
+.provider-alert-primary,
+.provider-alert-secondary,
+.research-verify-button,
+.action-engine-tool-link,
+.authority-index-summary button,
+.hreflang-output-tabs button,
+.crawl-progress-foot button,
+.research-history button,
+.seo-check-sites button,
+.website-delete-trigger,
+.rank-impact-btn,
+.wp-fix-btn,
+.wp-fix-apply {
+  transition: background .15s ease, border-color .15s ease, color .15s ease,
+              box-shadow .15s ease, transform .12s ease, opacity .15s ease;
+}
+
+/* ── Font size floor: bump illegible 8-9px text to readable sizes ── */
+
+/* Research table */
+.research-table th,.research-table td { font-size: 11px; }
+
+/* Research metric cards */
+.research-metric-grid small,.research-metric-grid > p { font-size: 11px; }
+
+/* Research secondary/detail text */
+.research-data-note,
+.research-history button span,
+.research-results-heading > div > p:last-child,
+.research-distribution div,
+.research-groups button { font-size: 11px; }
+
+.research-history button small,
+.research-history button time,
+.research-bars small { font-size: 10px; }
+
+/* Research empty state */
+.research-empty p { font-size: 11px; }
+
+/* Research form hints */
+.research-form label small { font-size: 11px; }
+
+/* Research overview charts heading */
+.research-overview-charts h3 { font-size: 11px; }
+
+/* Research filters */
+.research-filters label { font-size: 11px; }
+
+/* Location search feedback */
+.seo-location-message { font-size: 11px; }
+.seo-location-results button small { font-size: 11px; }
+
+/* Website activity */
+.website-activity li strong { font-size: 11px; }
+.website-activity li small,.website-activity > p { font-size: 10px; }
+.website-delete-panel p { font-size: 10px; }
+.website-cms-detection small { font-size: 10px; }
+
+/* Authority index */
+.authority-index-missing { font-size: 11px; }
+.authority-index-history li { font-size: 11px; }
+
+/* Visibility */
+.visibility-status { font-size: 10px; }
+.visibility-dimension li > p,.visibility-dimension li > small { font-size: 10px; }
+.visibility-recommendations ul,.visibility-limitations ul { font-size: 11px; }
+
+/* Crawl progress */
+.crawl-progress-elapsed { font-size: 12px; }
+.crawl-progress-steps li { font-size: 12px; }
+.crawl-progress-note { font-size: 11px; }
+
+/* SEO checker */
+.seo-check-panel h3 { font-size: 13px; }
+.seo-check-panel h4 { font-size: 12px; }
+.seo-check-facts > div { font-size: 12px; }
+.seo-check-facts small { font-size: 11px; }
+.seo-check-issues strong { font-size: 12px; }
+.seo-check-issues p,.seo-check-issues small { font-size: 11px; }
+.seo-check-note { font-size: 11px; }
+
+/* Google indexing */
+.google-indexing-block > p { font-size: 11px; }
+
+/* WordPress details */
+.wordpress-connection-content > p,.wordpress-connection-content li { font-size: 11px; }
+.wordpress-editor-refresh p { font-size: 10px; }
+.wordpress-connection-status { font-size: 11px; }
+
+/* Site crawl history */
+.site-crawl-history > div { font-size: 11px; }
+
+/* ── Card depth: subtle shadows for visual hierarchy ── */
+.research-metric-grid article,
+.research-overview-charts section,
+.seo-check-form,
+.seo-check-panel,
+.google-indexing-block,
+.visibility-score-card,
+.visibility-dimension,
+.visibility-recommendations,
+.visibility-limitations,
+.visibility-crawler-panel,
+.authority-index-summary,
+.authority-index-details,
+.action-engine-item,
+.diagnose-section,
+.rank-impact,
+.wp-fix-panel,
+.site-verification-box,
+.site-audit-box {
+  box-shadow: 0 1px 3px rgba(8, 7, 6, 0.06);
+}
+
+.seo-check-summary { box-shadow: 0 2px 8px rgba(8, 7, 6, 0.08); }
+
+/* ── Sidebar: left-border active indicator ── */
+.workspace-shell .workspace-sidebar > a.is-current {
+  box-shadow: inset 3px 0 0 #ff6a00;
+  font-weight: 650;
+}
+
+/* ── Button hover lifts for primary actions ── */
+.provider-alert-primary:hover,
+.research-verify-button:hover,
+.visibility-run-button:hover:not(:disabled),
+.authority-index-summary button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.provider-alert-primary:hover,
+.research-verify-button:hover { box-shadow: 0 4px 12px rgba(216, 88, 0, 0.3); }
+
+.visibility-run-button:hover:not(:disabled),
+.authority-index-summary button:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(8, 7, 6, 0.18); }
+
+.workspace-shell .workspace-notification-trigger:hover { box-shadow: 0 2px 8px rgba(8, 7, 6, 0.1); }
+
+/* ── Action engine tool link: hover lift ── */
+.action-engine-tool-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 106, 0, 0.14);
+}
+
+/* ── Research history rows: smooth hover ── */
+.research-history button:hover:not(.is-selected) { background: #f5efe9; }
+
+/* ── Smooth visibility progress bar ── */
+.visibility-progress > span { transition: width .4s ease; }
+
+/* ── SEO check score: hover glow ── */
+.seo-check-score { transition: box-shadow .18s ease; }
+.seo-check-score:hover { box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.1); }
+
+/* ── Account bar signout & profile: hover lift ── */
+.workspace-shell .workspace-signout:hover,
+.workspace-shell .workspace-signout:focus-visible,
+.workspace-shell .workspace-notification-trigger:hover { transform: translateY(-1px); }
+
+/* ── Research groups and keyword idea pills: subtle radius ── */
+.research-groups button { border-radius: 6px; }
+.kw-opt-ideas li { border-radius: 6px; }
+
+/* ── Action engine page link: hover background ── */
+.action-engine-page-link:hover { background: #fff7f0; }
+
+/* ── Crawl progress: button hover border ── */
+.crawl-progress-foot button:hover:not(:disabled) { border-color: #d85800; transform: translateY(-1px); }
+
+/* ── Hreflang output tabs: smooth transition ── */
+.hreflang-output-tabs button { transition: background .15s, border-color .15s, color .15s; }
+
+/* ── Rank impact and WP fix buttons: hover color ── */
+.rank-impact-btn:hover:not(:disabled) { color: #ff6a00; }
+.wp-fix-btn:hover { transform: translateY(-1px); }
+
+/* ── Provider alert and research submit: disabled cursor ── */
+.provider-alert-primary:disabled,
+.provider-alert-secondary:disabled { cursor: not-allowed; }
+
+/* ── Smooth hover on research export button ── */
+.research-export { transition: border-color .15s ease, color .15s ease; }
+
+/* ── Workspace site settings link: add hover lift ── */
+.workspace-shell .workspace-site-settings:hover { transform: translateY(-1px); }
+.workspace-shell .workspace-site-settings { transition: border-color .15s, background .15s, transform .12s; }
+
+/* ── WordPress editor save button ── */
+.wordpress-editor-save:hover:not(:disabled) { background: #2b241e; }

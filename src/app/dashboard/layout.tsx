@@ -13,7 +13,12 @@ import { ensurePersonalOrganization, getOrganizationMemberships } from "@/lib/or
 import { BRAND } from "@/lib/marketing";
 import { ArrowRight, BriefcaseBusiness, ChevronRight, LogOut, Rocket, UsersRound } from "lucide-react";
 import { WorkspaceSearch } from "@/components/workspace/workspace-search";
-import "./dashboard.css";
+import "./styles/01-base.css";
+import "./styles/02-tools.css";
+import "./styles/03-polish.css";
+import "./styles/04-layout-polish.css";
+import "./styles/05-reference.css";
+import "./styles/06-shell.css";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export const instant = false;

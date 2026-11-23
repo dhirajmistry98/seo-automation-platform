@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { SafeImage } from "@/components/ui/safe-image";
-import { Activity, ArrowDown, ArrowRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, Check, ChevronDown, FileCheck2, Info, LockKeyhole, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
+import { Activity, ArrowDown, ArrowUpRight, BadgeCheck, BarChart3, Blocks, Bot, Building2, Camera, ChartNoAxesCombined, ChevronDown, FileCheck2, Info, MapPin, Radar, Search, SearchCheck, ShieldCheck, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { BRAND, ROUTES } from "@/lib/marketing";
 import clientPromise from "@/lib/mongodb";
 import { LISTABLE_CREATOR_STATUS, profileTier } from "@/lib/marketplace/core";
 import { ScrollCue } from "./scroll-cue";
 import { BrandLogo } from "./brand-logo";
-import { ApplicationPreview, PluginPreview } from "./product-previews";
 
 const capabilities = [
   { icon: ShieldCheck, title: "Technical SEO audits", text: "Crawl verified websites to review indexing, metadata, links, performance and technical issues." },
@@ -157,45 +156,30 @@ function PrinciplesSection() {
   );
 }
 
+const tickerTopics = ["Technical SEO", "Local SEO", "AI Visibility", "Keyword Research", "Rank Tracking", "WordPress", "Search Console", "Site Audits"];
+
+function TickerTrack({ label }: { label?: string }) {
+  // Two identical halves: the track slides by exactly one half, so the loop never jumps.
+  return (
+    <div className="landing-ticker-track" {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}>
+      {[0, 1].map((half) => (
+        <ul key={half} aria-hidden={label ? true : undefined}>
+          {tickerTopics.map((topic) => <li key={topic}>{topic}<span aria-hidden="true">✱</span></li>)}
+        </ul>
+      ))}
+    </div>
+  );
+}
+
 export function ProductsSection() {
   return (
-    <section id="products" className="landing-products">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <SectionIntro index="01" eyebrow="The product system" title="Two focused tools. One clearer way to work." text="Use the application to find and understand opportunities. Use the WordPress plugin to manage supported changes where you publish." />
-        <article id="application" className="landing-product-row landing-product-app">
-          <div className="landing-product-copy">
-            <span className="landing-product-kicker"><ChartNoAxesCombined size={15} /> Product 01 · Web application</span>
-            <h3>See the whole search picture.</h3>
-            <p>Bring website health, keyword research, competitor context and authorized search data into one practical workspace.</p>
-            <ul>
-              <li><Check size={14} /> Website audits and issue tracking</li>
-              <li><Check size={14} /> Keywords and search performance</li>
-              <li><Check size={14} /> Evidence-based recommendations</li>
-            </ul>
-            <a className="landing-text-link" href="#features">Explore the application <ArrowRight size={15} /></a>
-          </div>
-          <div className="landing-product-visual"><ApplicationPreview /></div>
-        </article>
-        <article id="wordpress" className="landing-product-row landing-product-plugin">
-          <div className="landing-product-visual"><PluginPreview /></div>
-          <div className="landing-product-copy">
-            <span className="landing-product-kicker"><Blocks size={15} /> Product 02 · WordPress plugin</span>
-            <h3>Make approved updates where you publish.</h3>
-            <p>Manage metadata and technical SEO settings in WordPress, with a review step and a visible change history.</p>
-            <ul>
-              <li><Check size={14} /> Titles, descriptions and focus keywords</li>
-              <li><Check size={14} /> Canonicals, schema and sitemaps</li>
-              <li><Check size={14} /> Redirects and bulk editing</li>
-            </ul>
-            <a className="landing-text-link" href="#workflow">See the review workflow <ArrowRight size={15} /></a>
-          </div>
-        </article>
-        <div id="ecosystem" className="landing-connection-note">
-          <span className="landing-connection-icon"><LockKeyhole size={17} /></span>
-          <p><strong>Connected by authorization.</strong> Shared data and product synchronization depend on implementation and the access you approve.</p>
-          <span className="landing-connection-line" aria-hidden="true" />
-        </div>
-      </div>
+    <section id="products" className="landing-ticker" aria-label="What SEO Studio covers">
+      {/* Anchors used by the header and footer links */}
+      <span id="application" className="landing-ticker-anchor" />
+      <span id="wordpress" className="landing-ticker-anchor" />
+      <span id="ecosystem" className="landing-ticker-anchor" />
+      <div className="landing-ticker-band is-back"><TickerTrack /></div>
+      <div className="landing-ticker-band is-front"><TickerTrack label={`Covers ${tickerTopics.join(", ")}`} /></div>
     </section>
   );
 }
@@ -379,15 +363,16 @@ export function FAQSection() {
 
 export function FinalCTA() {
   return (
-    <section className="landing-cta-wrap">
-      <div className="landing-cta mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
-        <div className="landing-cta-copy">
-          <p className="landing-eyebrow"><span className="landing-eyebrow-dot" /> Your next useful SEO action</p>
-          <h2>Find the issue.<br /><em>Make the improvement.</em></h2>
-          <p>Bring analysis, research and approved WordPress updates into one connected workflow.</p>
-          <Link href={ROUTES.signIn} className="button-primary">Get started</Link>
-        </div>
-        <div className="landing-cta-mark" aria-hidden="true"><Activity size={32} /></div>
+    <section className="landing-bigcta">
+      <span className="landing-bigcta-dot is-one" aria-hidden="true" />
+      <span className="landing-bigcta-dot is-two" aria-hidden="true" />
+      <div className="landing-bigcta-inner mx-auto max-w-7xl px-5 sm:px-8">
+        <p className="landing-bigcta-eyebrow">Let’s grow together</p>
+        <h2>Start your search success story today<span>.</span></h2>
+        <Link href={ROUTES.signIn} className="landing-bigcta-button" aria-label="Start your audit">
+          <ArrowUpRight size={16} aria-hidden="true" />
+          <span>Start your<br />audit</span>
+        </Link>
       </div>
     </section>
   );

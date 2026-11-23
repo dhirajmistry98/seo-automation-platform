@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { auth } from "@/auth";
 import { connection } from "next/server";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import clientPromise from "@/lib/mongodb";
 import { ensureSessionUserProfile } from "@/lib/user-profile";
@@ -13,12 +14,14 @@ import { ensurePersonalOrganization, getOrganizationMemberships } from "@/lib/or
 import { BRAND } from "@/lib/marketing";
 import { ArrowRight, BriefcaseBusiness, ChevronRight, LogOut, Rocket, UsersRound } from "lucide-react";
 import { WorkspaceSearch } from "@/components/workspace/workspace-search";
+import { ThemeToggle } from "@/components/workspace/theme-toggle";
 import "./styles/01-base.css";
 import "./styles/02-tools.css";
 import "./styles/03-polish.css";
 import "./styles/04-layout-polish.css";
 import "./styles/05-reference.css";
 import "./styles/06-shell.css";
+import "./styles/07-theme.css";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export const instant = false;
@@ -36,8 +39,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     const memberships = await getOrganizationMemberships(db, user.id!);
     siteCount = await db.collection("websites").countDocuments({ $or: [{ organizationId: { $in: memberships.map((item) => item.organizationId) } }, { ownerId: user.id, organizationId: { $exists: false } }] });
   } catch { siteCount = null; }
+  const theme = (await cookies()).get("ws-theme")?.value === "dark" ? "dark" : "light";
   const firstName = user.name?.trim().split(/\s+/)[0] || "there";
-  return <div className="workspace-shell ws2">
+  return <div className="workspace-shell ws2" data-ws-theme={theme}>
     <aside className="ws2-side">
       <Link href="/dashboard" className="ws2-brand" aria-label={`${BRAND.name} workspace`}><BrandLogo className="ws2-brand-logo" /><span><strong>{BRAND.name}</strong><small>Workspace</small></span></Link>
       <WorkspaceNavigation siteCount={siteCount} />
@@ -47,7 +51,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <div className="ws2-body">
       <header className="ws2-header">
         <WorkspaceSearch />
-        <div className="ws2-actions"><Link href="/influencer-marketing" className="ws2-pill"><UsersRound size={15} aria-hidden="true" /><span>Influencer Marketing</span></Link><Link href="/marketplace/services" className="ws2-pill"><BriefcaseBusiness size={15} aria-hidden="true" /><span>Expert Services</span></Link><WorkspaceNotifications /><form action={signOutAction}><SubmitButton className="ws2-signout" aria-label="Sign out"><LogOut size={15} aria-hidden="true" /><span>Sign out</span></SubmitButton></form></div>
+        <div className="ws2-actions"><Link href="/influencer-marketing" className="ws2-pill"><UsersRound size={15} aria-hidden="true" /><span>Influencer Marketing</span></Link><Link href="/marketplace/services" className="ws2-pill"><BriefcaseBusiness size={15} aria-hidden="true" /><span>Expert Services</span></Link><WorkspaceNotifications /><ThemeToggle initialTheme={theme} /><form action={signOutAction}><SubmitButton className="ws2-signout" aria-label="Sign out"><LogOut size={15} aria-hidden="true" /><span>Sign out</span></SubmitButton></form></div>
       </header>
       <main className="workspace-main workspace-main-redesign workspace-route-main ws2-main">{siteCount === null && <div className="workspace-alert" role="status">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</div>}{children}<footer className="workspace-footer"><span>{BRAND.name} · SEO workspace</span><Link href="/">Back to the website</Link></footer></main>
     </div>

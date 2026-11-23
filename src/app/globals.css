@@ -1943,3 +1943,35 @@ h1, h2, h3, h4, .font-heading, [class*="font-heading"], .hero-title, .section-ti
 
 .safe-image-fallback { display: inline-block; flex: none; border-radius: inherit; background: linear-gradient(135deg, #f1e6dc, #e9ddd1); }
 .safe-image-fallback.is-fill { position: absolute; inset: 0; }
+
+/* ── Home: looping ticker (replaces "The product system") and closing CTA (replaces "Your next useful SEO action") ──
+   --lime is the one accent for these two sections. */
+.landing-ticker, .landing-bigcta { --lime: #ccf656; background: #060505; color: #fff; }
+.landing-ticker { position: relative; height: clamp(170px, 22vw, 240px); overflow: hidden; border-top: 1px solid rgba(243,239,234,.08); border-bottom: 1px solid rgba(243,239,234,.08); }
+.landing-ticker-anchor { position: absolute; top: 0; left: 0; width: 1px; height: 1px; scroll-margin-top: 88px; }
+.landing-ticker-band { position: absolute; left: -6%; width: 112%; overflow: hidden; display: flex; align-items: center; }
+.landing-ticker-band.is-front { top: 50%; height: clamp(54px, 6.4vw, 78px); margin-top: calc(clamp(54px, 6.4vw, 78px) / -2); background: var(--lime); color: #0a0a08; transform: rotate(-3deg); box-shadow: 0 10px 40px rgba(204,246,86,.12); z-index: 2; }
+.landing-ticker-band.is-back { top: 50%; height: clamp(54px, 6.4vw, 78px); margin-top: calc(clamp(54px, 6.4vw, 78px) / -2); background: #141413; color: rgba(255,255,255,.22); transform: rotate(2.5deg); z-index: 1; }
+.landing-ticker-track { display: flex; width: max-content; animation: landing-ticker-left 32s linear infinite; will-change: transform; }
+.landing-ticker-band.is-back .landing-ticker-track { animation-name: landing-ticker-right; animation-duration: 44s; }
+.landing-ticker-track ul { display: flex; flex: none; align-items: center; margin: 0; padding: 0; list-style: none; }
+.landing-ticker-track li { display: inline-flex; align-items: center; white-space: nowrap; font-family: var(--font-dm-sans), Arial, sans-serif; font-size: clamp(18px, 2.3vw, 30px); font-weight: 700; letter-spacing: -.02em; }
+.landing-ticker-track li span { margin: 0 clamp(22px, 3.4vw, 46px); font-size: .8em; }
+.landing-ticker:hover .landing-ticker-track { animation-play-state: paused; }
+@keyframes landing-ticker-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes landing-ticker-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .landing-ticker-track { animation: none; } }
+
+.landing-bigcta { position: relative; isolation: isolate; overflow: hidden; padding: clamp(72px, 10vw, 140px) 0 clamp(84px, 11vw, 160px); text-align: center; }
+.landing-bigcta::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 62%; width: min(980px, 130vw); height: min(620px, 90vw); transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, rgba(204,246,86,.2) 0%, rgba(150,180,40,.1) 38%, transparent 70%); pointer-events: none; }
+.landing-bigcta-inner { position: relative; display: flex; flex-direction: column; align-items: center; }
+.landing-bigcta-eyebrow { margin: 0 0 clamp(18px, 2.4vw, 30px); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.landing-bigcta h2 { max-width: 15ch; margin: 0; color: #fff; font-family: var(--font-dm-sans), Arial, sans-serif; font-size: clamp(40px, 8.2vw, 118px); font-weight: 800; letter-spacing: -.045em; line-height: .98; text-transform: uppercase; text-wrap: balance; }
+.landing-bigcta h2 span { color: var(--lime); }
+.landing-bigcta-button { position: absolute; left: 50%; top: 56%; display: grid; place-items: center; align-content: center; gap: 5px; width: clamp(104px, 11vw, 150px); height: clamp(104px, 11vw, 150px); margin: calc(clamp(104px, 11vw, 150px) / -2) 0 0 calc(clamp(104px, 11vw, 150px) / -2); border-radius: 50%; background: var(--lime); color: #0a0a08; font-size: clamp(11px, 1.05vw, 14px); font-weight: 700; line-height: 1.15; text-decoration: none; box-shadow: 0 14px 40px rgba(204,246,86,.28); transition: transform .25s ease, box-shadow .25s ease; animation: landing-bigcta-float 4.5s ease-in-out infinite; }
+.landing-bigcta-button:hover { transform: scale(1.08) rotate(-4deg); box-shadow: 0 18px 54px rgba(204,246,86,.4); }
+.landing-bigcta-button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.landing-bigcta-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); }
+.landing-bigcta-dot.is-one { left: 15%; top: 26%; } .landing-bigcta-dot.is-two { right: 14%; top: 56%; }
+@keyframes landing-bigcta-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
+@media (prefers-reduced-motion: reduce) { .landing-bigcta-button { animation: none; } }

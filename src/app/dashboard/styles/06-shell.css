@@ -157,3 +157,15 @@
   .ws2-pill { padding: 0 13px; gap: 6px; font-size: 12.5px; }
   .ws2-actions { gap: 8px; }
 }
+
+/* ── Header: one-line buttons, search nudged right ── */
+.ws2-pill, .ws2-signout { white-space: nowrap; flex: none; }
+.ws2-actions { flex-wrap: nowrap; }
+@media (min-width: 1001px) {
+  .ws2-header { grid-template-columns: minmax(0, 1.3fr) minmax(240px, 480px) auto; column-gap: 24px; }
+  .ws2-header > .ws2-actions { grid-column: 3; margin-left: 12px; }
+}
+@media (min-width: 1001px) and (max-width: 1399px) {
+  .ws2-pill { padding: 0; width: 42px; justify-content: center; }
+  .ws2-pill span { display: none; }
+}

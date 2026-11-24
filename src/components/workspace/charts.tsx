@@ -1,10 +1,14 @@
+import type { ReactNode } from "react";
+
 /** Small dependency-free SVG charts. Server-renderable, theme-aware through CSS classes, and readable by screen readers. */
 type Point = { label: string; value: number };
 const nf = (value: number) => (Math.abs(value) >= 10_000 ? `${Math.round(value / 1000)}k` : value.toLocaleString("en-IN", { maximumFractionDigits: 1 }));
 
-export function LineChart({ points, label, unit = "" }: { points: Point[]; label: string; unit?: string }) {
-  if (points.length < 2) return <p className="chart-empty">Not enough history yet. Each new report adds a point.</p>;
-  const W = 320, H = 150, L = 34, R = 8, T = 10, B = 24;
+/** `empty` is shown when there is no data at all, so a page can say exactly what to connect or run. */
+export function LineChart({ points, label, unit = "", empty }: { points: Point[]; label: string; unit?: string; empty?: ReactNode }) {
+  if (points.length === 0) return <p className="chart-empty">{empty ?? "No data yet."}</p>;
+  if (points.length === 1) return <p className="chart-empty"><b className="chart-single">{nf(points[0].value)}{unit}</b> on {points[0].label}. A trend line appears after the next report.</p>;
+  const W = 260, H = 140, L = 30, R = 8, T = 10, B = 22;
   const values = points.map((point) => point.value);
   const min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
   const x = (index: number) => L + (index / (points.length - 1)) * (W - L - R);
@@ -15,12 +19,13 @@ export function LineChart({ points, label, unit = "" }: { points: Point[]; label
     {[0, 0.5, 1].map((fraction) => <g key={fraction}><line className="chart-grid" x1={L} x2={W - R} y1={T + fraction * (H - T - B)} y2={T + fraction * (H - T - B)} /><text className="chart-axis" x={L - 4} y={T + fraction * (H - T - B) + 3} textAnchor="end">{nf(max - fraction * span)}{unit}</text></g>)}
     <polygon className="chart-area" points={area} /><polyline className="chart-line" points={line} fill="none" />
     {points.map((point, index) => <circle key={index} className="chart-dot" cx={x(index)} cy={y(point.value)} r="2.6"><title>{`${point.label}: ${nf(point.value)}${unit}`}</title></circle>)}
-    <text className="chart-axis" x={L} y={H - 7} textAnchor="start">{points[0].label}</text><text className="chart-axis" x={W - R} y={H - 7} textAnchor="end">{points.at(-1)?.label}</text>
+    <text className="chart-axis" x={L} y={H - 6} textAnchor="start">{points[0].label}</text><text className="chart-axis" x={W - R} y={H - 6} textAnchor="end">{points.at(-1)?.label}</text>
   </svg><figcaption>{label}</figcaption></figure>;
 }
 
-export function ColumnChart({ data, label }: { data: Point[]; label: string }) {
-  const W = 320, H = 150, T = 18, B = 24;
+export function ColumnChart({ data, label, empty }: { data: Point[]; label: string; empty?: ReactNode }) {
+  if (!data.some((point) => point.value > 0)) return <p className="chart-empty">{empty ?? "No data yet."}</p>;
+  const W = 260, H = 140, T = 18, B = 22;
   const max = Math.max(1, ...data.map((point) => point.value));
   const slot = (W - 12) / Math.max(1, data.length), bar = Math.min(40, slot * 0.62);
   return <figure className="chart"><svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label}: ${data.map((point) => `${point.label} ${point.value}`).join(", ")}`}>

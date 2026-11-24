@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { Download, Network } from "lucide-react";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
-import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
-import { hasOrganizationPermission } from "@/lib/organizations";
+import { loadSiteSelection } from "@/lib/dashboard/site-selection";
+import { SiteSwitcher } from "@/components/workspace/site-switcher";
 import { loadKeywordStrategy } from "@/lib/seo/keyword-strategy-data";
 import type { Intent } from "@/lib/seo/keyword-strategy";
 
@@ -18,14 +18,12 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const { site: requested } = await searchParams;
-  const workspace = await getWorkspaceData(session.user.id);
-  const sites = workspace.websites.filter((item) => hasOrganizationPermission(websiteRole(workspace.memberships, item), "reports.read"));
-  const site = sites.find((item) => item.domain === (typeof requested === "string" ? requested.toLowerCase() : "")) ?? sites[0];
+  const { sites, site } = await loadSiteSelection(session.user.id, requested);
   const result = site ? await loadKeywordStrategy((await clientPromise).db(), site).catch(() => null) : null;
   const s = result?.strategy;
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> KEYWORD STRATEGY</p><h1>Keyword strategy</h1><p>Topic clusters, search intent, page mapping and content gaps, built from your own Search Console queries and crawled pages.</p></div>{site && s && <a className="workspace-outline-link" href={`/api/sites/${encodeURIComponent(site.domain)}/keyword-strategy?format=csv`}><Download size={15} /> Export CSV</a>}</header>
-    {sites.length > 1 && <nav className="site-tool-switcher" aria-label="Choose a website">{sites.map((item) => <Link key={item.domain} href={`/dashboard/strategy?site=${encodeURIComponent(item.domain)}`} className={item.domain === site?.domain ? "is-current" : ""}>{item.name || item.domain}</Link>)}</nav>}
+    <SiteSwitcher sites={sites} current={site?.domain} path="/dashboard/strategy" />
     {!site ? <section className="workspace-section"><div className="workspace-site-empty"><div><strong>Add your website first</strong><p>The strategy is built from your site&apos;s own search data.</p></div><Link href="/dashboard/websites">Add your website</Link></div></section>
     : !s ? <section className="workspace-section"><div className="workspace-site-empty"><span><Network size={18} /></span><div><strong>No Search Console data for {site.domain} yet</strong><p>Connect Search Console, then load a query report. The strategy appears here automatically.</p></div><Link href="/dashboard/integrations">Connect Google</Link></div></section>
     : <>

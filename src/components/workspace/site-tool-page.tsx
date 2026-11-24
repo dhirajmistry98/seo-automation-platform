@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { SiteAuditControls, type ToolSection } from "@/components/workspace/site-audit-controls";
 import { SiteIssueManager } from "@/components/workspace/site-issue-manager";
+import { SiteSwitcher } from "@/components/workspace/site-switcher";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
 import { hasOrganizationPermission } from "@/lib/organizations";
 
@@ -25,7 +26,7 @@ export async function SiteToolPage({ section, path, eyebrow, title, description,
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> {eyebrow}</p><h1>{title}</h1><p>{description}</p></div><Link href="/dashboard/tools" className="workspace-outline-link"><ArrowLeft size={15} /> All SEO tools</Link></header>
     {!workspace.available && <div className="workspace-alert" role="status">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</div>}
     {site ? <section className="workspace-section workspace-tool-section">
-      {websites.length > 1 && <nav className="site-tool-switcher" aria-label="Choose a website">{websites.map((item) => <Link key={item.domain} href={`${path}?site=${encodeURIComponent(item.domain)}`} aria-current={item.domain === site.domain ? "page" : undefined} className={item.domain === site.domain ? "is-current" : ""}>{item.name || item.domain}</Link>)}</nav>}
+      <SiteSwitcher sites={websites} current={site.domain} path={path} />
       <article className="workspace-site-card workspace-tool-site" key={site.domain}>
         <div className="workspace-site-identity"><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "Verify ownership to use this tool"}</small></div>
         <Link className="workspace-site-settings" href="/dashboard/websites">Website settings</Link>

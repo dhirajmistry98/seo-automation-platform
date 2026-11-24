@@ -35,6 +35,14 @@ const liveTools: LiveTool[] = [
   { name: "E-E-A-T Audit (AI)", description: "AI-scored audit of experience, expertise, authority, and trustworthiness signals on any page.", icon: ShieldCheck, state: "Audit a page", href: "/dashboard/ai?tool=eeat-audit" },
 ];
 
+/** Hub categories, following the product's feature areas. Any tool not listed falls into "More tools". */
+const TOOL_GROUPS: Array<{ title: string; blurb: string; names: string[] }> = [
+  { title: "Performance & reporting", blurb: "Where you stand and what to do next.", names: ["SEO overview", "Client-ready reports", "Search Console & GA4", "SEO Authority Index"] },
+  { title: "Keywords & content", blurb: "Find what to rank for and plan the content.", names: ["Keyword strategy", "Keyword ideas & questions", "Keyword positions & quick wins", "Keyword cannibalization", "Rank a page", "Content Brief (AI)", "E-E-A-T Audit (AI)"] },
+  { title: "Technical SEO", blurb: "Crawl, speed and structure.", names: ["Technical site audits", "PageSpeed reports", "SEO action plans", "Internal links", "SEO checker", "Schema Generator", "hreflang Builder", "Redirect Manager"] },
+  { title: "AI search", blurb: "How AI assistants see and cite your site.", names: ["Gemini AI visibility", "GEO, AEO & LLMO readiness"] },
+];
+
 export default async function SeoToolsPage() {
   await connection();
   const session = await auth();
@@ -45,7 +53,13 @@ export default async function SeoToolsPage() {
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> MEASURE & IMPROVE</p><h1>SEO tools</h1><p>Run available analysis and review each site&apos;s findings and action plan.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><Search size={15} /> Open SEO research</Link></header>
     {!workspace.available && <div className="workspace-alert" role="status">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</div>}
     <section className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">READY TO USE</p><h2>Live tools</h2><p>Run them from a verified website. Results are saved in that website’s history.</p></div></div>
-      <div className="workspace-tool-grid">{liveTools.map(({ name, description, icon: Icon, state, href }) => <Link className="workspace-tool-card" href={href} key={name}><span><Icon size={18} aria-hidden="true" /></span><div><h3>{name}</h3><p>{description}</p></div><small>{state}</small></Link>)}</div>
+      {(() => {
+        const used = new Set<string>();
+        const sections = TOOL_GROUPS.map((group) => ({ ...group, tools: group.names.flatMap((name) => { const tool = liveTools.find((item) => item.name === name); if (tool) used.add(name); return tool ? [tool] : []; }) }));
+        const rest = liveTools.filter((tool) => !used.has(tool.name));
+        if (rest.length) sections.push({ title: "More tools", blurb: "", names: [], tools: rest });
+        return sections.map((group) => <div className="workspace-tool-group" key={group.title}><h3>{group.title}{group.blurb && <small>{group.blurb}</small>}</h3><div className="workspace-tool-grid">{group.tools.map(({ name, description, icon: Icon, state, href }) => <Link className="workspace-tool-card" href={href} key={name}><span><Icon size={18} aria-hidden="true" /></span><div><h3>{name}</h3><p>{description}</p></div><small>{state}</small></Link>)}</div></div>);
+      })()}
     </section>
     <section id="website-controls" className="workspace-section workspace-tool-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">BY WEBSITE</p><h2>All controls by website</h2><p>Every control for each site in one place. The tools above open each one on its own page.</p></div></div>
       {websites.length ? <div className="workspace-site-list">{websites.map((site) => {

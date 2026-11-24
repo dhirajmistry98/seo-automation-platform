@@ -1,30 +1,24 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, BotMessageSquare, Boxes, FileBarChart, Globe2, LockKeyhole, PlugZap, Radar, ScanSearch, Search, Settings2, Target } from "lucide-react";
+import { Activity, BarChart3, BotMessageSquare, Boxes, FileBarChart, FileSearch, Gauge, Globe2, ListTodo, LockKeyhole, Network, PlugZap, Radar, ScanSearch, Search, Settings2, Target, Waypoints, type LucideIcon } from "lucide-react";
+import { NAV_GROUPS, activeNavHref, type NavIcon } from "@/lib/dashboard/nav";
 
-const links = [
-  { href: "/dashboard", label: "Overview", icon: Activity, match: (path: string) => path === "/dashboard" },
-  { href: "/dashboard/websites", label: "Websites", icon: Globe2, match: (path: string) => path.startsWith("/dashboard/websites") },
-  { href: "/dashboard/tools", label: "SEO tools", icon: Boxes, match: (path: string) => path.startsWith("/dashboard/tools") },
-  { href: "/dashboard/rank-a-page", label: "Rank a page", icon: Target, match: (path: string) => path.startsWith("/dashboard/rank-a-page") },
-  { href: "/dashboard/seo-checker", label: "SEO checker", icon: ScanSearch, match: (path: string) => path.startsWith("/dashboard/seo-checker") },
-  { href: "/dashboard/research", label: "Research", icon: Search, match: (path: string) => path.startsWith("/dashboard/research") },
-  { href: "/dashboard/visibility", label: "Visibility", icon: Radar, match: (path: string) => path.startsWith("/dashboard/visibility") },
-  { href: "/dashboard/report", label: "Reports", icon: FileBarChart, match: (path: string) => path.startsWith("/dashboard/report") },
-  { href: "/dashboard/ai", label: "AI Studio", icon: BotMessageSquare, match: (path: string) => path.startsWith("/dashboard/ai") },
-  { href: "/dashboard/wordpress", label: "WordPress", icon: PlugZap, match: (path: string) => path.startsWith("/dashboard/wordpress") },
-  { href: "/dashboard/integrations", label: "Integrations", icon: LockKeyhole, match: (path: string) => path.startsWith("/dashboard/integrations") },
-  { href: "/dashboard/account", label: "Account", icon: Settings2, match: (path: string) => path.startsWith("/dashboard/account") },
-];
+const ICONS: Record<NavIcon, LucideIcon> = {
+  overview: Activity, websites: Globe2, "seo-overview": BarChart3, reports: FileBarChart, research: Search, strategy: Waypoints, rank: Target, ai: BotMessageSquare,
+  audit: FileSearch, links: Network, speed: Gauge, plan: ListTodo, checker: ScanSearch, visibility: Radar, tools: Boxes, wordpress: PlugZap, integrations: LockKeyhole, account: Settings2,
+};
 
 export function WorkspaceNavigation({ siteCount }: { siteCount: number | null }) {
-  const pathname = usePathname();
+  const active = activeNavHref(usePathname());
   return <nav className="workspace-sidebar" aria-label="Workspace">
-    <p className="workspace-sidebar-label">WORKSPACE</p>
-    {links.map(({ href, label, icon: Icon, match }) => <Link href={href} key={href} aria-current={match(pathname) ? "page" : undefined} className={match(pathname) ? "is-current" : ""}>
-      <Icon size={17} strokeWidth={1.8} /><span>{label}</span>{label === "Websites" && <span className="workspace-nav-count">{siteCount ?? "—"}</span>}
-    </Link>)}
+    {NAV_GROUPS.map((group) => <Fragment key={group.label}>
+      <p className="workspace-sidebar-label">{group.label}</p>
+      {group.items.map(({ href, label, icon }) => { const Icon = ICONS[icon]; const current = active === href; return <Link href={href} key={href} aria-current={current ? "page" : undefined} className={current ? "is-current" : ""}>
+        <Icon size={17} strokeWidth={1.8} /><span>{label}</span>{href === "/dashboard/websites" && <span className="workspace-nav-count">{siteCount ?? "—"}</span>}
+      </Link>; })}
+    </Fragment>)}
   </nav>;
 }

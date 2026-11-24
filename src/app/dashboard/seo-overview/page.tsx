@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
-import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
-import { hasOrganizationPermission } from "@/lib/organizations";
+import { loadSiteSelection } from "@/lib/dashboard/site-selection";
+import { SiteSwitcher } from "@/components/workspace/site-switcher";
 import { loadSiteOverview } from "@/lib/seo/site-overview-data";
 import { ColumnChart, DonutChart, LineChart } from "@/components/workspace/charts";
 const day = (value: string | Date) => new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -21,15 +21,13 @@ export default async function SeoOverviewPage({ searchParams }: { searchParams: 
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const { site: requested } = await searchParams;
-  const workspace = await getWorkspaceData(session.user.id);
-  const sites = workspace.websites.filter((item) => hasOrganizationPermission(websiteRole(workspace.memberships, item), "reports.read"));
-  const site = sites.find((item) => item.domain === (typeof requested === "string" ? requested.toLowerCase() : "")) ?? sites[0];
+  const { sites, site } = await loadSiteSelection(session.user.id, requested);
   const o = site ? await loadSiteOverview((await clientPromise).db(), site).catch(() => null) : null;
   const dist = o?.search?.distribution;
   const distRows: Array<[string, number]> = dist ? [["Top 3", dist.top3], ["4–10", dist.pos4to10], ["11–20", dist.pos11to20], ["21–50", dist.pos21to50], ["51–100", dist.pos51to100]] : [];
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> SEO OVERVIEW</p><h1>SEO overview</h1><p>Health, search performance, speed, AI visibility, history and the next best actions for one website.</p></div>{site && <Link href={`/dashboard/report/${encodeURIComponent(site.domain)}`} className="workspace-outline-link">Full report</Link>}</header>
-    {sites.length > 1 && <nav className="site-tool-switcher" aria-label="Choose a website">{sites.map((item) => <Link key={item.domain} href={`/dashboard/seo-overview?site=${encodeURIComponent(item.domain)}`} className={item.domain === site?.domain ? "is-current" : ""}>{item.name || item.domain}</Link>)}</nav>}
+    <SiteSwitcher sites={sites} current={site?.domain} path="/dashboard/seo-overview" />
     {!site ? <section className="workspace-section"><div className="workspace-site-empty"><div><strong>Add your website first</strong><p>The overview is built from your site&apos;s own audit, search and speed data.</p></div><Link href="/dashboard/websites">Add your website</Link></div></section>
     : !o ? <section className="workspace-section"><div className="workspace-site-empty"><div><strong>The overview could not load</strong><p>Please refresh in a minute.</p></div></div></section>
     : <>
@@ -48,11 +46,11 @@ export default async function SeoOverviewPage({ searchParams }: { searchParams: 
       <section className="workspace-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">ORGANIC SEARCH</p><h2>Search performance</h2><p>{o.search ? `Search Console${o.search.startDate && o.search.endDate ? `, ${o.search.startDate} to ${o.search.endDate}` : ""}.` : "Connect Search Console to see clicks, impressions, positions and keywords."}</p></div></div>
         {o.search ? <div className="overview-grid">
           <div className="overview-stats"><div><b>{fmt(o.search.clicks)}</b><span>clicks{o.search.clicksChange !== null ? ` (${o.search.clicksChange > 0 ? "+" : ""}${o.search.clicksChange}% vs previous)` : ""}</span></div><div><b>{fmt(o.search.impressions)}</b><span>impressions</span></div><div><b>{o.search.ctr}%</b><span>click-through rate</span></div><div><b>{fmt(o.search.averagePosition)}</b><span>average position</span></div><div><b>{fmt(o.search.keywords)}</b><span>organic keywords</span></div>{o.traffic && <><div><b>{fmt(o.traffic.sessions?.current)}</b><span>organic sessions (GA4)</span></div><div><b>{fmt(o.traffic.users?.current)}</b><span>organic users (GA4)</span></div></>}</div>
-          <div className="overview-bars"><strong>Ranking distribution</strong><ColumnChart label="Keywords by Google position" data={distRows.map(([label, value]) => ({ label, value }))} /></div>
+          <div className="overview-bars"><strong>Ranking distribution</strong><ColumnChart empty="No ranking data yet." label="Keywords by Google position" data={distRows.map(([label, value]) => ({ label, value }))} /></div>
         </div> : <p className="overview-empty">No Search Console data yet.</p>}
       </section>
       <section className="workspace-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">HISTORY</p><h2>Growth trends</h2><p>Built from the reports saved each time you load or run them.</p></div></div>
-        <div className="overview-trends"><div><strong>Clicks</strong><LineChart label="Clicks per saved report" points={o.trends.search.map((row) => ({ label: day(row.date), value: row.clicks }))} /></div><div><strong>Impressions</strong><LineChart label="Impressions per saved report" points={o.trends.search.map((row) => ({ label: day(row.date), value: row.impressions }))} /></div><div><strong>Website health</strong><LineChart label="Health score per audit" points={o.trends.health.map((row) => ({ label: day(row.date), value: row.score }))} /></div><div><strong>Page speed</strong><LineChart label="Performance score per test" points={o.trends.speed.map((row) => ({ label: day(row.date), value: row.performance }))} /></div></div>
+        <div className="overview-trends"><div><strong>Clicks</strong><LineChart empty={<>No Search Console data yet. <Link href="/dashboard/integrations">Connect Search Console</Link> to chart clicks.</>} label="Clicks per saved report" points={o.trends.search.map((row) => ({ label: day(row.date), value: row.clicks }))} /></div><div><strong>Impressions</strong><LineChart empty={<>No Search Console data yet. <Link href="/dashboard/integrations">Connect Search Console</Link> to chart impressions.</>} label="Impressions per saved report" points={o.trends.search.map((row) => ({ label: day(row.date), value: row.impressions }))} /></div><div><strong>Website health</strong><LineChart empty={<>No audit yet. <Link href="/dashboard/tools/audit">Run a site audit</Link>.</>} label="Health score per audit" points={o.trends.health.map((row) => ({ label: day(row.date), value: row.score }))} /></div><div><strong>Page speed</strong><LineChart empty={<>No speed test saved yet. <Link href="/dashboard/tools/pagespeed">Run PageSpeed</Link>.</>} label="Performance score per test" points={o.trends.speed.map((row) => ({ label: day(row.date), value: row.performance }))} /></div></div>
       </section>
       <section className="workspace-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">TECHNICAL SEO</p><h2>Technical overview</h2><p>{o.technical ? `${o.technical.pageCount} pages in the latest audit.` : "No audit has been run yet."}</p></div><Link href="/dashboard/tools/audit" className="workspace-outline-link">{o.technical ? "Open audit" : "Run audit"}</Link></div>
         {o.technical ? <div className="overview-grid"><div className="overview-bars"><strong>Issues by severity</strong><DonutChart label="Open issues by severity" slices={[{ label: "Critical", value: o.technical.counts.critical, tone: "bad" }, { label: "Warnings", value: o.technical.counts.warning, tone: "ok" }, { label: "Notices", value: o.technical.counts.notice, tone: "none" }]} /></div>

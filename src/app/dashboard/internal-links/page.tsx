@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
-import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
-import { hasOrganizationPermission } from "@/lib/organizations";
+import { loadSiteSelection } from "@/lib/dashboard/site-selection";
+import { SiteSwitcher } from "@/components/workspace/site-switcher";
 import { loadInternalLinks } from "@/lib/seo/internal-links-data";
 import { DEEP_PAGE_DEPTH, EXCESSIVE_LINKS } from "@/lib/seo/internal-links";
 import { ColumnChart } from "@/components/workspace/charts";
@@ -17,14 +17,12 @@ export default async function InternalLinksPage({ searchParams }: { searchParams
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const { site: requested } = await searchParams;
-  const workspace = await getWorkspaceData(session.user.id);
-  const sites = workspace.websites.filter((item) => hasOrganizationPermission(websiteRole(workspace.memberships, item), "reports.read"));
-  const site = sites.find((item) => item.domain === (typeof requested === "string" ? requested.toLowerCase() : "")) ?? sites[0];
+  const { sites, site } = await loadSiteSelection(session.user.id, requested);
   const result = site ? await loadInternalLinks((await clientPromise).db(), site).catch(() => null) : null;
   const a = result?.analysis;
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> INTERNAL LINKING</p><h1>Internal links</h1><p>How your pages link to each other: click depth, weakly linked and orphan pages, and where to add links.</p></div><Link href="/dashboard/tools/audit" className="workspace-outline-link">Re-run audit</Link></header>
-    {sites.length > 1 && <nav className="site-tool-switcher" aria-label="Choose a website">{sites.map((item) => <Link key={item.domain} href={`/dashboard/internal-links?site=${encodeURIComponent(item.domain)}`} className={item.domain === site?.domain ? "is-current" : ""}>{item.name || item.domain}</Link>)}</nav>}
+    <SiteSwitcher sites={sites} current={site?.domain} path="/dashboard/internal-links" />
     {!site ? <section className="workspace-section"><div className="workspace-site-empty"><div><strong>Add your website first</strong><p>The link analysis uses your site&apos;s latest crawl.</p></div><Link href="/dashboard/websites">Add your website</Link></div></section>
     : !a ? <section className="workspace-section"><div className="workspace-site-empty"><div><strong>No crawl data for {site.domain} yet</strong><p>Run a site audit and this page fills in automatically.</p></div><Link href="/dashboard/tools/audit">Run site audit</Link></div></section>
     : <>

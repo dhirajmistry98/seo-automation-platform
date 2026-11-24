@@ -235,3 +235,9 @@
 .wp-hero h2 { margin: 4px 0 8px; }
 .wp-steps { margin: 0 0 12px 18px; padding: 0; font-size: 13px; line-height: 1.7; }
 .wp-note { margin-top: 10px; color: #8a8178; font-size: 12px; }
+
+/* Tools: provider status */
+.tools-provider-alert a { margin-left: 6px; font-weight: 700; text-decoration: underline; }
+.workspace-tool-card.is-blocked { opacity: .72; }
+.workspace-tool-card.is-blocked > small { color: #a1371c; font-weight: 700; }
+[data-ws-theme="dark"] .workspace-tool-card.is-blocked > small { color: #ea9a85; }

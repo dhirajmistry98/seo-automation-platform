@@ -1,10 +1,9 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
-import { dataForSeoPost, buildDomainRankRows, isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
+import { freeRankPositions } from "@/lib/integrations/free-research";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
 import { getRankTrackingKeywords, nextRankTrackingAt, parseRankTrackingDevice, parseRankTrackingFrequency, parseRankTrackingLanguageCode, parseRankTrackingLocationCode } from "@/lib/seo/rank-schedule";
-import { parseGeoPoint, serpLocation } from "@/lib/seo/geo-target";
 
 export const maxDuration = 90;
 
@@ -21,7 +20,6 @@ function resultDocument(result: unknown): Array<Record<string, unknown>> {
 
 export async function POST(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "A valid CRON_SECRET bearer token is required." }, { status: 401 });
-  if (!isDataForSeoConfigured()) return NextResponse.json({ processed: false, message: "Scheduled rank tracking requires a configured data provider (DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD)." });
 
   const db = (await clientPromise).db();
   await ensureSeoIndexes(db);
@@ -58,13 +56,13 @@ export async function POST(request: Request) {
   const countryName = typeof site.rankTrackingCountryName === "string" ? site.rankTrackingCountryName : countryCode;
   const languageCode = parseRankTrackingLanguageCode(site.rankTrackingLanguageCode) || "en";
   const device = parseRankTrackingDevice(site.rankTrackingDevice) || "desktop";
-  const geoPoint = parseGeoPoint(site.rankTrackingLatitude, site.rankTrackingLongitude, site.rankTrackingRadiusKm);
   const query = keywords.join(", ");
 
   try {
-    const providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, ...serpLocation(locationCode, geoPoint), language_code: languageCode, device, depth: 100, load_async_ai_overview: true })));
-    const competitorDomains = Array.isArray(site.competitorDomains) ? site.competitorDomains.filter((item: unknown): item is string => typeof item === "string") : [];
-    const rows = resultDocument(buildDomainRankRows(providerResult.tasks || [], keywords, String(site.domain), competitorDomains));
+    // Free positions: impression-weighted averages from the site's own Search Console data.
+    const found = await freeRankPositions(db, site.organizationId, String(site.domain), keywords);
+    if (!found) throw new Error("Search Console is not connected for this website.");
+    const rows = resultDocument(found);
     const completedAt = new Date();
     const ownership = await db.collection("websites").findOne({ _id: site._id, rankTrackingLeaseToken: leaseToken }, { projection: { rankTrackingFrequency: 1 } });
     if (!ownership) return NextResponse.json({ processed: false, message: "Rank tracking settings changed while this report was running." });
@@ -84,7 +82,7 @@ export async function POST(request: Request) {
       countryLocationCode: parseRankTrackingLocationCode(site.rankTrackingCountryLocationCode) || locationCode,
       languageCode,
       device,
-      provider: "SERP",
+      provider: "Google Search Console",
       source: "scheduled",
       fetchedAt: completedAt,
       result: rows,

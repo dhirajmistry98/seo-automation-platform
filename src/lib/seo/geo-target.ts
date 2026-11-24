@@ -29,17 +29,6 @@ export function parseGeoPoint(latitude: unknown, longitude: unknown, radiusKm: u
   return { latitude: Number(lat.toFixed(7)), longitude: Number(lng.toFixed(7)), radiusKm: safeRadius };
 }
 
-/** `location_coordinate` value for SERP APIs: "latitude,longitude,radius" with the radius in metres (200 m – 199.999 km). */
-export function dataForSeoCoordinate(point: GeoPoint) {
-  const metres = Math.round(Math.min(199_999, Math.max(200, point.radiusKm * 1000)));
-  return `${point.latitude},${point.longitude},${metres}`;
-}
-
-/** Location fields for a live SERP task: the exact point when one is set, otherwise the location code. */
-export function serpLocation(locationCode: number, point: GeoPoint | null) {
-  return point ? { location_coordinate: dataForSeoCoordinate(point) } : { location_code: locationCode };
-}
-
 export function describeGeoPoint(point: GeoPoint) {
   return `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)} · ${point.radiusKm} km radius`;
 }

@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { ensurePersonalOrganization, findAccessibleWebsite, getOrganizationMemberships, hasOrganizationPermission } from "@/lib/organizations";
 import { getRankTrackingKeywords, nextRankTrackingAt, parseRankTrackingDevice, parseRankTrackingFrequency, parseRankTrackingLanguageCode, parseRankTrackingLocationCode } from "@/lib/seo/rank-schedule";
-import { normalizeResearchDomain } from "@/lib/integrations/dataforseo";
+import { normalizeResearchDomain } from "@/lib/integrations/research-utils";
 import { seoCrawlPageLimit } from "@/lib/seo/crawler";
 
 function normalizeDomain(value: FormDataEntryValue | null) {

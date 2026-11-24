@@ -753,7 +753,7 @@ a.workspace-tool-card.is-planned:hover > small { background:#805c16; border-colo
   .crawl-progress-bar.is-indeterminate > span { width: 100%; opacity: .45; animation: none; }
 }
 
-/* Research panel: DataForSEO account alert, info notes and the Run / Verify button row. */
+/* Research panel: info notes and the Run / Verify button row. */
 .provider-alert { display:grid; gap:12px; margin-top:13px; border:1px solid #f0cdb4; border-left:3px solid #d85800; border-radius:10px; background:#fff8f1; padding:14px; }
 .provider-alert.is-blocking { border-color:#efc1a6; border-left-color:#c2410c; background:#fff4ec; }
 .provider-alert-head { display:flex; align-items:flex-start; gap:10px; }

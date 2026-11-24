@@ -1,6 +1,6 @@
 import type { Db } from "mongodb";
 import { getGoogleAccessToken, googleApiError } from "@/lib/integrations/google";
-import { findCannibalization, type GscRow } from "@/lib/integrations/research-reports";
+import { findCannibalization, type GscRow } from "@/lib/integrations/research-utils";
 
 /**
  * Free research sources — always available, no paid provider required:

@@ -5,7 +5,6 @@ import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-import { isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
 import { GeminiVisibility } from "@/components/workspace/gemini-visibility";
 import { DataInsights } from "@/components/workspace/data-insights";
 import { ResearchWorkbench, type ResearchHistoryReport } from "@/components/workspace/research-workbench";
@@ -59,6 +58,6 @@ export default async function WebsiteResearchPage({ params }: { params: Promise<
     <AuthorityIndexCard domain={domain} initialHistory={authorityHistory} />
     <GeminiVisibility domain={domain} />
     <DataInsights domain={domain} />
-    <ResearchWorkbench domain={domain} verified={Boolean(website.verifiedAt)} configured={isDataForSeoConfigured()} competitorDomains={Array.isArray(website.competitorDomains) ? website.competitorDomains.filter((item): item is string => typeof item === "string") : []} initialHistory={history} initialTarget={getWebsiteSeoTarget(website as unknown as Parameters<typeof getWebsiteSeoTarget>[0])} />
+    <ResearchWorkbench domain={domain} verified={Boolean(website.verifiedAt)} initialHistory={history} initialTarget={getWebsiteSeoTarget(website as unknown as Parameters<typeof getWebsiteSeoTarget>[0])} />
   </>;
 }

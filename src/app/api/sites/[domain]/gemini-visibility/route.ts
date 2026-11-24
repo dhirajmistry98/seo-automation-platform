@@ -36,6 +36,9 @@ export async function POST(request: Request, context: Context) {
     const results = await checkGeminiVisibility(questions, brand, domain);
     if (results.every((r) => r.error)) return fail("Gemini could not answer right now. Please try again shortly.", 502);
     await db.collection("gemini_visibility_reports").insertOne({ organizationId: website.organizationId, websiteDomain: domain, userId: session.user.id, results, createdAt: new Date() }).catch(() => undefined);
+    // Same shape the dashboard overview already reads, so its AI visibility card shows the latest Gemini check.
+    const answered = results.filter((r) => !r.error);
+    await db.collection("ai_answer_reports").insertOne({ organizationId: website.organizationId, websiteDomain: domain, brand, createdAt: new Date(), summary: { answered: answered.length, mentioned: answered.filter((r) => r.mentioned).length, cited: answered.filter((r) => r.cited).length, platforms: [{ label: "Gemini" }] } }).catch(() => undefined);
     return NextResponse.json({ results, brand, checkedAt: new Date().toISOString() }, { headers: noStore });
   } catch (error) {
     if (error instanceof Error && error.message === "not-configured") return fail("Gemini is not configured yet.", 503);

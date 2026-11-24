@@ -2,25 +2,23 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
-import { researchSource } from "@/lib/integrations/research-policy";
-import { FREE_PROVIDER, FREE_RESEARCH_KINDS, freeCannibalization, freeKeywordIdeas, freeQuestionIdeas, freeQuickWins, freeRankPositions } from "@/lib/integrations/free-research";
-import { DOMAIN_TARGET_KINDS, EXTENDED_RESEARCH_KINDS, isExtendedResearchKind, parseBacklinkSummary, runExtendedResearch, type BacklinkMode, type ExtendedResearchKind, type GridSize } from "@/lib/integrations/research-reports";
-import { buildDomainRankRows, dataForSeoPost, getProviderItems, isDataForSeoConfigured, normalizeResearchDomain, normalizeSearchDevice, DataForSeoAccountError } from "@/lib/integrations/dataforseo";
+import { FREE_PROVIDER, freeCannibalization, freeKeywordIdeas, freeQuestionIdeas, freeQuickWins, freeRankPositions } from "@/lib/integrations/free-research";
+import { normalizeSearchDevice } from "@/lib/integrations/research-utils";
 import { isSameOriginRequest, readJsonLimited, sameOriginError } from "@/lib/security/request";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { ensureSeoIndexes } from "@/lib/seo/indexes";
-import { parseGeoPoint, serpLocation } from "@/lib/seo/geo-target";
 
+/**
+ * Free research only: Google autocomplete plus the website's own Search Console data.
+ * No paid data provider is used anywhere.
+ */
 type Context = { params: Promise<{ domain: string }> };
-type ResearchKind = "keywords" | "questions" | "rank" | "quick_wins" | "backlinks" | "competitors" | "ai_visibility" | "cannibalization" | ExtendedResearchKind;
-const BASE_KINDS = ["keywords", "questions", "rank", "quick_wins", "backlinks", "competitors", "ai_visibility", "cannibalization"];
-const GRID_SPACINGS_KM = [0.5, 1, 2, 5];
-function error(message: string, status = 400) { return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } }); }
-/** Saved primary keywords (comma list or array), trimmed and de-duplicated, for share of voice. */
-function getStoredKeywords(value: unknown) {
-  const values = Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [];
-  return [...new Set(values.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter((item) => item && item.length <= 120))].slice(0, 100);
-}
+type ResearchKind = "keywords" | "questions" | "rank" | "quick_wins" | "cannibalization";
+const KINDS: ResearchKind[] = ["keywords", "questions", "rank", "quick_wins", "cannibalization"];
+/** Reports that only look up search terms or the site's own Search Console data. */
+const UNVERIFIED_OK: ResearchKind[] = ["keywords", "questions", "cannibalization", "quick_wins"];
+const noStore = { "Cache-Control": "no-store" };
+function error(message: string, status = 400) { return NextResponse.json({ error: message }, { status, headers: noStore }); }
 function safeDomain(value: string) { return value.toLowerCase().replace(/^www\./, "").replace(/\.$/, ""); }
 
 export async function GET(_request: Request, context: Context) {
@@ -31,8 +29,8 @@ export async function GET(_request: Request, context: Context) {
   await ensureSeoIndexes(db);
   const { website } = await findAccessibleWebsite(db, session.user.id, domain, "reports.read");
   if (!website) return error("Website not found.", 404);
-  const history = await db.collection("seo_research_reports").find({ organizationId: website.organizationId, websiteDomain: domain }, { projection: { result: 1, providerSummary: 1, kind: 1, query: 1, competitorDomain: 1, locationCode: 1, locationName: 1, countryCode: 1, countryName: 1, countryLocationCode: 1, languageCode: 1, device: 1, platform: 1, source: 1, fetchedAt: 1, provider: 1, providerCostUsd: 1, _id: 0 } }).sort({ fetchedAt: -1 }).limit(30).toArray();
-  return NextResponse.json({ configured: isDataForSeoConfigured(), history }, { headers: { "Cache-Control": "no-store" } });
+  const history = await db.collection("seo_research_reports").find({ organizationId: website.organizationId, websiteDomain: domain, kind: { $in: KINDS } }, { projection: { result: 1, kind: 1, query: 1, locationName: 1, countryCode: 1, countryName: 1, languageCode: 1, device: 1, source: 1, fetchedAt: 1, provider: 1, searchConsoleConnected: 1, _id: 0 } }).sort({ fetchedAt: -1 }).limit(30).toArray();
+  return NextResponse.json({ history }, { headers: noStore });
 }
 
 export async function POST(request: Request, context: Context) {
@@ -48,233 +46,85 @@ export async function POST(request: Request, context: Context) {
   if (!parsed.ok) return error(parsed.status === 413 ? "Request is too large." : "Invalid request body.", parsed.status);
   const body = parsed.value;
   const kind = body.kind as ResearchKind;
-  if (![...BASE_KINDS, ...EXTENDED_RESEARCH_KINDS].includes(kind)) return error("Choose a supported research report.");
-  // Keyword and question research only looks up search terms, so it does not need site ownership.
-  // Domain reports (positions, backlinks, competitors, AI mentions) still require a verified website.
-  if (!website.verifiedAt && kind !== "keywords" && kind !== "questions" && kind !== "cannibalization" && kind !== "quick_wins") return error("Verify ownership of this website before running domain reports. Keyword demand and AEO questions work without verification.", 409);
-  const locationCode = Number.isSafeInteger(body.locationCode) ? Number(body.locationCode) : Number(website.rankTrackingLocationCode || 2356);
-  const countryLocationCode = Number.isSafeInteger(body.countryLocationCode) ? Number(body.countryLocationCode) : Number(website.rankTrackingCountryLocationCode || website.rankTrackingLocationCode || 2356);
+  if (!KINDS.includes(kind)) return error("Choose a supported research report.");
+  if (!website.verifiedAt && !UNVERIFIED_OK.includes(kind)) return error("Verify ownership of this website before running position reports. Keyword ideas, questions, quick wins and cannibalization work without verification.", 409);
+
   const countryCode = typeof body.countryCode === "string" && /^[a-z]{2}$/i.test(body.countryCode) ? body.countryCode.toUpperCase() : String(website.rankTrackingCountryCode || "IN").toUpperCase();
   const countryName = typeof body.countryName === "string" && body.countryName.trim().length <= 120 ? body.countryName.trim() : String(website.rankTrackingCountryName || countryCode);
-  const locationName = typeof body.locationName === "string" && body.locationName.trim().length <= 255 ? body.locationName.trim() : String(website.rankTrackingLocationName || countryCode);
   const languageCode = typeof body.languageCode === "string" && /^[a-z]{2,3}$/.test(body.languageCode) ? body.languageCode : String(website.rankTrackingLanguageCode || "en");
-  // Exact point for local SEO: from the request when it chose a location, otherwise the website's saved live location.
-  const geoPoint = body.locationCode !== undefined
-    ? parseGeoPoint(body.latitude, body.longitude, body.radiusKm)
-    : parseGeoPoint(website.rankTrackingLatitude, website.rankTrackingLongitude, website.rankTrackingRadiusKm);
   const device = kind === "rank" ? normalizeSearchDevice(body.device) : undefined;
-  const platform = kind === "ai_visibility" && body.platform === "chat_gpt" ? "chat_gpt" : "google";
-  const configuredCompetitors = Array.isArray(website.competitorDomains)
-    ? [...new Set(website.competitorDomains.map(normalizeResearchDomain).filter((item): item is string => Boolean(item) && item !== domain))]
-    : [];
-  // Domain reports can look at the website itself or one of its saved competitors (never an arbitrary domain).
-  const targetsCompetitor = kind === "competitors" || ((DOMAIN_TARGET_KINDS as readonly string[]).includes(kind) && typeof body.competitorDomain === "string" && body.competitorDomain.trim() !== "");
-  const competitorDomain = targetsCompetitor ? normalizeResearchDomain(body.competitorDomain) : null;
-  if (targetsCompetitor && (!competitorDomain || competitorDomain === domain || !configuredCompetitors.includes(competitorDomain))) return error("Choose one of the competitor domains saved in website settings.");
-  if (kind === "backlink_gap" && !configuredCompetitors.length) return error("Add competitor domains in website settings to find sites that link to them but not to you.");
-  const backlinkMode: BacklinkMode = body.backlinkMode === "new" || body.backlinkMode === "lost" ? body.backlinkMode : "all";
-  const gridSize: GridSize = body.gridSize === 5 ? 5 : 3;
-  const gridSpacingKm = GRID_SPACINGS_KM.includes(Number(body.gridSpacingKm)) ? Number(body.gridSpacingKm) : 1;
-  if (kind === "local_grid" && !geoPoint) return error("Pick an exact map location (live location or a place) as the centre of the local grid.");
-  if (!Number.isSafeInteger(locationCode) || locationCode < 1 || locationCode > 999_999_999_999 || !Number.isSafeInteger(countryLocationCode) || countryLocationCode < 1 || countryLocationCode > 999_999_999_999 || !/^[A-Z]{2}$/.test(countryCode)) return error("Choose a valid provider location.");
-  if (kind === "ai_visibility" && platform === "chat_gpt" && (countryLocationCode !== 2840 || languageCode !== "en")) return error("ChatGPT mention data is currently available only for United States English. Select United States and en.");
-  if (kind === "cannibalization") return runCannibalization();
-  if (kind === "quick_wins") return runQuickWins();
-  const freeKind = (FREE_RESEARCH_KINDS as readonly string[]).includes(kind);
-  const paidConfigured = isDataForSeoConfigured();
-  if (!paidConfigured && !freeKind) return error("This report requires an external data provider. Keyword demand, AEO questions, positions and cannibalization work for free.", 503);
+  if (!/^[A-Z]{2}$/.test(countryCode)) return error("Choose a valid country.");
+
   const limit = await consumeRateLimit(db, "seo-research", `${String(website.organizationId)}:${domain}`, 20, 60 * 60_000);
   if (!limit.allowed) return error(`Research limit reached for this website. Try again in ${limit.retryAfterSeconds} seconds.`, 429);
-  if (kind === "local_grid") {
-    // A grid makes one paid Maps check per point (9 or 25), so it has its own, tighter hourly limit.
-    const gridLimit = await consumeRateLimit(db, "seo-local-grid", `${String(website.organizationId)}:${domain}`, 4, 60 * 60_000);
-    if (!gridLimit.allowed) return error(`Local grid limit reached for this website (4 per hour). Try again in ${gridLimit.retryAfterSeconds} seconds.`, 429);
-  }
+
   const keywordList = (max: number) => Array.isArray(body.keywords) ? [...new Set(body.keywords.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean))].slice(0, max) : [];
-  let provider = "DataForSEO";
-  let searchConsoleConnected: boolean | undefined;
-  // Free path: Google autocomplete + the site's own Search Console data. Returns an error response or the rows.
-  const runFree = async (): Promise<{ response: NextResponse } | { query: string; items: Array<Record<string, unknown>> }> => {
-    provider = FREE_PROVIDER;
+  const connectSc = (what: string) => error(`${what} uses your Google Search Console data. Connect Search Console for this website under Integrations, then run the report again.`, 409);
+
+  try {
+    let query = domain;
+    let items: Array<Record<string, unknown>> = [];
+    let provider: string = FREE_PROVIDER;
+    let searchConsoleConnected: boolean | undefined;
+    let notice = "";
+
     if (kind === "keywords") {
       const keywords = keywordList(25);
-      if (!keywords.length || keywords.some((item) => item.length > 120)) return { response: error("Enter between 1 and 25 keywords, up to 120 characters each.") };
+      if (!keywords.length || keywords.some((item) => item.length > 120)) return error("Enter between 1 and 25 keywords, up to 120 characters each.");
       const result = await freeKeywordIdeas(db, website.organizationId, domain, keywords, languageCode, countryCode);
+      query = keywords.join(", ").slice(0, 2_000);
+      items = result.items;
       searchConsoleConnected = result.searchConsoleConnected;
-      return { query: keywords.join(", ").slice(0, 2_000), items: result.items };
-    }
-    if (kind === "questions") {
+      notice = `Ideas come from Google autocomplete${searchConsoleConnected ? " plus your Search Console impressions, clicks and positions" : ". Connect Search Console to add your real impressions, clicks and positions"}. Autocomplete does not give search volume.`;
+    } else if (kind === "questions") {
       const seed = keywordList(1)[0] || "";
-      if (!seed || seed.length > 120) return { response: error("Enter one topic phrase, up to 120 characters, for question research.") };
-      return { query: seed, items: await freeQuestionIdeas(seed, languageCode, countryCode) };
+      if (!seed || seed.length > 120) return error("Enter one topic phrase, up to 120 characters, for question research.");
+      query = seed;
+      items = await freeQuestionIdeas(seed, languageCode, countryCode);
+      notice = "Questions come from Google autocomplete for the selected country and language. Use them as headings and FAQ answers.";
+    } else if (kind === "rank") {
+      const keywords = keywordList(10);
+      if (!keywords.length || keywords.some((item) => item.length > 120)) return error("Enter between 1 and 10 keywords, up to 120 characters each.");
+      const rows = await freeRankPositions(db, website.organizationId, domain, keywords);
+      if (!rows) return connectSc("Position tracking");
+      query = keywords.join(", ").slice(0, 2_000);
+      items = rows;
+      searchConsoleConnected = true;
+      notice = "Positions come from your Google Search Console data: impression-weighted average position over the last 28 days, not a live search check.";
+    } else if (kind === "quick_wins") {
+      const result = await freeQuickWins(db, website.organizationId, domain);
+      if (!result) return connectSc("Quick wins");
+      if ("error" in result) return error(result.error, 502);
+      items = result.items;
+      provider = "Google Search Console";
+      searchConsoleConnected = true;
+      notice = result.total > 100
+        ? `Found ${result.total} keywords near the top 10 — showing the top 100 by opportunity. Each has 10+ impressions in the last 90 days.`
+        : `Found ${result.total} keyword${result.total === 1 ? "" : "s"} at positions 4–20 with 10+ impressions in the last 90 days.`;
+    } else {
+      const result = await freeCannibalization(db, website.organizationId, domain);
+      if (!result) return connectSc("Cannibalization");
+      if ("error" in result) return error(result.error, 502);
+      items = result.items as unknown as Array<Record<string, unknown>>;
+      provider = "Google Search Console";
+      searchConsoleConnected = true;
+      notice = "Cannibalization uses your Search Console data for the last 28 days: searches where two or more of your pages each get at least 10% of the impressions.";
     }
-    const keywords = keywordList(10);
-    if (!keywords.length || keywords.some((item) => item.length > 120)) return { response: error("Enter between 1 and 10 keywords, up to 120 characters each.") };
-    const rows = await freeRankPositions(db, website.organizationId, domain, keywords);
-    if (!rows) return { response: error("Free position tracking uses your Google Search Console data. Connect Search Console for this website (Integrations), then run the report again.", 409) };
-    searchConsoleConnected = true;
-    return { query: keywords.join(", ").slice(0, 2_000), items: rows };
-  };
-  async function runCannibalization() {
-    const free = await consumeRateLimit(db, "seo-research", `${String(website!.organizationId)}:${domain}`, 20, 60 * 60_000);
-    if (!free.allowed) return error(`Research limit reached for this website. Try again in ${free.retryAfterSeconds} seconds.`, 429);
-    const result = await freeCannibalization(db, website!.organizationId, domain);
-    if (!result) return error("Cannibalization uses your Google Search Console data. Connect Search Console for this website (Integrations), then run the report again.", 409);
-    if ("error" in result) return error(result.error, 502);
+
     const fetchedAt = new Date();
-    const report = { ownerId: session!.user!.id, userId: session!.user!.id, createdBy: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, kind: "cannibalization", query: domain, locationCode, locationName, countryCode, countryName, countryLocationCode, languageCode, provider: "Google Search Console", searchConsoleConnected: true, providerCostUsd: 0, source: "manual", fetchedAt, result: result.items };
-    await db.collection("seo_research_reports").insertOne(report);
-    await db.collection("audit_logs").insertOne({ ownerId: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, action: "seo.research.requested", kind: "cannibalization", query: domain, provider: report.provider, createdAt: fetchedAt });
-    return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice: "Cannibalization uses your Search Console data for the last 28 days: searches where two or more of your pages each get at least 10% of the impressions." }, { headers: { "Cache-Control": "no-store" } });
-  }
-  async function runQuickWins() {
-    const limited = await consumeRateLimit(db, "seo-research", `${String(website!.organizationId)}:${domain}`, 20, 60 * 60_000);
-    if (!limited.allowed) return error(`Research limit reached for this website. Try again in ${limited.retryAfterSeconds} seconds.`, 429);
-    const result = await freeQuickWins(db, website!.organizationId, domain);
-    if (!result) return error("Quick wins use your Google Search Console data. Connect Search Console for this website under Integrations, then run the report again.", 409);
-    if ("error" in result) return error(result.error, 502);
-    const fetchedAt = new Date();
-    const report = { ownerId: session!.user!.id, userId: session!.user!.id, createdBy: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, kind: "quick_wins", query: domain, locationCode, locationName, countryCode, countryName, countryLocationCode, languageCode, provider: "Google Search Console", searchConsoleConnected: true, providerCostUsd: 0, source: "manual", fetchedAt, result: result.items };
-    await db.collection("seo_research_reports").insertOne(report);
-    await db.collection("audit_logs").insertOne({ ownerId: session!.user!.id, organizationId: website!.organizationId, websiteDomain: domain, action: "seo.research.requested", kind: "quick_wins", query: domain, provider: report.provider, createdAt: fetchedAt });
-    const notice = result.total > 100
-      ? `Found ${result.total} keywords near the top 10 — showing the top 100 by opportunity. Each has 10+ impressions in the last 90 days.`
-      : `Found ${result.total} keyword${result.total === 1 ? "" : "s"} at positions 4–20 with 10+ impressions in the last 90 days.`;
-    return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice: notice }, { headers: { "Cache-Control": "no-store" } });
-  }
-  try {
-    let providerResult: Pick<Awaited<ReturnType<typeof dataForSeoPost>>, "cost"> & Partial<Awaited<ReturnType<typeof dataForSeoPost>>> = { cost: 0 };
-    let query = "";
-    let items: Array<Record<string, unknown>> = [];
-    let providerSummary: Array<Record<string, unknown>> | undefined;
-    let additionalProviderCost = 0;
-    // Paid provider calls are reserved for verified websites: website creation is unlimited, so letting
-    // unverified sites reach DataForSEO would let any account spend the operator's paid quota.
-    const useFreeNow = researchSource(kind, { paidConfigured, verified: Boolean(website.verifiedAt) }) === "free";
-    let fellBack = false;
-    if (!useFreeNow) {
-      try {
-        if (kind === "keywords") {
-          const keywords = Array.isArray(body.keywords) ? [...new Set(body.keywords.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean))].slice(0, 25) : [];
-          if (!keywords.length || keywords.some((item) => item.length > 120)) return error("Enter between 1 and 25 keywords, up to 120 characters each.");
-          query = keywords.join(", ").slice(0, 2_000);
-          providerResult = await dataForSeoPost("dataforseo_labs/google/keyword_overview/live", [{ keywords, location_code: countryLocationCode, language_code: languageCode }]);
-          items = getProviderItems(providerResult);
-        } else if (kind === "questions") {
-          const seed = Array.isArray(body.keywords) ? body.keywords.find((item): item is string => typeof item === "string")?.trim() || "" : "";
-          if (!seed || seed.length > 120) return error("Enter one topic phrase, up to 120 characters, for question research.");
-          query = seed;
-          providerResult = await dataForSeoPost("dataforseo_labs/google/keyword_suggestions/live", [{ keyword: seed, location_code: countryLocationCode, language_code: languageCode, include_serp_info: true, limit: 100 }]);
-          items = getProviderItems(providerResult).filter((item) => typeof item.keyword === "string" && /^(who|what|where|when|why|how|which|can|does|do|is|are|should|will|could|would)\b/i.test(item.keyword.trim())).slice(0, 100);
-        } else if (kind === "rank") {
-          const keywords = Array.isArray(body.keywords) ? [...new Set(body.keywords.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean))].slice(0, 10) : [];
-          if (!keywords.length || keywords.some((item) => item.length > 120)) return error("Enter between 1 and 10 keywords, up to 120 characters each.");
-          query = keywords.join(", ").slice(0, 2_000);
-          providerResult = await dataForSeoPost("serp/google/organic/live/advanced", keywords.map((keyword) => ({ keyword, ...serpLocation(locationCode, geoPoint), language_code: languageCode, device, depth: 100, load_async_ai_overview: true })));
-          items = buildDomainRankRows(providerResult.tasks || [], keywords, domain, configuredCompetitors);
-        } else if (kind === "backlinks") {
-          query = safeDomain(domain);
-          providerResult = await dataForSeoPost("backlinks/summary/live", [{ target: domain, include_subdomains: true, backlinks_status_type: "live" }]);
-          // The summary endpoint returns its metrics on the result object itself, not in an items list.
-          items = [parseBacklinkSummary(providerResult)];
-        } else if (kind === "competitors") {
-          query = competitorDomain as string;
-          const [gapResult, overviewResult] = await Promise.all([
-            dataForSeoPost("dataforseo_labs/google/domain_intersection/live", [{
-              target1: domain,
-              target2: competitorDomain,
-              location_code: countryLocationCode,
-              language_code: languageCode,
-              intersections: false,
-              item_types: ["organic"],
-              limit: 100,
-            }]),
-            dataForSeoPost("dataforseo_labs/google/domain_rank_overview/live", [domain, competitorDomain].map((target) => ({ target, location_code: countryLocationCode, language_code: languageCode }))),
-          ]);
-          providerResult = gapResult;
-          providerSummary = getProviderItems(overviewResult).slice(0, 2);
-          additionalProviderCost = Number.isFinite(overviewResult.cost) ? Number(overviewResult.cost) : 0;
-          items = getProviderItems(providerResult).slice(0, 100);
-        } else if (isExtendedResearchKind(kind)) {
-          const keywordLimit = kind === "share_of_voice" ? 100 : 1;
-          const needsKeywords = kind === "share_of_voice" || kind === "keyword_magic" || kind === "local_grid";
-          const keywords = kind === "share_of_voice" && !keywordList(1).length ? getStoredKeywords(website.primaryKeywords) : keywordList(keywordLimit);
-          if (needsKeywords && (!keywords.length || keywords.some((item) => item.length > 120))) return error(kind === "share_of_voice" ? "Enter up to 100 keywords (or save primary keywords in website settings) to measure share of voice." : "Enter one keyword, up to 120 characters.");
-          const extended = await runExtendedResearch({ kind, domain, target: competitorDomain || domain, competitorDomains: configuredCompetitors, keywords, countryLocationCode, languageCode, geoPoint, backlinkMode, gridSize, gridSpacingKm }, dataForSeoPost);
-          query = extended.query;
-          items = extended.items;
-          providerSummary = extended.summary ? [extended.summary] : undefined;
-          providerResult = { cost: extended.cost };
-        } else {
-          query = domain;
-          providerResult = await dataForSeoPost("ai_optimization/llm_mentions/search_mentions/live", [{
-            platform,
-            location_code: countryLocationCode,
-            language_code: languageCode,
-            target: [{ domain, search_filter: "include", search_scope: ["any"], include_subdomains: true }],
-            order_by: ["ai_search_volume,desc"],
-            limit: 100,
-          }]);
-          items = getProviderItems(providerResult).slice(0, 100);
-        }
-      } catch (caught) {
-        // A rejected or empty DataForSEO account should not block the free reports.
-        if (!(freeKind && caught instanceof DataForSeoAccountError)) throw caught;
-        fellBack = true;
-      }
-    }
-    if (useFreeNow || fellBack) {
-      const free = await runFree();
-      if ("response" in free) return free.response;
-      query = free.query;
-      items = free.items;
-      providerResult = { cost: 0 };
-    }
     const report = {
-      ownerId: session.user.id,
-      userId: session.user.id,
-      createdBy: session.user.id,
-      organizationId: website.organizationId,
-      websiteDomain: domain,
-      kind,
-      query,
-      locationCode,
-      locationName,
-      ...(geoPoint ? { geoPoint } : {}),
-      countryCode,
-      countryName,
-      countryLocationCode,
-      languageCode,
+      ownerId: session.user.id, userId: session.user.id, createdBy: session.user.id,
+      organizationId: website.organizationId, websiteDomain: domain, kind, query,
+      locationName: countryName, countryCode, countryName, languageCode,
       ...(device ? { device } : {}),
-      ...(kind === "ai_visibility" ? { platform } : {}),
-      ...(competitorDomain ? { competitorDomain } : {}),
-      ...(kind === "backlink_list" ? { backlinkMode } : {}),
-      provider,
-      ...(searchConsoleConnected !== undefined ? { searchConsoleConnected } : {}),
-      providerCostUsd: Number.isFinite(providerResult.cost) ? Number(providerResult.cost) + additionalProviderCost : null,
-      source: "manual",
-      fetchedAt: new Date(),
-      result: items,
-      ...(providerSummary ? { providerSummary } : {}),
+      provider, ...(searchConsoleConnected !== undefined ? { searchConsoleConnected } : {}),
+      providerCostUsd: 0, source: "manual", fetchedAt, result: items,
     };
     await db.collection("seo_research_reports").insertOne(report);
-    await db.collection("audit_logs").insertOne({ ownerId: session.user.id, organizationId: website.organizationId, websiteDomain: domain, action: "seo.research.requested", kind, query, locationCode, locationName, countryCode, countryName, countryLocationCode, languageCode, ...(device ? { device } : {}), provider, createdAt: report.fetchedAt });
-    const requestNotice = provider === FREE_PROVIDER
-      ? kind === "rank"
-        ? "Free positions come from your Google Search Console data: impression-weighted average position over the last 28 days, not a live SERP check."
-        : `Free ideas come from Google autocomplete${kind === "keywords" ? (searchConsoleConnected ? " plus your Search Console impressions, clicks and positions" : ". Connect Search Console to add your real impressions, clicks and positions") : ""}. Autocomplete does not give search volume.`
-      : kind === "ai_visibility"
-      ? "This report queries AI search mention data via the configured provider. Results are third-party observations, platform coverage varies by location, and the provider may charge your account. It does not prove rankings or future citations."
-      : kind === "questions"
-        ? "Question keywords are provider suggestions for AEO research, not proof of search intent, featured snippets, or AI answers. The provider may charge your account."
-      : "This report uses the configured data provider and may incur provider charges. Competitor metrics are third-party estimates.";
-    return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice }, { headers: { "Cache-Control": "no-store" } });
+    await db.collection("audit_logs").insertOne({ ownerId: session.user.id, organizationId: website.organizationId, websiteDomain: domain, action: "seo.research.requested", kind, query, countryCode, languageCode, provider, createdAt: fetchedAt });
+    return NextResponse.json({ report: { ...report, organizationId: undefined, _id: undefined }, requestNotice: notice }, { headers: noStore });
   } catch (caught) {
-    if (caught instanceof DataForSeoAccountError) {
-      return NextResponse.json({ error: caught.message, providerIssue: { state: caught.reason, actionUrl: "https://app.dataforseo.com/" } }, { status: 503, headers: { "Cache-Control": "no-store" } });
-    }
-    const message = caught instanceof Error ? caught.message : "SEO research is temporarily unavailable.";
-    const status = /not configured/.test(message) ? 503 : 502;
-    return error(message, status);
+    console.error("research failed", caught instanceof Error ? caught.message : "unknown");
+    return error("Research is temporarily unavailable. Please try again shortly.", 502);
   }
 }

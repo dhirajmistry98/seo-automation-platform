@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite, hasOrganizationPermission } from "@/lib/organizations";
 import { SearchVisibilityReportCard } from "@/components/workspace/search-visibility-report";
-import { AiAnswersPanel } from "@/components/workspace/ai-answers-panel";
+import { GeminiVisibility } from "@/components/workspace/gemini-visibility";
 import type { SearchVisibilityReport } from "@/lib/seo/search-visibility";
 
 export const instant = false;
@@ -29,7 +29,7 @@ export default async function WebsiteVisibilityPage({ params }: { params: Promis
   const role = membership?.role ?? (website.ownerId === session.user.id ? "owner" : null);
   const canRun = hasOrganizationPermission(role, "research.run");
   return <>
-    <AiAnswersPanel domain={domain} canRun={canRun} />
+    {canRun && <GeminiVisibility domain={domain} />}
     <SearchVisibilityReportCard domain={domain} initialReports={history} hasCrawl={Boolean(audit)} canRun={canRun} />
   </>;
 }

@@ -5,7 +5,6 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { updateWebsiteAction, setWebsiteActiveAction } from "@/app/dashboard/actions";
 import { findAccessibleWebsite, getOrganizationMemberships, hasOrganizationPermission } from "@/lib/organizations";
-import { isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
 import { WebsiteOrganizationSelector } from "@/components/workspace/website-organization-selector";
 import { WebsiteSeoLocationField } from "@/components/workspace/seo-location-selector";
 import { getWebsiteSeoTarget } from "@/lib/seo/target";
@@ -73,7 +72,6 @@ export default async function WebsiteSettingsPage({ params, searchParams }: { pa
     return item ? [{ id: String(id), name: item.name }] : [];
   });
   const query = await searchParams;
-  const researchConfigured = isDataForSeoConfigured();
   const seoTarget = getWebsiteSeoTarget(website);
   const errors: Record<string, string> = {
     url: "Sitemap and robots URLs must use HTTP or HTTPS and belong to this website.",
@@ -109,7 +107,6 @@ export default async function WebsiteSettingsPage({ params, searchParams }: { pa
           <label>Search device<select name="rankTrackingDevice" defaultValue={website.rankTrackingDevice || "desktop"}><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select></label>
         </div>
         <div className="website-market-settings"><p className="workspace-eyebrow">SEARCH MARKET</p><h2>Target country, city, or region</h2><p>Choose the real search area and language used by live rank checks and research reports. Country-level keyword datasets remain country-scoped when the provider does not offer city-level volume data.</p><WebsiteSeoLocationField initialTarget={seoTarget} /></div>
-        {website.rankTrackingFrequency && website.rankTrackingFrequency !== "manual" && !researchConfigured && <p className="website-settings-message is-error" role="status">Scheduled rank tracking is saved, but requires a data provider to be configured on the server (DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD).</p>}
         {website.nextScheduledRankTrackingAt && <p className="website-settings-message" role="status">Next scheduled rank check: {new Date(website.nextScheduledRankTrackingAt).toLocaleString()}.</p>}
         <label>Competitor domains<input name="competitorDomains" defaultValue={website.competitorDomains?.join(", ") || ""} maxLength={1000} /><small>Comma-separated, up to 20.</small></label>
         <label>Sitemap URL<input name="sitemapUrl" defaultValue={website.sitemapUrl || ""} maxLength={2048} placeholder={`${website.url}/sitemap.xml`} /></label>

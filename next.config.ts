@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   outputFileTracingRoot: path.join(__dirname),
+  // The plugin zip route reads these files at request time, so they must ship with the deployment.
+  outputFileTracingIncludes: { "/api/plugin/download": ["./wordpress-plugin/seo-studio/**/*"] },
   async headers() {
     const headers = [
       { key: "X-Content-Type-Options", value: "nosniff" },

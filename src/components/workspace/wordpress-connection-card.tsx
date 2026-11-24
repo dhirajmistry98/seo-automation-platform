@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, KeyRound, LoaderCircle, RotateCcw } from "lucide-react";
+import { Check, Copy, KeyRound, LoaderCircle, RotateCcw, Download } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 
 type ConnectionStatus = { tokenIssued: boolean; connectedAt: string | null; lastSyncAt: string | null; lastSyncStatus?: string | null; pluginVersion?: string | null; appEditingReady?: boolean };
@@ -44,7 +44,8 @@ export function WordPressConnectionCard({ domain, appUrl }: { domain: string; ap
     <summary><KeyRound size={14} /> WordPress plugin {status?.connectedAt ? <span className="wordpress-connected">Connected</span> : <span>Setup</span>}</summary>
     <div className="wordpress-connection-content">
       <p>Install the standalone SEO Studio Connector plugin, then set the app URL and token in WordPress under <strong>Settings → SEO Studio</strong>.</p>
-      <ol><li>Install the latest <code>wordpress-plugin/seo-studio</code> (v0.5.0 or newer) on your verified WordPress site.</li><li>Generate a token here and enter it in the plugin settings with this app URL: <code>{appUrl}</code>.</li><li>Select <strong>Sync published content now</strong> in WordPress.</li></ol>
+      <a className="wordpress-download" href="/api/plugin/download" download><Download size={13} /> Download plugin (.zip)</a>
+      <ol><li>Download the plugin, then in WordPress open <strong>Plugins → Add New → Upload Plugin</strong>, choose the zip and activate it. It needs WordPress 6.2+ and PHP 8.0+.</li><li>Generate a token here and enter it in the plugin settings with this app URL: <code>{appUrl}</code>.</li><li>Select <strong>Sync published content now</strong> in WordPress.</li></ol>
       <div className="wordpress-connection-status">{status?.lastSyncAt ? `Last sync: ${new Date(status.lastSyncAt).toLocaleString()} · ${status.lastSyncStatus || "received"}${status.pluginVersion ? ` · plugin ${status.pluginVersion}` : ""}` : "No plugin sync received yet."}</div>
       <div className="wordpress-connection-status">App-initiated metadata updates: {status?.appEditingReady ? "ready after token rotation" : "configure WORDPRESS_TOKEN_ENCRYPTION_KEY and rotate the token"}</div>
       <button type="button" onClick={rotateToken} disabled={busy}><RotateCcw size={13} />{busy ? <><LoaderCircle className="site-spin" size={13} /> Generating…</> : status?.tokenIssued ? "Replace connection token" : "Generate connection token"}</button>

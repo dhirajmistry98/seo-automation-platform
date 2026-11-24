@@ -225,3 +225,6 @@
 [data-ws-theme="dark"] .keyword-transfer-actions .is-primary { border-color: #e96306; }
 [data-ws-theme="dark"] .keyword-transfer-ok, [data-ws-theme="dark"] .gv-tags em.is-yes { color: #6fd1a0; border-color: #6fd1a0; }
 [data-ws-theme="dark"] .keyword-transfer-error { color: #ea9a85; }
+
+.wordpress-download { display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 10px; border-radius: 8px; background: #e96306; padding: 8px 13px; color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; }
+.wordpress-download:hover { background: #cf5600; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart3, ExternalLink, LoaderCircle, RefreshCw } from "lucide-react";
+import { BarChart3, ChevronDown, ExternalLink, LoaderCircle, RefreshCw } from "lucide-react";
 import { readJson } from "@/lib/read-json";
 import { GoogleIndexingPanel } from "@/components/workspace/google-indexing-panel";
 
@@ -145,7 +145,8 @@ export function GoogleDataCard({ domain, canConnect }: { domain: string; canConn
     try { const response = await fetch(`/api/sites/${encodeURIComponent(domain)}/business-profile`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locationName: businessLocation }) }); const data = await readJson(response); if (!response.ok) throw new Error(data.error || "Could not load the Business Profile report. Check your location selection and try again."); setBusinessSeries(data.report); setMessage(`Business Profile report loaded through ${data.endDate.year}-${data.endDate.month}-${data.endDate.day}.`); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Could not load the Business Profile report. Check your location selection and try again."); } finally { setBusy(false); }
   }
-  return <details className="google-data-card"><summary><BarChart3 size={15} /> Google integrations & reports <span>{services.filter((item) => item.status === "connected").length} connected</span></summary>
+  const connectedCount = services.filter((item) => item.status === "connected").length;
+  return <details className="google-data-card"><summary><span className="google-card-icon"><BarChart3 size={17} /></span><span className="google-card-title"><strong>Google integrations &amp; reports</strong><small>Search Console, Analytics, Merchant Center and Business Profile</small></span><span className="google-card-status" data-connected={connectedCount > 0}>{connectedCount > 0 ? `${connectedCount} connected` : "Not connected"}</span><ChevronDown className="google-card-chevron" size={16} aria-hidden="true" /></summary>
     <div className="google-data-content"><p>Connect Google-owned data for this website. Each connection uses read or service-specific API access approved on Google&apos;s consent screen.</p>
       <div className="google-service-list">{services.map((item) => <article key={item.service}><div><strong>{item.label}</strong><small>{item.status === "connected" ? `Connected${item.providerEmail ? ` as ${item.providerEmail}` : ""}` : "Not connected"}</small></div>{canConnect ? <a href={`/api/integrations/google/${item.service}/authorize?domain=${encodeURIComponent(domain)}`}>{item.status === "connected" ? "Reconnect" : "Connect"} <ExternalLink size={12} /></a> : <small>{item.status === "connected" ? "Available" : "Admin access required"}</small>}</article>)}</div>
       {services.some((item) => item.service === "search_console" && item.status === "connected") && <div className="google-search-report"><div className="google-report-controls"><label>Property<select value={property} onChange={(event) => setProperty(event.target.value)}>{properties.map((item) => <option value={item.siteUrl} key={item.siteUrl}>{item.siteUrl}</option>)}</select></label><label>Group by<select value={dimension} onChange={(event) => setDimension(event.target.value)}>{["query", "page", "country", "device", "date"].map((item) => <option key={item}>{item}</option>)}</select></label><button type="button" disabled={busy || !property} onClick={runReport}>{busy ? <LoaderCircle className="site-spin" size={13} /> : <RefreshCw size={13} />} Run Search Console report</button></div>

@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Boxes, LockKeyhole } from "lucide-react";
+import { ArrowRight, Boxes, LockKeyhole } from "lucide-react";
 import { GoogleDataCard } from "@/components/workspace/google-data-card";
 import { getWorkspaceData, websiteRole } from "@/lib/workspace-data";
 import { hasOrganizationPermission } from "@/lib/organizations";
@@ -28,7 +28,7 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
       <div className="workspace-integration-list">{websites.map((site) => {
         const role = websiteRole(memberships, site);
         const canConnect = hasOrganizationPermission(role, "integrations.manage");
-        return <article className="workspace-integration-site" key={site.domain}><header><div><span className="workspace-site-mark"><Boxes size={17} /></span><span><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "Verify ownership to connect"}</small></span></div><span className="workspace-integration-role">{canConnect ? "Integration manager" : "Read access"}</span></header>{site.verifiedAt ? <><GoogleDataCard domain={site.domain} canConnect={canConnect} /><p className="workspace-integration-locked">WordPress now has its own page: <Link href="/dashboard/wordpress">open WordPress</Link>.</p></> : <p className="workspace-integration-locked">Confirm you own this website first (Websites → Configure), then you can connect Google or WordPress.</p>}</article>;
+        return <article className="workspace-integration-site" key={site.domain}><header><div><span className="workspace-site-mark"><Boxes size={17} /></span><span><strong>{site.name || site.domain}</strong><small>{site.domain} · {site.verifiedAt ? "Verified" : "Verify ownership to connect"}</small></span></div><span className="workspace-integration-role">{canConnect ? "Integration manager" : "Read access"}</span></header>{site.verifiedAt ? <><GoogleDataCard domain={site.domain} canConnect={canConnect} /><Link className="workspace-wordpress-link" href="/dashboard/wordpress"><span><strong>WordPress</strong><small>Connect the plugin, sync pages and manage redirects on its own page</small></span><ArrowRight size={16} aria-hidden="true" /></Link></> : <p className="workspace-integration-locked">Confirm you own this website first (Websites → Configure), then you can connect Google or WordPress.</p>}</article>;
       })}</div>
     </section>}
   </>;

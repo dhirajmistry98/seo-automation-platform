@@ -923,3 +923,41 @@
 /* Logo: the mark is black in light mode, so it must flip to white on dark surfaces */
 [data-ws-theme="dark"] .ws2-brand-logo,
 [data-ws-theme="dark"] .workspace-brand-logo { filter: brightness(0) invert(1); }
+
+/* Integrations page: Google card header and WordPress link row */
+.google-data-card { margin: 0; border: 1px solid #e4ded6; border-radius: 12px; background: #ffffff; box-shadow: 0 1px 3px rgba(8,7,6,0.05); overflow: hidden; }
+.google-data-card summary { min-height: 64px; gap: 12px; padding: 12px 16px; list-style: none; font-size: 13px; transition: background .15s; }
+.google-data-card summary::-webkit-details-marker { display: none; }
+.google-data-card summary:hover { background: #faf8f5; }
+.google-data-card summary:focus-visible { outline: 2px solid #423b34; outline-offset: -2px; }
+.google-data-card summary > span { margin-left: 0; color: inherit; font-weight: inherit; }
+.google-card-icon { display: grid; flex: none; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: #f2eee8; color: #423b34; }
+.google-card-title { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.google-card-title strong { font-size: 13px; font-weight: 600; }
+.google-card-title small { overflow: hidden; color: #70675e; font-size: 11px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.google-data-card summary > .google-card-status { flex: none; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: #f2eee8; padding: 4px 10px; color: #70675e; font-size: 11px; font-weight: 500; }
+.google-card-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #b5afa9; }
+.google-card-status[data-connected="true"] { background: #e8f4ec; color: #1f6b3a; }
+.google-card-status[data-connected="true"]::before { background: #2e9d57; }
+.google-card-chevron { flex: none; color: #70675e; transition: transform .2s; }
+.google-data-card[open] .google-card-chevron { transform: rotate(180deg); }
+.google-data-content { padding: 16px; }
+.workspace-wordpress-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; border: 1px solid #e4ded6; border-radius: 12px; background: #ffffff; padding: 14px 16px; color: #423b34; text-decoration: none; transition: background .15s, border-color .15s; }
+.workspace-wordpress-link > span { display: grid; gap: 2px; min-width: 0; }
+.workspace-wordpress-link strong { font-size: 13px; font-weight: 600; }
+.workspace-wordpress-link small { color: #70675e; font-size: 11px; line-height: 1.4; }
+.workspace-wordpress-link:hover { background: #faf8f5; border-color: #cfc8bf; }
+.workspace-wordpress-link:focus-visible { outline: 2px solid #423b34; outline-offset: 2px; }
+.workspace-wordpress-link > svg { flex: none; transition: transform .15s; }
+.workspace-wordpress-link:hover > svg { transform: translateX(3px); }
+[data-ws-theme="dark"] .google-data-card { background: #23211f; border-color: #2c2824; }
+[data-ws-theme="dark"] .google-data-card summary:hover { background: #2a2724; }
+[data-ws-theme="dark"] .google-card-icon,
+[data-ws-theme="dark"] .google-data-card summary > .google-card-status { background: #2f2b27; color: #cdc8c4; }
+[data-ws-theme="dark"] .google-card-title small,
+[data-ws-theme="dark"] .google-card-chevron { color: #aca59e; }
+[data-ws-theme="dark"] .google-data-card summary > .google-card-status[data-connected="true"] { background: #1c3326; color: #7fd69c; }
+[data-ws-theme="dark"] .workspace-wordpress-link { background: #23211f; border-color: #2c2824; color: #cdc8c4; }
+[data-ws-theme="dark"] .workspace-wordpress-link small { color: #aca59e; }
+[data-ws-theme="dark"] .workspace-wordpress-link:hover { background: #2a2724; border-color: #453f38; }
+@media (max-width: 700px) { .google-card-title small { white-space: normal; } .google-data-card summary { padding: 12px; gap: 10px; } .google-card-icon { display: none; } }

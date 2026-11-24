@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title,
   description,
   // Website ownership verification for this site inside SEO Studio.
-  other: { "seo-studio-verification": "67ea6b84a8cea6a92730b62647053f1d5ab1d1bdee2da51b" },
+  other: { "seo-studio-verification": "157aeaa37e5328168417064c54729deba29a0f5ca8255bbe" },
   ...(siteUrl ? {
     metadataBase: new URL(siteUrl),
     alternates: { canonical: "/" },

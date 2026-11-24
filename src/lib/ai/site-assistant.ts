@@ -37,30 +37,6 @@ export function cleanHistory(value: unknown): ChatTurn[] {
   return turns.filter((t, i) => t.content && (i === 0 || t.role !== turns[i - 1].role));
 }
 
-export function assistantProvider(): "claude" | "gemini" | null {
-  if (process.env.ANTHROPIC_API_KEY) return "claude";
-  if (process.env.GEMINI_API_KEY) return "gemini";
-  return null;
-}
-
-async function askClaude(question: string, history: ChatTurn[]): Promise<string> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY!, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({
-      model: process.env.ANTHROPIC_ASSISTANT_MODEL || "claude-haiku-5-5",
-      max_tokens: 400,
-      temperature: 0.2,
-      system: ASSISTANT_SYSTEM,
-      messages: [...history, { role: "user", content: question }],
-    }),
-    signal: AbortSignal.timeout(25_000),
-  });
-  if (!response.ok) throw new Error(`claude ${response.status}`);
-  const data = (await response.json()) as { content?: Array<{ type: string; text?: string }> };
-  return data.content?.filter((b) => b.type === "text").map((b) => b.text).join("").trim() || "";
-}
-
 async function askGemini(question: string, history: ChatTurn[]): Promise<string> {
   const model = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!).getGenerativeModel({
     model: process.env.GEMINI_ASSISTANT_MODEL || "gemini-2.5-flash",
@@ -73,8 +49,6 @@ async function askGemini(question: string, history: ChatTurn[]): Promise<string>
 }
 
 export async function askAssistant(question: string, history: ChatTurn[]) {
-  const provider = assistantProvider();
-  if (!provider) throw new Error("not-configured");
-  const answer = provider === "claude" ? await askClaude(question, history) : await askGemini(question, history);
-  return { answer, provider };
+  if (!process.env.GEMINI_API_KEY) throw new Error("not-configured");
+  return { answer: await askGemini(question, history), provider: "gemini" as const };
 }

@@ -202,3 +202,26 @@
 [data-ws-theme="dark"] .data-insights textarea { border-color: #49423b; }
 [data-ws-theme="dark"] .data-insights-error { color: #ea9a85; }
 [data-ws-theme="dark"] .data-insights-result { border-color: #2c2824; }
+
+/* Keyword import/export and Gemini visibility */
+.keyword-transfer { margin-top: 18px; }
+.keyword-transfer textarea { width: 100%; margin: 10px 0; border: 1px solid #ded8d0; border-radius: 10px; background: transparent; padding: 10px 12px; color: inherit; font: inherit; font-size: 13px; resize: vertical; }
+.keyword-transfer-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.keyword-transfer-actions a, .keyword-transfer-actions button, .keyword-transfer-file { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #ded8d0; border-radius: 9px; background: transparent; padding: 8px 13px; color: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.keyword-transfer-actions .is-primary { border-color: #e96306; background: #e96306; color: #fff; }
+.keyword-transfer-actions button:disabled { opacity: .5; cursor: default; }
+.keyword-transfer-file input { display: none; }
+.keyword-transfer-preview { margin-top: 10px; font-size: 13px; }
+.keyword-transfer-preview ul { margin: 6px 0 0 18px; }
+.keyword-transfer-ok { margin-top: 10px; color: #1c7a4a; }
+.keyword-transfer-error { margin-top: 10px; color: #a1371c; }
+.gv-list { display: grid; gap: 12px; margin: 10px 0 0; padding: 0; list-style: none; }
+.gv-list li { display: grid; gap: 5px; font-size: 13px; }
+.gv-list small { color: #8a8178; line-height: 1.5; }
+.gv-tags { display: flex; gap: 6px; }
+.gv-tags em { border: 1px solid #ded8d0; border-radius: 99px; padding: 2px 9px; font-size: 11px; font-style: normal; font-weight: 700; color: #8a8178; }
+.gv-tags em.is-yes { border-color: #1c7a4a; color: #1c7a4a; }
+[data-ws-theme="dark"] .keyword-transfer textarea, [data-ws-theme="dark"] .keyword-transfer-actions a, [data-ws-theme="dark"] .keyword-transfer-actions button, [data-ws-theme="dark"] .keyword-transfer-file, [data-ws-theme="dark"] .gv-tags em { border-color: #49423b; }
+[data-ws-theme="dark"] .keyword-transfer-actions .is-primary { border-color: #e96306; }
+[data-ws-theme="dark"] .keyword-transfer-ok, [data-ws-theme="dark"] .gv-tags em.is-yes { color: #6fd1a0; border-color: #6fd1a0; }
+[data-ws-theme="dark"] .keyword-transfer-error { color: #ea9a85; }

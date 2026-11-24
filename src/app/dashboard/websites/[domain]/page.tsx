@@ -13,6 +13,7 @@ import { seoCrawlPageLimit } from "@/lib/seo/crawler";
 import { ArrowLeft, Download, Save, Zap, Search } from "lucide-react";
 import { WebsiteDeleteControl } from "@/components/workspace/website-delete-control";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { KeywordTransfer } from "@/components/workspace/keyword-transfer";
 
 export const instant = false;
 
@@ -127,5 +128,6 @@ export default async function WebsiteSettingsPage({ params, searchParams }: { pa
       <section className="website-activity" aria-labelledby="website-activity-title"><div><p className="workspace-eyebrow">AUDIT TRAIL</p><h2 id="website-activity-title">Recent activity</h2></div>{activity.length ? <ol>{activity.map((item, index) => <li key={`${item.auditId || item.action}-${item.createdAt?.toISOString?.() || index}`}><span className="website-activity-dot" /><div><strong>{(item.action || "website.updated").replaceAll(".", " ").replaceAll("_", " ")}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleString() : "Time unavailable"}{item.method ? ` · ${item.method.replaceAll("_", " ")}` : ""}{typeof item.pageCount === "number" ? ` · ${item.pageCount} pages` : ""}{typeof item.issueCount === "number" ? ` · ${item.issueCount} findings` : ""}</small></div></li>)}</ol> : <p>No recorded website activity yet. Verification and audits will appear here.</p>}</section>
       <div className="website-delete-panel"><div><strong>Remove this website</strong><p>Delete this site and its saved SEO data from this workspace.</p></div><WebsiteDeleteControl domain={website.domain} /></div>
     </section>
+    <KeywordTransfer domain={website.domain} canEdit={allowedOrganizationIds.some((id) => String(id) === String(website.organizationId))} />
   </div>;
 }

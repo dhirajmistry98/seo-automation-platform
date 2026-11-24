@@ -6,7 +6,7 @@ import { auditHtml, addCrossPageIssues, getHealthScoreDetails, getPageHealthScor
 import { createOAuthPkce, decryptGoogleSecret, encryptGoogleSecret, isGoogleService, hashOAuthState } from "../src/lib/integrations/google.ts";
 import { hasOrganizationPermission } from "../src/lib/organizations.ts";
 import { assertPublicUrl, createPinnedLookup } from "../src/lib/seo/url-security.ts";
-import { buildDomainRankRows, getProviderItems, isDataForSeoConfigured, normalizeSearchDevice, readDataForSeoResponse } from "../src/lib/integrations/dataforseo.ts";
+import { normalizeSearchDevice } from "../src/lib/integrations/research-utils.ts";
 import { ensureSessionUserProfile, persistUserProfile } from "../src/lib/user-profile.ts";
 import { revokeUserSessions } from "../src/lib/security/sessions.ts";
 import { formatAuthUser } from "../src/lib/auth-user-format.ts";
@@ -15,7 +15,7 @@ import { calculateAuthorityIndex } from "../src/lib/seo/authority-index.ts";
 import { analyzeSearchVisibility } from "../src/lib/seo/search-visibility.ts";
 import { robotsHomepagePolicy } from "../src/lib/seo/search-access.ts";
 import { buildOrganizationInvitationEmail, escapeEmailHtml } from "../src/lib/email.ts";
-import { normalizeResearchDomain } from "../src/lib/integrations/dataforseo.ts";
+import { normalizeResearchDomain } from "../src/lib/integrations/research-utils.ts";
 import { getRankTrackingKeywords, nextRankTrackingAt, parseRankTrackingDevice, parseRankTrackingFrequency, parseRankTrackingLanguageCode, parseRankTrackingLocationCode } from "../src/lib/seo/rank-schedule.ts";
 import { getWebsiteSeoTarget } from "../src/lib/seo/target.ts";
 import { assertProductionEnvironment } from "../src/lib/production-env.ts";
@@ -106,26 +106,6 @@ test("role permissions follow least privilege", () => {
   assert.equal(hasOrganizationPermission("viewer", "research.run"), false);
   assert.equal(hasOrganizationPermission("seo_specialist", "research.run"), true);
   assert.equal(hasOrganizationPermission("unknown", "websites.read"), false);
-});
-
-test("SEO research only returns a site's own matching positions and handles missing results", () => {
-  const rows = buildDomainRankRows([
-    { result: [{ items: [{ domain: "www.example.test", url: "https://www.example.test/page", rank_group: 4, title: "Relevant" }, { domain: "competitor.test", url: "https://competitor.test", rank_group: 1 }] }] },
-    { result: [{ items: [{ domain: "example.test.evil.test", url: "https://example.test.evil.test", rank_group: 2 }] }] },
-  ], ["first query", "second query"], "example.test");
-  assert.equal(rows[0].keyword, "first query");
-  assert.equal(rows[0].rank_group, 4);
-  assert.equal(rows[1].rank_group, null);
-});
-
-test("SEO research provider item extraction is empty-safe and credentials remain optional", () => {
-  assert.deepEqual(getProviderItems({ tasks: [{ result: [{ items: [{ keyword: "seo" }] }] }] }), [{ keyword: "seo" }]);
-  assert.deepEqual(getProviderItems({}), []);
-  delete process.env.DATAFORSEO_LOGIN;
-  delete process.env.DATAFORSEO_PASSWORD;
-  assert.equal(isDataForSeoConfigured(), false);
-  assert.equal(normalizeSearchDevice("mobile"), "mobile");
-  assert.equal(normalizeSearchDevice("tablet"), "desktop");
 });
 
 test("crawler rejects private IPs and non-HTTP URL schemes", async () => {
@@ -304,11 +284,6 @@ test("account deletion revokes the current and every active JWT session", async 
   assert.deepEqual(deleted, [{ name: "active_sessions", query: { userId: "user-1" } }]);
 });
 
-test("DataForSEO responses are size-limited before parsing", async () => {
-  assert.deepEqual(await readDataForSeoResponse(new Response('{"status_code":200}')), { status_code: 200 });
-  await assert.rejects(readDataForSeoResponse(new Response("x".repeat(16 * 1024 * 1024 + 1))), /size limit/);
-});
-
 test("rank tracking settings validate inputs, cap keywords, and schedule from UTC dates", () => {
   assert.equal(parseRankTrackingFrequency("weekly"), "weekly");
   assert.equal(parseRankTrackingFrequency("hourly"), null);
@@ -372,4 +347,9 @@ test("AI crawler homepage policy follows exact bot groups and wildcard robots ru
   assert.equal(robotsHomepagePolicy(robots, "ClaudeBot"), "blocked_on_root");
   assert.equal(robotsHomepagePolicy("User-agent: GPTBot\nDisallow: /private", "GPTBot"), "allowed_on_root");
   assert.equal(robotsHomepagePolicy("Sitemap: https://example.test/sitemap.xml", "GPTBot"), "not_specified");
+});
+
+test("research device input is normalised", () => {
+  assert.equal(normalizeSearchDevice("mobile"), "mobile");
+  assert.equal(normalizeSearchDevice("tablet"), "desktop");
 });

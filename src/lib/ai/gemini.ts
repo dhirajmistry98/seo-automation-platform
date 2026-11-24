@@ -1,10 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { estimateCost, DEFAULT_MODEL } from "./models";
+import { estimateCost, DEFAULT_MODEL, FALLBACK_MODEL } from "./models";
 import { buildPrompt, SYSTEM_PROMPT, taskOutputTokens, taskTemperature } from "./prompts";
 import type { AiGenRequest, AiGenResponse, AiUsageMeta } from "./types";
 
+/** Temporary Google overload (503). Checked before the generic "fetch" network message, which it also contains. */
+function isOverloaded(msg: string) {
+  return /\b503\b|high demand|overloaded|UNAVAILABLE/i.test(msg);
+}
+
 function friendlyError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
+  if (isOverloaded(msg)) return "The AI model is very busy right now. Please try again in a moment, or pick another model in AI Studio settings.";
   if (msg.includes("no longer available") || msg.includes("404")) {
     return "The selected AI model is no longer available. Go to AI Studio → Config and choose a different model.";
   }
@@ -36,7 +42,7 @@ function extractUsage(usageMetadata: Record<string, unknown> | undefined, modelI
   return { promptTokens, completionTokens, totalTokens, estimatedCostUsd: estimateCost(modelId, promptTokens, completionTokens) };
 }
 
-export async function geminiGenerate(req: AiGenRequest): Promise<AiGenResponse> {
+async function geminiGenerateOnce(req: AiGenRequest): Promise<AiGenResponse> {
   const start = Date.now();
   const modelId = req.model ?? DEFAULT_MODEL;
   const task = req.task;
@@ -78,6 +84,18 @@ export async function geminiGenerate(req: AiGenRequest): Promise<AiGenResponse> 
     return { result: resp.text(), model: modelId, mode: "raw", usage, durationMs: Date.now() - start };
   } catch (err) {
     throw new Error(friendlyError(err));
+  }
+}
+
+export async function geminiGenerate(req: AiGenRequest): Promise<AiGenResponse> {
+  try {
+    return await geminiGenerateOnce(req);
+  } catch (err) {
+    const chosen = req.model ?? DEFAULT_MODEL;
+    const raw = err instanceof Error ? err.message : "";
+    // friendlyError already turned the cause into text; retry once on a stable model when it was overload or retirement.
+    if (chosen !== FALLBACK_MODEL && /very busy|no longer available/i.test(raw)) return geminiGenerateOnce({ ...req, model: FALLBACK_MODEL });
+    throw err;
   }
 }
 

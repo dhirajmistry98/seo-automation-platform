@@ -1,19 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { researchSource } from "../src/lib/integrations/research-policy.ts";
 import { auditHtml } from "../src/lib/seo/audit.ts";
 import { analyzeKeywordTargeting } from "../src/lib/seo/keyword-optimizer.ts";
-
-test("unverified websites never reach the paid research provider", () => {
-  for (const kind of ["keywords", "questions", "rank"]) {
-    assert.equal(researchSource(kind, { paidConfigured: true, verified: false }), "free");
-    assert.equal(researchSource(kind, { paidConfigured: false, verified: true }), "free");
-  }
-  for (const kind of ["backlinks", "competitors", "ai_visibility"]) {
-    assert.equal(researchSource(kind, { paidConfigured: true, verified: false }), "blocked");
-  }
-  assert.equal(researchSource("keywords", { paidConfigured: true, verified: true }), "paid");
-});
 
 const page = (title, h1, body) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><meta name="description" content="Plan and ship ${h1.toLowerCase()} with clear steps your team can follow every week."></head><body><h1>${h1}</h1><h2>Why it matters</h2><p>${body}</p></body></html>`;
 

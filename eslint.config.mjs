@@ -13,6 +13,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // Test fakes are CommonJS on purpose: tsx loads the app through Node's CommonJS loader, which is where they are swapped in.
+    files: ["tests/support/**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 ]);
 
 export default eslintConfig;

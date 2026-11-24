@@ -1,0 +1,9 @@
+const { world } = require("./state.cjs");
+exports.__esModule = true;
+exports.FREE_PROVIDER = "Google Autocomplete + Search Console";
+exports.FREE_RESEARCH_KINDS = ["keywords", "questions", "rank"];
+exports.freeKeywordIdeas = async (...a) => (world().free.keywords ?? (async () => ({ items: [{ keyword: a[3][0], suggestions: ["s1"], gsc: null }], searchConsoleConnected: false })))(...a);
+exports.freeQuestionIdeas = async (...a) => (world().free.questions ?? (async () => [{ keyword: "what is " + a[0], questionType: "what" }]))(...a);
+exports.freeRankPositions = async (...a) => (world().free.rank ?? (async () => null))(...a);
+exports.freeQuickWins = async (...a) => (world().free.quick ?? (async () => null))(...a);
+exports.freeCannibalization = async (...a) => (world().free.cannibal ?? (async () => null))(...a);

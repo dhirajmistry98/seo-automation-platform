@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, Copy, Plus, Trash2 } from "lucide-react";
 
-type Row = { lang: string; region: string; url: string };
+import { buildHtmlTags, buildSitemapXml, validate, type Row } from "@/lib/seo/hreflang";
 
 const COMMON_LANGS = [
   { code: "en", label: "English" }, { code: "hi", label: "Hindi" }, { code: "es", label: "Spanish" },
@@ -25,44 +25,6 @@ const REGIONS = [
   { code: "JP", label: "Japan" }, { code: "CN", label: "China" }, { code: "KR", label: "South Korea" },
   { code: "RU", label: "Russia" }, { code: "IT", label: "Italy" }, { code: "NL", label: "Netherlands" },
 ];
-
-function hreflangValue(lang: string, region: string) {
-  if (!lang) return "";
-  return region ? `${lang}-${region}` : lang;
-}
-
-function buildHtmlTags(rows: Row[], xDefault: string): string {
-  const lines = rows
-    .filter((r) => r.lang && r.url)
-    .map((r) => `<link rel="alternate" hreflang="${hreflangValue(r.lang, r.region)}" href="${r.url}" />`);
-  if (xDefault) lines.push(`<link rel="alternate" hreflang="x-default" href="${xDefault}" />`);
-  return lines.join("\n");
-}
-
-function buildSitemapXml(rows: Row[], xDefault: string): string {
-  const valid = rows.filter((r) => r.lang && r.url);
-  if (!valid.length) return "";
-  const urls = valid.map((r) => r.url);
-  if (xDefault) urls.push(xDefault);
-  return valid.map((row) => `<url>
-  <loc>${row.url}</loc>
-${[...valid.map((r) => `  <xhtml:link rel="alternate" hreflang="${hreflangValue(r.lang, r.region)}" href="${r.url}" />`), xDefault ? `  <xhtml:link rel="alternate" hreflang="x-default" href="${xDefault}" />` : ""].filter(Boolean).join("\n")}
-</url>`).join("\n\n");
-}
-
-function validate(rows: Row[]): string[] {
-  const errors: string[] = [];
-  const seen = new Set<string>();
-  rows.forEach((r, i) => {
-    if (!r.lang) errors.push(`Row ${i + 1}: language is required.`);
-    if (!r.url) errors.push(`Row ${i + 1}: URL is required.`);
-    else { try { new URL(r.url); } catch { errors.push(`Row ${i + 1}: URL is not valid.`); } }
-    const key = hreflangValue(r.lang, r.region);
-    if (key && seen.has(key)) errors.push(`Duplicate hreflang value: ${key}`);
-    if (key) seen.add(key);
-  });
-  return errors;
-}
 
 export default function HreflangBuilderPage() {
   const [rows, setRows] = useState<Row[]>([

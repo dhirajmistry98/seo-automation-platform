@@ -22,11 +22,20 @@ export function normalizeRedirectPath(value: string): string {
   return path;
 }
 
+/** Characters that could end a config directive or start a new one when a rule is exported as nginx/Apache text. */
+const UNSAFE_CONFIG_CHARS = /[\s;{}"'`\\$^|<>\u0000-\u001f\u007f]/;
+
 export function validateRedirectRule(source: string, destination: string): string | null {
-  if (!source.trim()) return "Source path is required.";
-  if (!source.trim().startsWith("/")) return "Source must be a path starting with /.";
-  if (!destination.trim()) return "Destination is required.";
-  if (source.trim() === destination.trim()) return "Source and destination must differ.";
+  const from = source.trim();
+  const to = destination.trim();
+  if (!from) return "Source path is required.";
+  if (!from.startsWith("/")) return "Source must be a path starting with /.";
+  if (!to) return "Destination is required.";
+  if (from === to) return "Source and destination must differ.";
+  if (from.length > 500 || to.length > 2000) return "Source or destination is too long.";
+  if (UNSAFE_CONFIG_CHARS.test(from) || from.startsWith("//")) return "Source contains characters that are not allowed (spaces, quotes, semicolons, braces or control characters).";
+  if (UNSAFE_CONFIG_CHARS.test(to)) return "Destination contains characters that are not allowed (spaces, quotes, semicolons, braces or control characters).";
+  if (!(to.startsWith("/") && !to.startsWith("//")) && !/^https?:\/\/[^\s/]+/i.test(to)) return "Destination must be a path starting with / or an http(s) URL.";
   return null;
 }
 
@@ -73,8 +82,13 @@ export function exportVercel(rules: RedirectRule[]): string {
   return JSON.stringify({ redirects }, null, 2);
 }
 
+function csvCell(value: string) {
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
 export function exportCsv(rules: RedirectRule[]): string {
   const header = "source,destination,type,note";
-  const rows = rules.map((r) => `"${r.source}","${r.destination}","${r.type}","${(r.note ?? "").replace(/"/g, '""')}"`);
+  const rows = rules.map((r) => [r.source, r.destination, r.type, r.note ?? ""].map(csvCell).join(","));
   return [header, ...rows].join("\n");
 }

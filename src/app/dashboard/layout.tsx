@@ -23,6 +23,7 @@ import "./styles/05-reference.css";
 import "./styles/06-shell.css";
 import "./styles/07-theme.css";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { SiteAssistant } from "@/components/workspace/site-assistant";
 
 export const instant = false;
 
@@ -55,5 +56,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       </header>
       <main className="workspace-main workspace-main-redesign workspace-route-main ws2-main">{siteCount === null && <div className="workspace-alert" role="status">We can’t reach your saved data right now. Please refresh in a minute — if this keeps happening, contact support.</div>}{children}<footer className="workspace-footer"><span>{BRAND.name} · SEO workspace</span><Link href="/">Back to the website</Link></footer></main>
     </div>
+    <SiteAssistant />
   </div>;
 }

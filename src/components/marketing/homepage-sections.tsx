@@ -6,6 +6,7 @@ import clientPromise from "@/lib/mongodb";
 import { LISTABLE_CREATOR_STATUS, profileTier } from "@/lib/marketplace/core";
 import { ScrollCue } from "./scroll-cue";
 import { BrandLogo } from "./brand-logo";
+import { faqs } from "@/lib/marketing-faqs";
 
 const capabilities = [
   { icon: BarChart3, title: "Organic search performance", text: "Bring authorized Search Console clicks, impressions, CTR and position reports into your workspace." },
@@ -32,19 +33,6 @@ const integrations = [
   { mark: "S", name: "Shopify", scope: "Possible future integration", status: "Not available" },
 ];
 
-const faqs = [
-  ["How can influencers find brand collaborations?", "Create an influencer profile with your portfolio, categories and rates, then connect Instagram for official verification. Once your profile is reviewed, browse approved brands and open campaigns, then apply with a pitch. Creators of every audience size can qualify when their account is connected and reviewed."],
-  ["How can brands find and contact influencers?", "Create a brand profile and submit it for review. After approval, publish a campaign, browse verified creator profiles and send an invitation tied to your brief. Private messaging opens after an application or invitation is accepted."],
-  ["Can I hire an SEO, GEO, AEO or LLMO specialist?", "Yes. Sign in to browse reviewed expert service listings, send a project brief and compare proposals. Eligible orders can use Razorpay checkout when the deployment has valid merchant credentials; payout transfers are not enabled, and live payment acceptance still requires sandbox and production verification."],
-  ["When can a creator and brand message each other?", "A private campaign conversation is created after the other party accepts an application or invitation. They can then discuss scope and pricing, agree on terms, and manage deliverables in that conversation."],
-  ["Are integrations available now?", "Integrations depend on implementation, account access and authorization. A source should only appear as connected after an authorized connection is in place."],
-  ["Will the platform change my website automatically?", "High-impact changes are intended to wait for your review. Applying a change also depends on supported actions and the authorization you provide."],
-  ["Can I use the application without WordPress?", "Yes. The application is designed as a central SEO workspace. WordPress is only needed for direct site management through the plugin."],
-  ["How are SEO Health and Authority different?", "SEO Health is based on documented technical and on-page rules. The SEO Authority Index is a separate proprietary measure and is not equivalent to third-party scores."],
-  ["How do I begin local SEO for a location anywhere in the world?", "Add and verify your website, then choose a country and a provider-supported city or region with the matching language in website settings or research. Location availability and metrics depend on the data provider; some reports are country-level and some services cover only selected markets."],
-  ["What does AI visibility mean in this workspace?", "GEO, AEO and LLMO readiness scores describe technical and content-structure signals found in your latest crawl. AI mention reports are separate third-party snapshots. Neither type guarantees rankings, citations or answers in an AI product."],
-  ["Where can I read the platform terms?", "The Terms and Conditions explain account responsibilities, data connections, marketplace use, service availability and limitations. Read them at /terms before using the platform."],
-] as const;
 
 function SectionIntro({
   index,

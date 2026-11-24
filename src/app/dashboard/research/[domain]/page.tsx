@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { findAccessibleWebsite } from "@/lib/organizations";
 import { isDataForSeoConfigured } from "@/lib/integrations/dataforseo";
+import { DataInsights } from "@/components/workspace/data-insights";
 import { ResearchWorkbench, type ResearchHistoryReport } from "@/components/workspace/research-workbench";
 import { AuthorityIndexCard, type AuthoritySnapshot } from "@/components/workspace/authority-index-card";
 import { getWebsiteSeoTarget } from "@/lib/seo/target";
@@ -55,6 +56,7 @@ export default async function WebsiteResearchPage({ params }: { params: Promise<
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> SEARCH INTELLIGENCE</p><h1>{website.name || domain}</h1><p>Keyword, domain, competitor, position, local, backlink and AI search research for {domain}.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><ArrowLeft size={15} /> All websites</Link></header>
     <AuthorityIndexCard domain={domain} initialHistory={authorityHistory} />
+    <DataInsights domain={domain} />
     <ResearchWorkbench domain={domain} verified={Boolean(website.verifiedAt)} configured={isDataForSeoConfigured()} competitorDomains={Array.isArray(website.competitorDomains) ? website.competitorDomains.filter((item): item is string => typeof item === "string") : []} initialHistory={history} initialTarget={getWebsiteSeoTarget(website as unknown as Parameters<typeof getWebsiteSeoTarget>[0])} />
   </>;
 }

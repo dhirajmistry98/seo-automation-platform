@@ -213,6 +213,37 @@ export function auditHtml(url: string, finalUrl: string, status: number, html: s
   return { url, finalUrl, status, title, description, canonical, robots, headings, wordCount, internalLinks, externalLinks, images, structuredData, searchSignals, hreflang, cmsDetection, issues };
 }
 
+export const DEEP_PAGE_DEPTH = 3;
+export const EXCESSIVE_LINKS = 150;
+
+export function normalizeInternalUrl(value: string) {
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    if (url.pathname !== "/") url.pathname = url.pathname.replace(/\/+$/, "");
+    return url.href;
+  } catch { return null; }
+}
+const normalizeLinkUrl = normalizeInternalUrl;
+
+/** Clicks from the first crawled page to every reachable page (breadth-first). Unreachable pages are absent. */
+export function clickDepths(pages: Array<{ url: string; internalLinks: string[] }>) {
+  const depths = new Map<string, number>();
+  const byUrl = new Map(pages.flatMap((page) => { const key = normalizeInternalUrl(page.url); return key ? [[key, page] as const] : []; }));
+  const rootKey = pages[0] ? normalizeInternalUrl(pages[0].url) : null;
+  if (!rootKey) return depths;
+  depths.set(rootKey, 0);
+  const queue = [rootKey];
+  for (let index = 0; index < queue.length; index += 1) {
+    const current = queue[index];
+    for (const link of byUrl.get(current)?.internalLinks ?? []) {
+      const key = normalizeInternalUrl(link);
+      if (key && byUrl.has(key) && !depths.has(key)) { depths.set(key, (depths.get(current) ?? 0) + 1); queue.push(key); }
+    }
+  }
+  return depths;
+}
+
 export function addCrossPageIssues(pages: AuditedPage[]) {
   const normalizeInternalUrl = (value: string) => {
     try {
@@ -268,6 +299,21 @@ export function addCrossPageIssues(pages: AuditedPage[]) {
     if (page !== root && normalized && !incoming.has(normalized)) {
       page.issues.push(issue("internal.not_linked_from_crawl", "No internal link found from crawled pages", "notice", "No other page in this crawl linked to this URL. This can indicate a discoverability gap, but does not prove the page is an orphan because the crawl may be limited.", "Check whether important pages have descriptive internal links from relevant pages and navigation.", "No incoming internal links in this crawl"));
     }
+  }
+  const depths = clickDepths(pages);
+  for (const page of pages) {
+    const key = normalizeLinkUrl(page.url);
+    const depth = key ? depths.get(key) : undefined;
+    if (depth !== undefined && depth > DEEP_PAGE_DEPTH) page.issues.push(issue("internal.deep_page", "Page is buried deep in the site", "notice", `This page is ${depth} clicks from the first crawled page.`, "Link to important pages from the home page, menus or hub pages so they are within three clicks.", `${depth} clicks from the first crawled page`));
+    const internalCount = new Set(page.internalLinks.map((link) => normalizeLinkUrl(link)).filter(Boolean)).size;
+    if (internalCount > EXCESSIVE_LINKS) page.issues.push(issue("internal.excessive_links", "Very many internal links on one page", "notice", `This page links to ${internalCount} different internal URLs.`, "Keep navigation focused so link value is not spread too thin. Move long lists to hub pages.", `${internalCount} unique internal links`));
+    try {
+      const url = new URL(page.url);
+      const params = [...url.searchParams.keys()].length;
+      if (page.url.length > 115) page.issues.push(issue("technical.url_long", "URL is very long", "notice", `The URL is ${page.url.length} characters long.`, "Use short, readable URLs, ideally under about 115 characters.", page.url.slice(0, 160)));
+      if (params > 2) page.issues.push(issue("technical.url_parameters", "URL has many query parameters", "notice", `The URL has ${params} query parameters, which can create duplicate versions of the page.`, "Prefer clean URLs, and use canonical tags where parameters are needed.", url.search.slice(0, 160)));
+      if (/[A-Z_]/.test(url.pathname)) page.issues.push(issue("technical.url_format", "URL uses capitals or underscores", "notice", "URL paths work best in lowercase with hyphens between words.", "Use lowercase letters and hyphens, and redirect the old URL to the new one.", url.pathname.slice(0, 160)));
+    } catch { /* an unparsable URL is already reported elsewhere */ }
   }
 }
 

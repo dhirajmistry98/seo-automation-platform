@@ -9,7 +9,8 @@ import { AiStudio } from "@/components/workspace/ai-studio";
 
 export const instant = false;
 
-export default async function AiStudioPage() {
+export default async function AiStudioPage({ searchParams }: { searchParams: Promise<{ tool?: string }> }) {
+  const { tool } = await searchParams;
   await connection();
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -37,6 +38,7 @@ export default async function AiStudioPage() {
       models={GEMINI_MODELS}
       websites={workspace.websites.map((s) => ({ domain: s.domain, name: s.name ?? s.domain }))}
       hasApiKey={hasApiKey}
+      initialTask={typeof tool === "string" ? tool : undefined}
     />
   </>;
 }

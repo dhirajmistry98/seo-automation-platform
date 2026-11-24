@@ -20,6 +20,7 @@ interface Props {
   models: GeminiModel[];
   websites: Array<{ domain: string; name: string }>;
   hasApiKey: boolean;
+  initialTask?: string;
 }
 
 type Tab = "tools" | "chat" | "config" | "usage";
@@ -40,7 +41,7 @@ function fmt(n: number, digits = 0) { return n.toLocaleString("en-IN", { maximum
 function fmtCost(usd: number) { return usd < 0.001 ? "<$0.001" : `$${usd.toFixed(4)}`; }
 function elapsed(ms: number) { return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`; }
 
-export function AiStudio({ initialConfig, initialStats, models, websites, hasApiKey }: Props) {
+export function AiStudio({ initialConfig, initialStats, models, websites, hasApiKey, initialTask }: Props) {
   const [tab, setTab] = useState<Tab>("tools");
   const [config, setConfig] = useState<AiConfig>(initialConfig);
   const [stats, setStats] = useState<UsageStats>(initialStats);
@@ -49,7 +50,7 @@ export function AiStudio({ initialConfig, initialStats, models, websites, hasApi
   const [connectionStatus, setConnectionStatus] = useState<{ ok: boolean; error?: string } | null>(null);
 
   // Tools tab
-  const [selectedTask, setSelectedTask] = useState<AiTask>("seo-titles");
+  const [selectedTask, setSelectedTask] = useState<AiTask>(TASKS.some((item) => item.id === initialTask) ? (initialTask as AiTask) : "seo-titles");
   const [taskDomain, setTaskDomain] = useState(websites[0]?.domain ?? "");
   const [taskFields, setTaskFields] = useState<Record<string, string>>({});
   const [generating, setGenerating] = useState(false);

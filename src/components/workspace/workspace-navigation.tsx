@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, BotMessageSquare, Boxes, FileBarChart, Globe2, LockKeyhole, Radar, ScanSearch, Search, Settings2, Target } from "lucide-react";
+import { Activity, BotMessageSquare, Boxes, FileBarChart, Globe2, LockKeyhole, PlugZap, Radar, ScanSearch, Search, Settings2, Target } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: Activity, match: (path: string) => path === "/dashboard" },
@@ -14,6 +14,7 @@ const links = [
   { href: "/dashboard/visibility", label: "Visibility", icon: Radar, match: (path: string) => path.startsWith("/dashboard/visibility") },
   { href: "/dashboard/report", label: "Reports", icon: FileBarChart, match: (path: string) => path.startsWith("/dashboard/report") },
   { href: "/dashboard/ai", label: "AI Studio", icon: BotMessageSquare, match: (path: string) => path.startsWith("/dashboard/ai") },
+  { href: "/dashboard/wordpress", label: "WordPress", icon: PlugZap, match: (path: string) => path.startsWith("/dashboard/wordpress") },
   { href: "/dashboard/integrations", label: "Integrations", icon: LockKeyhole, match: (path: string) => path.startsWith("/dashboard/integrations") },
   { href: "/dashboard/account", label: "Account", icon: Settings2, match: (path: string) => path.startsWith("/dashboard/account") },
 ];

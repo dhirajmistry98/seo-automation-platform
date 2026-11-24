@@ -3,7 +3,7 @@ Contributors: seostudio
 Tags: seo, metadata, bulk editor, canonical, schema
 Requires at least: 6.2
 Requires PHP: 8.0
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 
 SEO metadata controls and a permission-checked REST API for SEO Studio.

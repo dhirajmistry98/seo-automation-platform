@@ -6,7 +6,7 @@ import { readJson } from "@/lib/read-json";
 
 type ConnectionStatus = { tokenIssued: boolean; connectedAt: string | null; lastSyncAt: string | null; lastSyncStatus?: string | null; pluginVersion?: string | null; appEditingReady?: boolean };
 
-export function WordPressConnectionCard({ domain, appUrl }: { domain: string; appUrl: string }) {
+export function WordPressConnectionCard({ domain, appUrl, defaultOpen = false }: { domain: string; appUrl: string; defaultOpen?: boolean }) {
   const [status, setStatus] = useState<ConnectionStatus | null>(null);
   const [newToken, setNewToken] = useState("");
   const [busy, setBusy] = useState(false);
@@ -40,7 +40,7 @@ export function WordPressConnectionCard({ domain, appUrl }: { domain: string; ap
     catch { setMessage("Copy was blocked by the browser. Select the token text and copy it manually."); }
   }
 
-  return <details className="wordpress-connection-card">
+  return <details className="wordpress-connection-card" open={defaultOpen || undefined}>
     <summary><KeyRound size={14} /> WordPress plugin {status?.connectedAt ? <span className="wordpress-connected">Connected</span> : <span>Setup</span>}</summary>
     <div className="wordpress-connection-content">
       <p>Install the standalone SEO Studio Connector plugin, then set the app URL and token in WordPress under <strong>Settings → SEO Studio</strong>.</p>

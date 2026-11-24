@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SEO Studio Connector
  * Description: SEO metadata controls and a permission-checked REST interface for SEO Studio.
- * Version: 0.5.0
+ * Version: 0.5.1
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * License: GPL-2.0-or-later
@@ -12,7 +12,7 @@
 if (!defined('ABSPATH')) { exit; }
 
 final class SEO_Studio_Connector {
-	const VERSION = '0.5.0';
+	const VERSION = '0.5.1';
 	const META_TITLE = '_seo_studio_title';
 	const META_DESCRIPTION = '_seo_studio_description';
 	const META_CANONICAL = '_seo_studio_canonical';
@@ -228,7 +228,8 @@ final class SEO_Studio_Connector {
 		$sync_status = sanitize_key($_GET['seo_studio_sync'] ?? '');
 		if (current_user_can('manage_options') && isset($_GET['page']) && $_GET['page'] === 'seo-studio' && $sync_status) {
 			$success = $sync_status === 'success';
-			printf('<div class="notice %1$s"><p>%2$s</p></div>', $success ? 'notice-success' : 'notice-error', esc_html($success ? __('Content sync completed.', 'seo-studio') : __('Content sync failed. Check the app URL, token, and network access.', 'seo-studio')));
+			$message = $success ? __('Content sync completed.', 'seo-studio') : ($sync_status === 'missing' ? __('Save the SEO Studio application URL and connection token first, then sync.', 'seo-studio') : __('Content sync failed. Check the app URL, token, and network access.', 'seo-studio'));
+			printf('<div class="notice %1$s"><p>%2$s</p></div>', $success ? 'notice-success' : 'notice-error', esc_html($message));
 		}
 		if (current_user_can('manage_options') && isset($_GET['page']) && $_GET['page'] === 'seo-studio') {
 			$sync = get_option(self::SYNC_STATE_OPTION, []);
@@ -268,7 +269,7 @@ final class SEO_Studio_Connector {
 			</form>
 			<hr>
 			<h2><?php esc_html_e('Synchronize content', 'seo-studio'); ?></h2>
-			<p><?php esc_html_e('Send up to 100 published posts and their SEO metadata to the connected website workspace.', 'seo-studio'); ?></p>
+			<p><?php esc_html_e('Send your published pages, posts and other content (up to 2,000 items) and their SEO metadata to the connected website workspace. Changes you save afterwards sync automatically.', 'seo-studio'); ?></p>
 			<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 				<input type="hidden" name="action" value="seo_studio_sync">
 				<?php wp_nonce_field('seo_studio_sync'); ?>
@@ -341,32 +342,52 @@ final class SEO_Studio_Connector {
 			wp_safe_redirect(add_query_arg(['page' => 'seo-studio', 'seo_studio_sync' => 'missing'], admin_url('options-general.php')));
 			exit;
 		}
-		$posts = [];
+		// Send the whole site in batches of 100 (the app accepts 100 records per request), up to 2,000 items.
+		if (function_exists('set_time_limit')) @set_time_limit(180);
+		$success = true;
+		$sent = 0;
+		$batch = [];
+		$flush = static function () use (&$batch, &$success, &$sent, $app_url, $token) {
+			if (!$batch) return;
+			$response = wp_remote_post($app_url . '/api/plugin/v1/sync', [
+				'timeout' => 25,
+				'redirection' => 0,
+				'headers' => ['Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json', 'Accept' => 'application/json'],
+				'body' => wp_json_encode(['siteUrl' => home_url('/'), 'pluginVersion' => self::VERSION, 'posts' => $batch]),
+			]);
+			$code = is_wp_error($response) ? 0 : (int) wp_remote_retrieve_response_code($response);
+			if ($code < 200 || $code >= 300) $success = false;
+			$sent += count($batch);
+			$batch = [];
+		};
 		foreach (self::seo_post_types() as $type) {
-			foreach (get_posts(['post_type' => $type, 'post_status' => 'publish', 'posts_per_page' => max(0, 100 - count($posts)), 'orderby' => 'ID', 'order' => 'ASC']) as $post) {
-				if (count($posts) >= 100) break 2;
-				$posts[] = [
-					'postId' => (int) $post->ID,
-					'postType' => $type,
-					'title' => get_the_title($post),
-					'url' => get_permalink($post),
-					'status' => 'publish',
-					'meta' => [
-						'title' => self::sync_meta($post->ID, 'title'),
-						'description' => self::sync_meta($post->ID, 'description'),
-						'canonical' => self::sync_meta($post->ID, 'canonical'),
-						'robots' => self::sync_meta($post->ID, 'robots'),
-					],
-				];
+			$status = $type === 'attachment' ? 'inherit' : 'publish';
+			$page = 1;
+			while ($success && $sent + count($batch) < 2000) {
+				$found = get_posts(['post_type' => $type, 'post_status' => $status, 'posts_per_page' => 100, 'paged' => $page, 'orderby' => 'ID', 'order' => 'ASC']);
+				if (!$found) break;
+				foreach ($found as $post) {
+					$batch[] = [
+						'postId' => (int) $post->ID,
+						'postType' => $type,
+						'title' => get_the_title($post),
+						'url' => get_permalink($post),
+						'status' => 'publish',
+						'meta' => [
+							'title' => self::sync_meta($post->ID, 'title'),
+							'description' => self::sync_meta($post->ID, 'description'),
+							'canonical' => self::sync_meta($post->ID, 'canonical'),
+							'robots' => self::sync_meta($post->ID, 'robots'),
+						],
+					];
+					if (count($batch) >= 100) $flush();
+				}
+				if (count($found) < 100) break;
+				$page++;
 			}
 		}
-		$response = wp_remote_post($app_url . '/api/plugin/v1/sync', [
-			'timeout' => 25,
-			'redirection' => 0,
-			'headers' => ['Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json', 'Accept' => 'application/json'],
-			'body' => wp_json_encode(['siteUrl' => home_url('/'), 'pluginVersion' => self::VERSION, 'posts' => $posts]),
-		]);
-		$success = !is_wp_error($response) && wp_remote_retrieve_response_code($response) >= 200 && wp_remote_retrieve_response_code($response) < 300;
+		$flush();
+		if ($sent === 0) $success = false;
 		wp_safe_redirect(add_query_arg(['page' => 'seo-studio', 'seo_studio_sync' => $success ? 'success' : 'error'], admin_url('options-general.php')));
 		exit;
 	}
@@ -655,7 +676,8 @@ final class SEO_Studio_Connector {
 		if (!isset($redirects[$path]) || !is_array($redirects[$path])) return;
 		$target = $redirects[$path]['target'] ?? '';
 		$code = absint($redirects[$path]['status'] ?? 301);
-		if (wp_safe_redirect($target, in_array($code, [301, 302, 307, 308], true) ? $code : 301, 'SEO Studio')) exit;
+		// Targets are saved only by administrators and validated as http(s) URLs, so external destinations are allowed.
+		if (preg_match('#^https?://#i', (string) $target) && wp_redirect(esc_url_raw($target, ['http', 'https']), in_array($code, [301, 302, 307, 308], true) ? $code : 301, 'SEO Studio')) exit;
 	}
 }
 

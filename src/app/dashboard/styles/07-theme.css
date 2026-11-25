@@ -1076,7 +1076,7 @@
 .sx-hint { margin: 0; color: #9a9088; font-size: 12px; line-height: 1.45; }
 .sx-kpi .mini-area { width: 100%; height: 40px; color: #4f46e5; margin-top: 2px; } .sx-kpi .chart-area, .sx-kpi .chart-line { fill: #4f46e5; stroke: #4f46e5; } .sx-kpi .chart-line { fill: none; stroke-width: 1.6; }
 .sx-ring-row { display: flex; align-items: center; gap: 12px; }
-.ring-text { fill: #2b2620; font-size: 15px; font-weight: 600; }
+.score-ring-text { fill: #2b2620; font-size: 15px; font-weight: 600; }
 .sx-panel, .sx-card { border: 1px solid #e4ded6; border-radius: 14px; background: #fff; box-shadow: 0 1px 3px rgba(8,7,6,.04); }
 .sx-panel { padding: 8px 20px 20px; }
 .sx-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 18px; }
@@ -1108,7 +1108,7 @@
 .trend-explorer svg { width: 100%; height: auto; display: block; overflow: visible; }
 .trend-empty { margin: 6px 0 0; color: #70675e; font-size: 13px; } .trend-empty a { color: #3a5bd9; text-decoration: underline; }
 /* dark */
-[data-ws-theme="dark"] .sx, [data-ws-theme="dark"] .sx-h, [data-ws-theme="dark"] .sx-big b, [data-ws-theme="dark"] .ring-text { color: #e2e0dd; fill: #e2e0dd; }
+[data-ws-theme="dark"] .sx, [data-ws-theme="dark"] .sx-h, [data-ws-theme="dark"] .sx-big b, [data-ws-theme="dark"] .score-ring-text { color: #e2e0dd; fill: #e2e0dd; }
 [data-ws-theme="dark"] .sx-kpis, [data-ws-theme="dark"] .sx-panel, [data-ws-theme="dark"] .sx-card { border-color: #2c2824; background: #23211f; }
 [data-ws-theme="dark"] .sx-kpi { border-color: #2c2824; } [data-ws-theme="dark"] .sx-kpi > span, [data-ws-theme="dark"] .sx-row, [data-ws-theme="dark"] .sx-empty, [data-ws-theme="dark"] .sx-actions p, [data-ws-theme="dark"] .sx-provider p, [data-ws-theme="dark"] .sx-rings small, [data-ws-theme="dark"] .trend-empty { color: #aca59e; }
 [data-ws-theme="dark"] .sx-row b, [data-ws-theme="dark"] .trend-empty a { color: #8fa4ff; } [data-ws-theme="dark"] .sx-list li, [data-ws-theme="dark"] .sx-actions b, [data-ws-theme="dark"] .trend-legend label, [data-ws-theme="dark"] .trend-tabs button.is-current { color: #e2e0dd; }
@@ -1116,3 +1116,7 @@
 [data-ws-theme="dark"] .sx-badge, [data-ws-theme="dark"] .sx-list li i { background: #2f2b27; color: #cdc8c4; } [data-ws-theme="dark"] .sx-provider { border-color: #453f38; } [data-ws-theme="dark"] .sx-provider li { background: #2f2b27; color: #aca59e; }
 [data-ws-theme="dark"] .sx-badge[data-tone="good"] { background: #1c3326; color: #7fd69c; } [data-ws-theme="dark"] .sx-badge[data-tone="bad"] { background: #3a1f1b; color: #f2a399; } [data-ws-theme="dark"] .sx-badge[data-tone="ok"] { background: #3a2f12; color: #ecc572; }
 @media (max-width: 700px) { .sx-kpi { border-left: 0; border-top: 1px solid #efeae3; } .sx-kpi:first-child { border-top: 0; } .sx-big b { font-size: 26px; } }
+.gsc-sync { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; color: #70675e; font-size: 13px; }
+.gsc-sync p { margin: 0; } .gsc-sync a { color: #3a5bd9; text-decoration: underline; }
+.gsc-sync button { border: 1px solid #ded8d1; border-radius: 8px; background: #fff; padding: 5px 12px; color: #423b34; font-size: 12px; }
+[data-ws-theme="dark"] .gsc-sync { color: #aca59e; } [data-ws-theme="dark"] .gsc-sync a { color: #8fa4ff; } [data-ws-theme="dark"] .gsc-sync button { border-color: #38332e; background: #23211f; color: #cdc8c4; }

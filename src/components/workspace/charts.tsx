@@ -53,10 +53,10 @@ const RING_TONE = (value: number | null) => (value === null ? "none" : value >= 
 export function RingScore({ value, label, suffix = "", size = 64 }: { value: number | null; label: string; suffix?: string; size?: number }) {
   const R = 26, C = 2 * Math.PI * R;
   const shown = value === null ? 0 : Math.max(0, Math.min(100, value));
-  return <svg className="ring" width={size} height={size} viewBox="0 0 64 64" role="img" aria-label={`${label}: ${value === null ? "no data" : `${value}${suffix}`}`}>
+  return <svg className="score-ring" width={size} height={size} viewBox="0 0 64 64" role="img" aria-label={`${label}: ${value === null ? "no data" : `${value}${suffix}`}`}>
     <circle cx="32" cy="32" r={R} className="chart-ring" fill="none" strokeWidth="7" />
     {value !== null && <circle cx="32" cy="32" r={R} fill="none" strokeWidth="7" strokeLinecap="round" className={`chart-slice-${RING_TONE(value)}`} strokeDasharray={`${(shown / 100) * C} ${C}`} transform="rotate(-90 32 32)" />}
-    <text className="ring-text" x="32" y="36" textAnchor="middle">{value === null ? "—" : `${value}${suffix}`}</text>
+    <text className="score-ring-text" x="32" y="36" textAnchor="middle">{value === null ? "—" : `${value}${suffix}`}</text>
   </svg>;
 }
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ColumnChart, DonutChart, MiniArea, RingScore } from "@/components/workspace/charts";
+import { SearchConsoleAutoSync } from "@/components/workspace/search-console-autosync";
 import { TrendExplorer, type ExplorerTab } from "@/components/workspace/trend-explorer";
 import type { SiteOverview } from "@/lib/seo/site-overview";
 
@@ -34,6 +35,7 @@ export function SeoOverviewView({ domain, o }: { domain: string; o: SiteOverview
   const distRows = dist ? [{ label: "Top 3", value: dist.top3 }, { label: "4–10", value: dist.pos4to10 }, { label: "11–20", value: dist.pos11to20 }, { label: "21–50", value: dist.pos21to50 }, { label: "51–100", value: dist.pos51to100 }] : [];
   const metricsOf = (device: "mobile" | "desktop") => Object.entries(o.speed.metrics?.[device] ?? {});
   return <div className="sx">
+    {!search && <SearchConsoleAutoSync domain={domain} />}
     <section className="sx-kpis" aria-label="Key metrics">
       <div className="sx-kpi"><span>Organic traffic</span><div className="sx-big"><b>{search ? fmt(search.clicks, 0) : "—"}</b><Change value={search?.clicksChange ?? null} /></div>{search ? <Row name="Organic keywords" value={fmt(search.keywords, 0)} /> : <p className="sx-hint">Connect Search Console</p>}<MiniArea values={history.map((row) => row.clicks)} label="Clicks over time" /></div>
       <div className="sx-kpi"><span>Search visibility</span><div className="sx-big"><b>{s.searchVisibility ?? "—"}</b><i className="sx-badge" data-tone={vis.tone}>{vis.text}</i></div>{search ? <><Row name="Average position" value={fmt(search.averagePosition)} /><Row name="Click-through rate" value={`${search.ctr}%`} /><Row name="Impressions" value={fmt(search.impressions, 0)} /></> : <p className="sx-hint">Needs Search Console data</p>}</div>

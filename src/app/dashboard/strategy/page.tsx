@@ -5,6 +5,7 @@ import { Download, Network } from "lucide-react";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { loadSiteSelection } from "@/lib/dashboard/site-selection";
+import { SearchConsoleAutoSync } from "@/components/workspace/search-console-autosync";
 import { SiteSwitcher } from "@/components/workspace/site-switcher";
 import { loadKeywordStrategy } from "@/lib/seo/keyword-strategy-data";
 import type { Intent } from "@/lib/seo/keyword-strategy";
@@ -25,7 +26,7 @@ export default async function StrategyPage({ searchParams }: { searchParams: Pro
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> KEYWORD STRATEGY</p><h1>Keyword strategy</h1><p>Topic clusters, search intent, page mapping and content gaps, built from your own Search Console queries and crawled pages.</p></div>{site && s && <a className="workspace-outline-link" href={`/api/sites/${encodeURIComponent(site.domain)}/keyword-strategy?format=csv`}><Download size={15} /> Export CSV</a>}</header>
     <SiteSwitcher sites={sites} current={site?.domain} path="/dashboard/strategy" />
     {!site ? <section className="workspace-section"><div className="workspace-site-empty"><div><strong>Add your website first</strong><p>The strategy is built from your site&apos;s own search data.</p></div><Link href="/dashboard/websites">Add your website</Link></div></section>
-    : !s ? <section className="workspace-section"><div className="workspace-site-empty"><span><Network size={18} /></span><div><strong>No Search Console data for {site.domain} yet</strong><p>Connect Search Console, then load a query report. The strategy appears here automatically.</p></div><Link href="/dashboard/integrations">Connect Google</Link></div></section>
+    : !s ? <section className="workspace-section"><div className="workspace-site-empty"><span><Network size={18} /></span><div><strong>No Search Console data for {site.domain} yet</strong><p>Connect Search Console, then load a query report. The strategy appears here automatically.</p><SearchConsoleAutoSync domain={site.domain} /></div><Link href="/dashboard/integrations">Connect Google</Link></div></section>
     : <>
       <section className="workspace-section"><div className="workspace-section-heading"><div><p className="workspace-eyebrow">OVERVIEW</p><h2>{site.domain}</h2><p>{result?.startDate && result?.endDate ? `Search Console data from ${result.startDate} to ${result.endDate}. ` : ""}{result?.pagesCompared ? `${result.pagesCompared} crawled pages compared.` : "Run a site audit to map keywords to your pages."}</p></div></div>
         <div className="strategy-stats">

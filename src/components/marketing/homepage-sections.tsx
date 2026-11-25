@@ -218,7 +218,7 @@ export function ProductsSection() {
 const services = [
   { icon: ChartLine, title: "Technical SEO audits", points: ["Indexing, metadata and links", "Performance and crawl issues"] },
   { icon: FileText, title: "On-page & content", points: ["Titles, headings and structure", "Internal links and content gaps"] },
-  { icon: Globe, title: "GEO, AEO & LLMO readiness", points: ["Structure signals for AI answers", "Gemini answer check for your brand"], featured: true },
+  { icon: Globe, title: "GEO, AEO & LLMO readiness", points: ["Structure signals for AI answers", "AI answer checks for each engine you connect"], featured: true },
   { icon: MapPin, title: "Keyword tracking", points: ["Positions, clicks and impressions", "From your Search Console data"] },
   { icon: ZoomIn, title: "Keyword & question research", points: ["Ideas for any country and language", "Quick wins and cannibalization"] },
   { icon: Blocks, title: "WordPress SEO management", points: ["Titles, schema, sitemaps, redirects", "Review step and change history"] },

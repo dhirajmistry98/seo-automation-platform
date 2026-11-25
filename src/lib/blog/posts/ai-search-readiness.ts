@@ -5,7 +5,7 @@ export const aiSearchReadiness: BlogPost = {
   title: "How to Check if Your Website Is Ready for AI Search (GEO, AEO & LLMO)",
   metaTitle: "AI Search Readiness Check: GEO, AEO & LLMO for Websites",
   description: "Check how ready your website is for Google AI Overviews, ChatGPT and other answer engines with SEO Studio's GEO, AEO and LLMO readiness signals.",
-  excerpt: "Check the 12 crawl-based signals that help AI answer engines understand and cite your pages, then check whether Gemini mentions your brand.",
+  excerpt: "Check the 12 crawl-based signals that help AI answer engines understand and cite your pages, then check whether AI engines mention your brand.",
   category: "AI search (GEO)",
   primaryKeyword: "generative engine optimization",
   keywords: ["generative engine optimization", "GEO", "AEO", "answer engine optimization", "LLMO", "AI search optimization", "AI Overviews optimization", "ChatGPT SEO", "AI search visibility", "LLM SEO", "AI readiness check"],
@@ -14,7 +14,7 @@ export const aiSearchReadiness: BlogPost = {
   takeaways: [
     "GEO, AEO and LLMO all depend on pages that machines can read clearly and trust.",
     "SEO Studio's readiness report checks 12 signals from your latest site crawl, such as direct answer blocks, question-led headings and entity markup.",
-    "The AI answer check asks Gemini your customers' questions and shows whether it mentions or cites your site.",
+    "The AI answer check asks the AI engines you connect your customers' questions and shows whether they mention or cite your site.",
   ],
   body: [
     { type: "p", text: "More and more searches end in an AI-written answer: Google AI Overviews, ChatGPT, Perplexity, Copilot. **Generative engine optimization (GEO)**, **answer engine optimization (AEO)** and **LLM optimization (LLMO)** are about making your pages easy for these systems to understand, trust and cite." },
@@ -55,7 +55,7 @@ export const aiSearchReadiness: BlogPost = {
     ] },
 
     { type: "h2", id: "ai-mentions", text: "Track real AI mentions" },
-    { type: "p", text: "In **Visibility**, open your website and use the **AI answers** check: enter the questions your customers ask and SEO Studio asks Gemini, then shows whether your brand is mentioned or cited. It checks Gemini only, not other AI products. Re-run it monthly to see whether your readiness work is paying off." },
+    { type: "p", text: "In **Visibility**, open your website and use the **AI answers** check: enter the questions your customers ask and SEO Studio asks each connected engine — ChatGPT, Claude, Perplexity, Gemini or Google AI Overviews — then shows whether your brand is mentioned or cited, and how often competitors appear. Each engine works only after its own API key is set up by the site owner. Re-run it monthly to see whether your readiness work is paying off." },
 
   ],
   faqs: [

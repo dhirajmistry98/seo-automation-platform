@@ -5,7 +5,7 @@ export const aiSearchReadiness: BlogPost = {
   title: "How to Check if Your Website Is Ready for AI Search (GEO, AEO & LLMO)",
   metaTitle: "AI Search Readiness Check: GEO, AEO & LLMO for Websites",
   description: "Check how ready your website is for Google AI Overviews, ChatGPT and other answer engines with SEO Studio's GEO, AEO and LLMO readiness signals.",
-  excerpt: "Check the 12 crawl-based signals that help AI answer engines understand and cite your pages, then track real brand mentions in AI Overviews and ChatGPT.",
+  excerpt: "Check the 12 crawl-based signals that help AI answer engines understand and cite your pages, then check whether Gemini mentions your brand.",
   category: "AI search (GEO)",
   primaryKeyword: "generative engine optimization",
   keywords: ["generative engine optimization", "GEO", "AEO", "answer engine optimization", "LLMO", "AI search optimization", "AI Overviews optimization", "ChatGPT SEO", "AI search visibility", "LLM SEO", "AI readiness check"],
@@ -14,8 +14,7 @@ export const aiSearchReadiness: BlogPost = {
   takeaways: [
     "GEO, AEO and LLMO all depend on pages that machines can read clearly and trust.",
     "SEO Studio's readiness report checks 12 signals from your latest site crawl, such as direct answer blocks, question-led headings and entity markup.",
-    "AI search mention reports show whether your brand actually appears in Google AI Overviews and ChatGPT answers.",
-    "The SEO Authority Index combines backlink, Search Console and crawl evidence into one trackable estimate.",
+    "The AI answer check asks Gemini your customers' questions and shows whether it mentions or cites your site.",
   ],
   body: [
     { type: "p", text: "More and more searches end in an AI-written answer: Google AI Overviews, ChatGPT, Perplexity, Copilot. **Generative engine optimization (GEO)**, **answer engine optimization (AEO)** and **LLM optimization (LLMO)** are about making your pages easy for these systems to understand, trust and cite." },
@@ -56,10 +55,8 @@ export const aiSearchReadiness: BlogPost = {
     ] },
 
     { type: "h2", id: "ai-mentions", text: "Track real AI mentions" },
-    { type: "p", text: "In **Research**, choose **AI search mentions**, pick **Google AI Overviews** or **ChatGPT**, and enter the questions your customers ask. The report shows whether your brand is mentioned in the answers for your selected market. Re-run it monthly to see whether your readiness work is paying off." },
+    { type: "p", text: "In **Visibility**, open your website and use the **AI answers** check: enter the questions your customers ask and SEO Studio asks Gemini, then shows whether your brand is mentioned or cited. It checks Gemini only, not other AI products. Re-run it monthly to see whether your readiness work is paying off." },
 
-    { type: "h2", id: "authority", text: "Measure trust with the SEO Authority Index" },
-    { type: "p", text: "The **SEO Authority Index** calculates a versioned authority estimate from your saved backlink, Search Console and crawl evidence. It doesn't make new paid provider requests; refresh the source reports to update it. Track it alongside readiness to see your site's overall trust grow." },
   ],
   faqs: [
     { question: "Is GEO different from SEO?", answer: "GEO builds on SEO. AI answer engines mostly retrieve from search indexes, so crawlable, indexed, trustworthy pages come first. GEO adds a focus on clear answers, structure, sources and consistent brand information." },

@@ -199,7 +199,7 @@ export function ProductsSection() {
           <article id="application" className="landing-sp-card">
             <span className="landing-sp-pill">Product 01 · Web application</span>
             <h3>See the <strong>whole search</strong> picture.</h3>
-            <p>Website health, keyword research, competitor context and authorized search data in one practical workspace.</p>
+            <p>Website health, keyword research and your own Search Console data in one practical workspace.</p>
             <AppExample />
           </article>
           <article id="wordpress" className="landing-sp-card">
@@ -218,9 +218,9 @@ export function ProductsSection() {
 const services = [
   { icon: ChartLine, title: "Technical SEO audits", points: ["Indexing, metadata and links", "Performance and crawl issues"] },
   { icon: FileText, title: "On-page & content", points: ["Titles, headings and structure", "Internal links and content gaps"] },
-  { icon: Globe, title: "GEO, AEO & LLMO readiness", points: ["Structure signals for AI answers", "Provider-backed AI mention reports"], featured: true },
-  { icon: MapPin, title: "Local SEO & rank tracking", points: ["Any country, city or region", "Location and language aware"] },
-  { icon: ZoomIn, title: "Keyword & competitor research", points: ["Demand and competitor gaps", "Backlink summaries"] },
+  { icon: Globe, title: "GEO, AEO & LLMO readiness", points: ["Structure signals for AI answers", "Gemini answer check for your brand"], featured: true },
+  { icon: MapPin, title: "Keyword tracking", points: ["Positions, clicks and impressions", "From your Search Console data"] },
+  { icon: ZoomIn, title: "Keyword & question research", points: ["Ideas for any country and language", "Quick wins and cannibalization"] },
   { icon: Blocks, title: "WordPress SEO management", points: ["Titles, schema, sitemaps, redirects", "Review step and change history"] },
 ];
 

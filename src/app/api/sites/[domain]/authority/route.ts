@@ -53,7 +53,7 @@ export async function POST(request: Request, context: Context) {
     pages,
     primaryKeywords: Array.isArray(website.primaryKeywords) ? website.primaryKeywords.filter((item): item is string => typeof item === "string") : [],
   });
-  if (result.score === null) return fail("Recent source data is incomplete. Run a backlink summary, a Search Console query report, and a site audit, then set primary keywords.", 409, { missing: result.missing });
+  if (result.score === null) return fail("The Authority Index needs backlink data, which SEO Studio no longer collects, so it cannot be recalculated for this site.", 409, { missing: result.missing });
   const calculatedAt = new Date();
   const snapshot = {
     ownerId: session.user.id,

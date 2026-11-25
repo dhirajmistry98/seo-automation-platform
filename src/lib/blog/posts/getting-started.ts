@@ -49,7 +49,7 @@ export const gettingStarted: BlogPost = {
     { type: "p", text: "Choose **Mobile** or **Desktop** and select **Run PageSpeed** to load Google Lighthouse scores and performance opportunities. See [how to test page speed and Core Web Vitals](/blog/page-speed-core-web-vitals)." },
 
     { type: "h2", id: "research", text: "Step 6: Research your market" },
-    { type: "p", text: "In **Research**, pick a report — keyword demand, AEO question keywords, live organic positions, backlink summary, competitor keyword gaps or AI search mentions — for any supported country, city and language. See [keyword research and rank tracking for any country](/blog/keyword-research-and-rank-tracking)." },
+    { type: "p", text: "In **Research**, pick a report — keyword ideas, AEO question keywords, quick wins, keyword positions or keyword cannibalization — for any supported country and language. See [keyword research and rank tracking for any country](/blog/keyword-research-and-rank-tracking)." },
 
     { type: "h2", id: "ai-search", text: "Step 7: Check AI-search readiness" },
     { type: "p", text: "Open **Visibility** to see how ready your crawled pages are for Google AI Overviews, ChatGPT and other answer engines. See [how to check GEO, AEO and LLMO readiness](/blog/check-ai-search-readiness-geo-aeo-llmo)." },
@@ -66,8 +66,8 @@ export const gettingStarted: BlogPost = {
     { type: "h2", id: "routine", text: "Your monthly SEO routine" },
     { type: "table", head: ["When", "What to do in SEO Studio"], rows: [
       ["Weekly", "Review open tasks; check Search Console data for sudden drops"],
-      ["Monthly", "Re-run the site audit and PageSpeed; review rank tracking and AI search mentions"],
-      ["Quarterly", "Refresh keyword research and competitor gaps; update your primary keywords"],
+      ["Monthly", "Re-run the site audit and PageSpeed; review keyword positions and your AI answer check"],
+      ["Quarterly", "Refresh keyword research and cannibalization checks; update your primary keywords"],
     ] },
     { type: "callout", title: "Automate the checks", text: "In website settings, set **Crawl frequency** to a weekly or monthly scheduled audit, **PageSpeed schedule** to a weekly or monthly mobile homepage check, and **Rank tracking frequency** to weekly or monthly, so fresh data is waiting for you." },
   ],

@@ -8,7 +8,7 @@ import { siteUrl } from "@/lib/site-url";
 import "./blog.css";
 
 const title = "SEO Guides: Audits, Rankings & AI Search";
-const description = "Step-by-step SEO Studio guides to technical audits, page speed, keyword research, rank tracking, AI search readiness and WordPress SEO.";
+const description = "Step-by-step SEO Studio guides to technical audits, page speed, keyword research, Search Console keyword tracking, AI search readiness and WordPress SEO.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),

@@ -6,7 +6,7 @@ export function GET() {
   const lines = [
     "# SEO STUDIO",
     "",
-    "> SEO automation platform: website audits, PageSpeed, keyword research and rank tracking, Google Search Console and GA4 reports, GEO/AEO/LLMO (AI search) readiness, a WordPress SEO plugin and influencer marketing collaboration.",
+    "> SEO automation platform: website audits, PageSpeed, keyword ideas and Search Console keyword tracking, Google Search Console and GA4 reports, GEO/AEO/LLMO (AI search) readiness, a WordPress SEO plugin and influencer marketing collaboration.",
     "",
     "## Main pages",
     `- [Home](${origin}/): Product overview`,

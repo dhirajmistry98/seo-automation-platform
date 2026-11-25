@@ -55,7 +55,7 @@ export default async function WebsiteResearchPage({ params }: { params: Promise<
   }));
   return <>
     <header className="workspace-page-heading"><div><p className="workspace-eyebrow"><span /> SEARCH INTELLIGENCE</p><h1>{website.name || domain}</h1><p>Keyword, domain, competitor, position, local, backlink and AI search research for {domain}.</p></div><Link href="/dashboard/research" className="workspace-outline-link"><ArrowLeft size={15} /> All websites</Link></header>
-    <AuthorityIndexCard domain={domain} initialHistory={authorityHistory} />
+    {authorityHistory.length > 0 && <AuthorityIndexCard domain={domain} initialHistory={authorityHistory} />}
     <GeminiVisibility domain={domain} />
     <DataInsights domain={domain} />
     <ResearchWorkbench domain={domain} verified={Boolean(website.verifiedAt)} initialHistory={history} initialTarget={getWebsiteSeoTarget(website as unknown as Parameters<typeof getWebsiteSeoTarget>[0])} />

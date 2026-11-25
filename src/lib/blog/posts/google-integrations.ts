@@ -43,7 +43,6 @@ export const googleIntegrations: BlogPost = {
       "**Find quick wins** — queries with many impressions but a low click-through rate usually need a better title and meta description.",
       "**Prioritize audit fixes** — fix issues on the pages with the most clicks and conversions first, using your [action plan](/blog/seo-action-plan).",
       "**Spot drops early** — a sudden fall in clicks on a page is a reason to re-run the [site audit](/blog/how-to-run-a-technical-seo-audit).",
-      "**Feed the SEO Authority Index** — saved Search Console data is one of its evidence sources.",
     ] },
 
     { type: "h2", id: "privacy", text: "Managing access" },

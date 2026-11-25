@@ -26,7 +26,7 @@ const guideContents = [
 
 const offerings = [
   { icon: SearchCheck, title: "SEO audits and issue tracking", text: "Crawl a verified site to review technical health, page metadata, content structure, links and opportunities. Findings are tied to the latest crawl." },
-  { icon: Search, title: "Keyword and market research", text: "Explore search demand, local rank checks, competitor context and backlinks where a connected provider supports the selected market." },
+  { icon: Search, title: "Keyword and market research", text: "Get keyword and question ideas for any country and language, then see your own keyword positions, clicks and impressions from Google Search Console." },
   { icon: Globe2, title: "GEO, AEO and LLMO readiness", text: "Review crawl-based signals that help search engines and answer systems understand a site. Provider-backed AI mention reports are separate snapshots." },
   { icon: Blocks, title: "WordPress SEO workflow", text: "Manage supported metadata and technical settings through the plugin, with an approval step and a change history." },
   { icon: BarChart3, title: "Performance and reporting", text: "Bring authorized search and performance data together with audits and research. Each report should show its source, date and coverage." },

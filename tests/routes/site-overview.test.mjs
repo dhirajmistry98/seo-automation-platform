@@ -105,3 +105,30 @@ test("overview route: builds from stored audit, search, speed and AI data", asyn
   assert.equal(overview.scores.mentionRate, 50);
   assert.ok(overview.scores.performance > 0);
 });
+
+// ---------- redesign data ----------
+test("overview: competitors are kept as clean strings, capped at 10", () => {
+  const many = Array.from({ length: 14 }, (_, i) => `rival${i}.com`);
+  assert.equal(buildOverview({ ...empty, competitors: many }).competitors.length, 10);
+  assert.deepEqual(buildOverview({ ...empty, competitors: ["a.com", "", 5, null, "b.com"] }).competitors, ["a.com", "b.com"]);
+  assert.deepEqual(buildOverview(empty).competitors, []);
+});
+test("overview: speed metrics pass through, and are empty when no test exists", () => {
+  const o = buildOverview({ ...full, speed: { ...full.speed, metrics: { mobile: { LCP: "4.6 s" } } } });
+  assert.equal(o.speed.metrics.mobile.LCP, "4.6 s");
+  assert.deepEqual(buildOverview(empty).speed.metrics, {});
+});
+test("overview: search history keeps the keyword count per report for the trend chart", () => {
+  const o = buildOverview({ ...full, search: { ...full.search, history: [{ date: "2026-10-01", clicks: 1, impressions: 2, keywords: 40 }, { date: "2026-10-08", clicks: 3, impressions: 4, keywords: 55 }] } });
+  assert.deepEqual(o.trends.search.map((row) => row.keywords), [40, 55]);
+});
+test("overview route: returns competitors, speed metrics and keyword history from stored data", async () => {
+  const t = setup({ site: { competitorDomains: ["woodenstreet.com"] } });
+  t.collections.google_search_console_reports = [{ generatedAt: new Date("2026-11-01"), rows: [{ keys: ["a b"], clicks: 5, impressions: 50, position: 4 }, { keys: ["c d"], clicks: 1, impressions: 10, position: 9 }] }];
+  t.collections.pagespeed_results = [{ strategy: "mobile", categories: { performance: 80 }, retrievedAt: new Date(), labMetrics: { "largest-contentful-paint": { displayValue: "4.6 s" }, "cumulative-layout-shift": { displayValue: "0" } } }];
+  const { overview } = await json(await call());
+  assert.deepEqual(overview.competitors, ["woodenstreet.com"]);
+  assert.equal(overview.speed.metrics.mobile.LCP, "4.6 s");
+  assert.equal(overview.speed.metrics.mobile.CLS, "0");
+  assert.equal(overview.trends.search[0].keywords, 2);
+});

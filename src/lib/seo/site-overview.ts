@@ -7,9 +7,10 @@ import { expectedCtr, type QueryRow } from "@/lib/seo/keyword-strategy";
 export type OverviewInput = {
   audit: { score: number; pageCount: number; issueCounts: { critical: number; warning: number; notice: number }; completedAt?: string | Date | null } | null;
   healthHistory: Array<{ date: string | Date; score: number }>;
-  search: { queries: QueryRow[]; history: Array<{ date: string | Date; clicks: number; impressions: number }>; startDate?: string | null; endDate?: string | null } | null;
+  search: { queries: QueryRow[]; history: Array<{ date: string | Date; clicks: number; impressions: number; keywords?: number }>; startDate?: string | null; endDate?: string | null } | null;
   ga4: Record<string, { current: number; previous: number; changePercent: number | null }> | null;
-  speed: { mobile: number | null; desktop: number | null; history: Array<{ date: string | Date; performance: number }> };
+  speed: { mobile: number | null; desktop: number | null; history: Array<{ date: string | Date; performance: number }>; metrics?: Partial<Record<"mobile" | "desktop", Record<string, string>>> };
+  competitors?: string[];
   readiness: { geo: number; aeo: number; llmo: number; eeat: number } | null;
   answers: { answered: number; mentioned: number; cited: number } | null;
   openIssues: Array<{ title: string; severity: string }>;
@@ -110,7 +111,8 @@ export function buildOverview(input: OverviewInput) {
     search: search ? { clicks, impressions, ctr: impressions ? Math.round((clicks / impressions) * 1000) / 10 : 0, averagePosition: weightedPosition === null ? null : Math.round(weightedPosition * 10) / 10, keywords: queries.length, distribution: rankingDistribution(queries), clicksChange, startDate: search.startDate ?? null, endDate: search.endDate ?? null } : null,
     traffic: ga4 ? { sessions: ga4.sessions ?? null, users: ga4.activeUsers ?? null, engaged: ga4.engagedSessions ?? null, conversions: ga4.conversions ?? null } : null,
     technical: audit ? { counts: audit.issueCounts, pageCount: audit.pageCount, completedAt: audit.completedAt ?? null, topIssues } : null,
-    speed: { mobile: speed.mobile, desktop: speed.desktop },
+    speed: { mobile: speed.mobile, desktop: speed.desktop, metrics: speed.metrics ?? {} },
+    competitors: (input.competitors ?? []).filter((item) => typeof item === "string" && item).slice(0, 10),
     ai: { readiness, answers },
     trends: { search: history, health: [...input.healthHistory].sort((a, b) => +new Date(a.date) - +new Date(b.date)), speed: [...speed.history].sort((a, b) => +new Date(a.date) - +new Date(b.date)) },
     recommendations, missing,

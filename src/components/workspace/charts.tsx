@@ -46,3 +46,24 @@ export function DonutChart({ slices, label }: { slices: Array<Point & { tone: "g
     <text className="chart-center" x="60" y="64" textAnchor="middle">{total}</text></svg>
     <figcaption><ul>{slices.map((slice) => <li key={slice.label}><i className={`chart-slice-${slice.tone}`} />{slice.label} <b>{slice.value}</b></li>)}</ul></figcaption></figure>;
 }
+
+const RING_TONE = (value: number | null) => (value === null ? "none" : value >= 80 ? "good" : value >= 50 ? "ok" : "bad");
+
+/** A score ring with the number in the middle. `suffix` is shown after the number, e.g. "%". */
+export function RingScore({ value, label, suffix = "", size = 64 }: { value: number | null; label: string; suffix?: string; size?: number }) {
+  const R = 26, C = 2 * Math.PI * R;
+  const shown = value === null ? 0 : Math.max(0, Math.min(100, value));
+  return <svg className="ring" width={size} height={size} viewBox="0 0 64 64" role="img" aria-label={`${label}: ${value === null ? "no data" : `${value}${suffix}`}`}>
+    <circle cx="32" cy="32" r={R} className="chart-ring" fill="none" strokeWidth="7" />
+    {value !== null && <circle cx="32" cy="32" r={R} fill="none" strokeWidth="7" strokeLinecap="round" className={`chart-slice-${RING_TONE(value)}`} strokeDasharray={`${(shown / 100) * C} ${C}`} transform="rotate(-90 32 32)" />}
+    <text className="ring-text" x="32" y="36" textAnchor="middle">{value === null ? "—" : `${value}${suffix}`}</text>
+  </svg>;
+}
+
+/** A tiny filled trend with no axes, for stat cards. Draws nothing for fewer than two points. */
+export function MiniArea({ values, label }: { values: number[]; label: string }) {
+  if (values.length < 2) return null;
+  const W = 140, H = 40, min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
+  const pts = values.map((value, index) => `${(index / (values.length - 1)) * W},${H - 3 - ((value - min) / span) * (H - 8)}`).join(" ");
+  return <svg className="mini-area" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={label}><polygon points={`0,${H} ${pts} ${W},${H}`} className="chart-area" /><polyline points={pts} className="chart-line" fill="none" vectorEffect="non-scaling-stroke" /></svg>;
+}

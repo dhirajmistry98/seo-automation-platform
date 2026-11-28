@@ -1,10 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { GOOGLE_TOOLS, SEARCH_CHECKS, SETTINGS, SHORTCUT_GROUPS, consoleUrl, propertyId } from "../../src/lib/google/console.ts";
-import { GUIDES } from "../../src/lib/google/guides.ts";
+import { SETTINGS, consoleUrl, propertyId } from "../../src/lib/google/console.ts";
 import { TIPS, TIP_TOPICS } from "../../src/lib/google/tips.ts";
-import { CHECK_GROUPS } from "../../src/lib/google/checklist.ts";
 
 const unique = (list) => assert.equal(new Set(list).size, list.length, "duplicate entry");
 const official = (url) => { const { protocol, hostname } = new URL(url); assert.equal(protocol, "https:", url); assert.match(hostname, /(^|\.)(google\.com|web\.dev|schema\.org|googleusercontent\.com)$/, url); };
@@ -18,21 +16,9 @@ test("google: console links carry the encoded property", () => {
   assert.equal(consoleUrl("sitemaps", "sc-domain:example.com"), "https://search.google.com/search-console/sitemaps?resource_id=sc-domain%3Aexample.com");
   assert.equal(consoleUrl("", "https://a.com/"), "https://search.google.com/search-console?resource_id=https%3A%2F%2Fa.com%2F");
 });
-test("google: every link is an official https address, without duplicates", () => {
-  unique(GUIDES.map((g) => g.url)); unique(GUIDES.map((g) => g.title));
-  for (const guide of GUIDES) { official(guide.url); assert.ok(guide.summary.length > 5); }
-  for (const tool of GOOGLE_TOOLS) official(tool.url("example.com", "https://example.com/?q=a&b=1"));
-  for (const item of SEARCH_CHECKS("example.com")) { official(item.url); assert.match(item.query, /example\.com/); }
-  for (const setting of SETTINGS) { if (setting.guide) official(setting.guide); assert.ok(setting.steps.length); }
-});
-test("google: shortcuts and settings are unique", () => {
-  unique(SHORTCUT_GROUPS.flatMap((g) => g.items).map((i) => i.path));
+test("google: settings are unique, with steps and official guide links", () => {
   unique(SETTINGS.map((s) => s.name));
-});
-test("google: checklist ids are unique and every tool link has a page", () => {
-  const checks = CHECK_GROUPS.flatMap((g) => g.checks);
-  unique(checks.map((c) => c.id));
-  for (const check of checks) { official(check.guide); if (check.tool) assert.ok(existsSync(`src/app${check.tool.href}/page.tsx`), check.tool.href); }
+  for (const setting of SETTINGS) { if (setting.guide) official(setting.guide); assert.ok(setting.steps.length); }
 });
 test("tips: each has steps and cautions, and every tool link has a page", () => {
   unique(TIPS.map((t) => t.id)); unique(TIPS.map((t) => t.title));

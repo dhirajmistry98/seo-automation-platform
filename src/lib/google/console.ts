@@ -1,5 +1,5 @@
 /**
- * Shortcuts into Google Search Console and Google's other search tools.
+ * Search Console settings and the links into them.
  * Console links open the signed-in user's own account; SEO Studio never sees what is shown there.
  */
 export type PropertyType = "domain" | "prefix";
@@ -11,65 +11,6 @@ export function propertyId(type: PropertyType, domain: string, siteUrl?: string)
   try { return new URL(siteUrl || `https://${domain}`).origin + "/"; } catch { return `https://${domain}/`; }
 }
 export const consoleUrl = (path: string, property: string) => `${CONSOLE}${path ? `/${path}` : ""}?resource_id=${encodeURIComponent(property)}`;
-
-export type Shortcut = { label: string; use: string; path: string };
-export const SHORTCUT_GROUPS: Array<{ title: string; items: Shortcut[] }> = [
-  { title: "Overview and performance", items: [
-    { label: "Overview", use: "A summary of clicks, indexing and problems.", path: "" },
-    { label: "Search results performance", use: "Queries, pages, countries, devices, clicks and position.", path: "performance/search-analytics" },
-    { label: "Discover performance", use: "Shown only when your site gets enough Discover traffic.", path: "performance/discover" },
-    { label: "Google News performance", use: "Shown only when your site appears in Google News.", path: "performance/google-news" },
-  ] },
-  { title: "Indexing", items: [
-    { label: "URL inspection", use: "Check one page and request indexing.", path: "inspect" },
-    { label: "Pages (indexing)", use: "Which pages are indexed, and why others are not.", path: "index" },
-    { label: "Video pages", use: "Indexing of pages that have videos.", path: "video-index" },
-    { label: "Sitemaps", use: "Submit sitemaps and see read errors.", path: "sitemaps" },
-    { label: "Removals", use: "Temporarily hide a page from results.", path: "removals" },
-  ] },
-  { title: "Experience", items: [
-    { label: "Core Web Vitals", use: "Real-visitor speed and stability.", path: "core-web-vitals" },
-    { label: "HTTPS", use: "Pages indexed without HTTPS.", path: "https" },
-  ] },
-  { title: "Security, penalties and links", items: [
-    { label: "Manual actions", use: "Penalties applied by Google reviewers.", path: "manual-actions" },
-    { label: "Security issues", use: "Hacked content, malware and deceptive pages.", path: "security-issues" },
-    { label: "Links", use: "Top linking sites, linked pages and internal links.", path: "links" },
-  ] },
-  { title: "Settings", items: [
-    { label: "Settings", use: "Ownership, associations, change of address and export.", path: "settings" },
-    { label: "Users and permissions", use: "Add or remove people.", path: "users" },
-    { label: "Ownership verification", use: "See and add verification methods.", path: "ownership" },
-    { label: "Crawl stats", use: "How often Google crawls your site.", path: "settings/crawl-stats" },
-    { label: "robots.txt report", use: "The robots.txt files Google fetched.", path: "settings/robots-txt" },
-  ] },
-];
-
-export type Tool = { label: string; use: string; url: (domain: string, siteUrl: string) => string };
-export const GOOGLE_TOOLS: Tool[] = [
-  { label: "Rich Results Test", use: "See which rich results a page can get.", url: (_d, u) => `https://search.google.com/test/rich-results?url=${encodeURIComponent(u)}` },
-  { label: "PageSpeed Insights", use: "Speed on phone and desktop.", url: (_d, u) => `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(u)}` },
-  { label: "Schema Markup Validator", use: "Check any structured data (schema.org).", url: (_d, u) => `https://validator.schema.org/#url=${encodeURIComponent(u)}` },
-  { label: "Google Trends", use: "Interest in a topic over time.", url: () => "https://trends.google.com/trends/" },
-  { label: "Google Analytics", use: "What visitors do on your site.", url: () => "https://analytics.google.com/" },
-  { label: "Google Tag Manager", use: "Manage tracking tags.", url: () => "https://tagmanager.google.com/" },
-  { label: "Business Profile", use: "Your listing on Search and Maps.", url: () => "https://business.google.com/" },
-  { label: "Merchant Center", use: "Product listings for shops.", url: () => "https://merchants.google.com/" },
-  { label: "Keyword Planner", use: "Keyword ideas (needs a Google Ads account).", url: () => "https://ads.google.com/home/tools/keyword-planner/" },
-  { label: "Search Status Dashboard", use: "Ranking updates and Google outages.", url: () => "https://status.search.google.com/summary" },
-  { label: "Disavow links tool", use: "Advanced: read the guide before using it.", url: () => `${CONSOLE}/disavow-links` },
-  { label: "Search Central community", use: "Ask questions in Google’s help forum.", url: () => "https://support.google.com/webmasters/community" },
-];
-
-const search = (query: string, extra = "") => `https://www.google.com/search?q=${encodeURIComponent(query)}${extra}`;
-export const SEARCH_CHECKS = (domain: string) => [
-  { label: "Pages Google shows for your site", query: `site:${domain}`, url: search(`site:${domain}`) },
-  { label: "PDF files on your site", query: `site:${domain} filetype:pdf`, url: search(`site:${domain} filetype:pdf`) },
-  { label: "Pages with a word in the title", query: `site:${domain} intitle:contact`, url: search(`site:${domain} intitle:contact`) },
-  { label: "Addresses containing a word", query: `site:${domain} inurl:blog`, url: search(`site:${domain} inurl:blog`) },
-  { label: "Mentions of your domain elsewhere", query: `"${domain}" -site:${domain}`, url: search(`"${domain}" -site:${domain}`) },
-  { label: "Your images in Google Images", query: `site:${domain}`, url: search(`site:${domain}`, "&udm=2") },
-];
 
 export type Setting = { name: string; what: string; steps: string[]; caution?: string; path: string; guide?: string };
 const HELP = "https://support.google.com/webmasters/answer/";

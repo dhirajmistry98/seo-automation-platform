@@ -21,7 +21,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     // seostudio.vercel.app is the main address. Pages on the old Vercel address move there; /api/ stays
     // reachable on both so the scheduler, webhooks, OAuth callbacks and WordPress plugins keep working.
-    return [{
+    // Removed Google Search pages: send saved links to SEO tips.
+    const removed = ["/dashboard/google", "/dashboard/google/checklist"].map((source) => ({ source, destination: "/dashboard/google/tips", permanent: false }));
+    return [...removed, {
       source: "/:path((?!api/).*)",
       has: [{ type: "host", value: "seo-automation-platform-ten.vercel.app" }],
       destination: "https://seostudio.vercel.app/:path",

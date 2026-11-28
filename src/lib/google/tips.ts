@@ -48,7 +48,7 @@ export const TIPS: Tip[] = [
     idea: "Rushed fixes can make a drop worse. First work out what fell, when and where.",
     steps: ["Mark the date the drop started and compare it with your own releases.", "See whether it affects all pages, one section, one country or one device.", "Check indexing, manual actions, security issues and redirects.", "Compare with announced Google updates and seasonal demand."],
     check: ["A tracking fault can look like a traffic drop.", "Several causes can happen at once.", "Recovery can take weeks after a correct fix."],
-    tools: [{ label: "Position tracking", href: "/dashboard/search-insights" }, { label: "Site audit", href: "/dashboard/tools/audit" }, { label: "Search Console shortcuts", href: "/dashboard/google" }] },
+    tools: [{ label: "Position tracking", href: "/dashboard/search-insights" }, { label: "Site audit", href: "/dashboard/tools/audit" }] },
   { id: "own-experience", topic: "Content", title: "Publish what only you can say",
     idea: "General advice that anyone could write gives readers little reason to choose your page.",
     steps: ["Collect real questions from customers.", "Answer them with your own examples, photos, prices or results where you can share them.", "Say who wrote it and how you know.", "Remove or improve pages that only repeat other sites."],

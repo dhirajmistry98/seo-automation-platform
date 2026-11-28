@@ -34,11 +34,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard/visibility", label: "AI visibility" },
     ] },
     { key: "google", label: "Google Search", icon: "google", children: [
-      { href: "/dashboard/google", label: "Console shortcuts" },
       { href: "/dashboard/google/search", label: "Search launcher" },
       { href: "/dashboard/google/tips", label: "SEO tips" },
       { href: "/dashboard/google/settings", label: "Console settings" },
-      { href: "/dashboard/google/checklist", label: "Search checklist" },
     ] },
     { href: "/dashboard/tools/action-plan", label: "Action plan", icon: "plan" },
     { href: "/dashboard/tools", label: "All SEO tools", icon: "tools" },

@@ -21,7 +21,7 @@ const strategy: Tool = { label: "Keyword strategy", href: "/dashboard/strategy" 
 const ai: Tool = { label: "AI visibility", href: "/dashboard/visibility" };
 export const PROMPT_TOOLS: Record<number, Tool> = {
   1: gaps, 2: strategy, 3: insights, 4: insights, 5: insights, 8: insights, 11: insights, 15: insights, 18: toolkit,
-  29: { label: "Search Console shortcuts", href: "/dashboard/google" }, 30: audit, 31: toolkit, 32: toolkit, 33: audit, 34: audit, 35: speed, 36: links, 37: toolkit, 38: toolkit,
+  30: audit, 31: toolkit, 32: toolkit, 33: audit, 34: audit, 35: speed, 36: links, 37: toolkit, 38: toolkit,
   39: links, 40: links, 41: links, 42: strategy, 43: local, 44: local, 49: ai, 55: insights, 56: toolkit, 59: insights, 60: audit, 62: toolkit, 63: insights,
   64: { label: "Action plan", href: "/dashboard/tools/action-plan" }, 67: insights,
 };

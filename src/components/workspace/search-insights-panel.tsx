@@ -61,6 +61,7 @@ export function SearchInsightsPanel({ domain }: { domain: string }) {
   const loadVitals = (factor: string) => run(async () => { setFormFactor(factor); setVitals(await post(domain, "field-data", { formFactor: factor })); });
 
   return <section className="workspace-panel gin" aria-label="Search insights">
+    <div className="gin-toolbar">
     <form className="gin-filters" onSubmit={(e) => { e.preventDefault(); void load(); }}>
       <label>Period<select value={days} onChange={(e) => setDays(Number(e.target.value))}><option value={7}>Last 7 days</option><option value={28}>Last 28 days</option><option value={90}>Last 90 days</option></select></label>
       <label>Device<select value={device} onChange={(e) => setDevice(e.target.value)}><option value="">All devices</option><option value="MOBILE">Mobile</option><option value="DESKTOP">Desktop</option><option value="TABLET">Tablet</option></select></label>
@@ -68,6 +69,7 @@ export function SearchInsightsPanel({ domain }: { domain: string }) {
       <button type="submit" disabled={busy}>{busy ? "Loading…" : data ? "Update report" : "Run report"}</button>
     </form>
     <nav className="gin-tabs" aria-label="Report sections">{TABS.map((item) => <button type="button" key={item} aria-pressed={tab === item} onClick={() => setTab(item)}>{item}</button>)}</nav>
+    </div>
     {error && <p role="alert" className="gin-error">{error}</p>}
 
     {tab === "Field speed" ? <div>
@@ -75,7 +77,7 @@ export function SearchInsightsPanel({ domain }: { domain: string }) {
       <div className="gin-tabs"><button type="button" aria-pressed={formFactor === "PHONE"} disabled={busy} onClick={() => void loadVitals("PHONE")}>Load phone data</button><button type="button" aria-pressed={formFactor === "DESKTOP"} disabled={busy} onClick={() => void loadVitals("DESKTOP")}>Load desktop data</button></div>
       {vitals?.message && <p className="gin-empty">{vitals.message}</p>}
       <div className="gin-grid">{vitals?.metrics.map((metric) => <article key={metric.id} className="gin-card"><h3>{metric.label}</h3><p><strong>{metric.latest === null ? "—" : `${metric.latest}${metric.unit}`}</strong> {metric.rating && <em className={metric.rating === "good" ? "is-up" : "is-down"}>{metric.rating}</em>}</p><LineChart points={metric.points.map((p) => ({ label: p.date.slice(5), value: p.value }))} label={metric.label} unit={metric.unit} /></article>)}</div>
-    </div> : !data ? <p className="gin-empty">Choose filters and select <strong>Run report</strong>. Data comes from your Google Search Console property.</p> : <>
+    </div> : !data ? <div className="gin-start"><strong>No report yet</strong><p>Choose your filters and select <b>Run report</b>. Data comes from your Google Search Console property.</p></div> : <>
       <p className="gin-empty">{data.period.startDate} to {data.period.endDate}, compared with the {days} days before.</p>
       {tab === "Positions" && <>
         <div className="gin-grid">

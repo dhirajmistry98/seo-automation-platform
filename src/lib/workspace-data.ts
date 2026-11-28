@@ -2,7 +2,7 @@ import clientPromise from "@/lib/mongodb";
 import type { Db, ObjectId } from "mongodb";
 import { ensurePersonalOrganization, getOrganizationMemberships } from "@/lib/organizations";
 
-export type WorkspaceWebsite = {
+export type WorkspaceWebsite = { businessNap?: { name?: string; address?: string; phone?: string };
   domain: string;
   url: string;
   organizationId?: unknown;
@@ -33,7 +33,7 @@ export async function getWorkspaceData(userId: string): Promise<WorkspaceData> {
     });
     const websites = await db.collection<WorkspaceWebsite>("websites")
       .find({ $or: [{ organizationId: { $in: organizationIds } }, { ownerId: userId, organizationId: { $exists: false } }] })
-      .project<WorkspaceWebsite>({ _id: 0, domain: 1, url: 1, organizationId: 1, name: 1, websiteType: 1, status: 1, createdAt: 1, verifiedAt: 1, detectedCms: 1, lastAudit: 1 })
+      .project<WorkspaceWebsite>({ _id: 0, domain: 1, url: 1, organizationId: 1, name: 1, websiteType: 1, status: 1, createdAt: 1, verifiedAt: 1, detectedCms: 1, lastAudit: 1, businessNap: 1 })
       .sort({ createdAt: -1 }).limit(100).toArray();
     return { available: true, db, memberships, organizationIds, organizations, websites };
   } catch (error) {

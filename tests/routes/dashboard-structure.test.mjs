@@ -32,7 +32,8 @@ test("nav: no duplicate links, labels or empty groups", () => {
   const hrefs = NAV_ITEMS.map((item) => item.href);
   assert.equal(new Set(hrefs).size, hrefs.length);
   assert.equal(new Set(NAV_ITEMS.map((item) => item.label)).size, NAV_ITEMS.length);
-  assert.ok(NAV_GROUPS.every((group) => group.items.length > 0 && group.label));
+  assert.ok(NAV_GROUPS.every((group) => group.entries.length > 0));
+  assert.ok(NAV_GROUPS.flatMap((group) => group.entries).filter((entry) => "children" in entry).every((section) => section.children.length > 0 && section.label && section.icon));
 });
 test("nav: exactly one item is highlighted, and the most specific one wins", () => {
   assert.equal(activeNavHref("/dashboard"), "/dashboard");

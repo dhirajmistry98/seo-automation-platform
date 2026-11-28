@@ -64,7 +64,7 @@ export async function loadOverview(userId: string) {
   const clicksChange = priorClicks > 0 ? ((organicClicks - priorClicks) / priorClicks) * 100 : null;
   const aiResultCount = latestAiReport?.result?.length ?? 0;
   const trendRows = dateReport ? (dateReport.rows || []).filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(row.keys?.[0] || "")).sort((a, b) => (a.keys?.[0] || "").localeCompare(b.keys?.[0] || "")).slice(-21) : [];
-  const aiPercent = latestAnswers && latestAnswers.summary.answered ? Math.round((latestAnswers.summary.mentioned / latestAnswers.summary.answered) * 100) : 0;
+  const aiPercent = latestAnswers && latestAnswers.summary.answered ? Math.round((latestAnswers.summary.mentioned / latestAnswers.summary.answered) * 100) : null; // null = nothing checked yet, which is not the same as 0%
   return { websites, ready, openTaskCount, connectedCount, latestSearchReport, dateReport, queryReport, latestAiReport, latestAnswers, latestReadinessReport, latestAudit, organicClicks, organicImpressions, organicPositionWeight, organicPositionImpressions, organicCtr, clicksChange, aiResultCount, trendRows, aiPercent };
 }
 

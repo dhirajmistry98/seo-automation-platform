@@ -1,0 +1,52 @@
+/* ── Grouped sidebar ── */
+.ws2-nav { display: flex; flex: none; flex-direction: column; }
+.ws2-nav-group { display: flex; flex-direction: column; gap: 2px; }
+.ws2-nav-group + .ws2-nav-group { margin-top: 8px; border-top: 1px solid #ece4dc; padding-top: 10px; }
+.ws2-nav-label { margin: 0 0 3px; padding: 0 12px; color: #8f867e; font-size: 11px; font-weight: 600; letter-spacing: .1em; }
+.workspace-shell.ws2 .ws2-nav-link { display: flex; width: 100%; min-height: 34px; align-items: center; gap: 13px; border: 0; border-radius: 12px; background: transparent; padding: 0 12px; color: #1d1a17; font: inherit; font-size: 14.5px; font-weight: 500; line-height: 1.2; text-align: left; text-decoration: none; cursor: pointer; }
+.workspace-shell.ws2 .ws2-nav-link:hover { background: #fbefe5; }
+.workspace-shell.ws2 .ws2-nav-link.is-current { background: #fde6d5; font-weight: 600; }
+.workspace-shell.ws2 .ws2-nav-toggle { font-weight: 600; }
+.ws2-nav-icon { display: grid; flex: none; width: 20px; place-items: center; color: #4a433c; }
+.ws2-nav-icon.is-accent { color: #ff6a00; }
+.ws2-nav-text { min-width: 0; flex: 1; }
+.ws2-nav-count { display: grid; min-width: 22px; height: 22px; place-items: center; border-radius: 999px; background: #12100e; padding: 0 7px; color: #fff; font-size: 11.5px; font-weight: 600; }
+.ws2-nav-chevron { flex: none; color: #3a342e; transform: rotate(-90deg); transition: transform .15s; }
+.ws2-nav-toggle[aria-expanded="true"] .ws2-nav-chevron { transform: rotate(0deg); }
+.ws2-nav-children { display: flex; flex-direction: column; gap: 1px; margin: 0 0 3px 21px; border-left: 1px solid #ded5cc; padding-left: 14px; }
+.ws2-nav-children[hidden] { display: none; }
+.workspace-shell.ws2 .ws2-nav-child { display: flex; min-height: 27px; align-items: center; border-radius: 9px; padding: 0 10px; color: #6b635b; font-size: 13.5px; text-decoration: none; }
+.workspace-shell.ws2 .ws2-nav-child:hover { background: #fbefe5; color: #1d1a17; }
+.workspace-shell.ws2 .ws2-nav-child.is-current { background: #fde6d5; color: #1d1a17; font-weight: 600; }
+.workspace-shell.ws2 .ws2-nav-account { margin-top: 10px; min-height: 38px; border: 1px solid #e7ded5; border-radius: 999px; padding: 0 18px; }
+.workspace-shell.ws2 .ws2-nav a:focus-visible, .workspace-shell.ws2 .ws2-nav button:focus-visible { outline: 2px solid #ff6a00; outline-offset: 1px; }
+.ws2-side > .ws2-promo { flex: none; }
+/* Keep the brand, menu and experts card close together so more fits on screen. */
+@media (min-width: 1001px) {
+  .workspace-shell.ws2 .ws2-side { gap: 10px; padding-top: 18px; }
+  .workspace-shell.ws2 .ws2-brand { padding-bottom: 4px; }
+  .workspace-shell.ws2 .ws2-promo { gap: 4px; padding: 14px; }
+}
+
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-group + .ws2-nav-group { border-color: #2c2824; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-label { color: #7a7168; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-link, .workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-chevron { color: #e5e3e0; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-icon { color: #b5afa9; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-icon.is-accent { color: #ff6a00; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-child { color: #ada59e; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-link:hover, .workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-child:hover { background: #161513; color: #e5e3e0; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-link.is-current, .workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-child.is-current { background: #3a2415; color: #f3f2f1; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-children { border-color: #3a342e; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-account { border-color: #3a342e; }
+.workspace-shell[data-ws-theme="dark"].ws2 .ws2-nav-count { background: #dad6d2; color: #2f2b28; }
+
+/* Narrow screens: one scrolling row of pages, without headings. */
+@media (max-width: 1000px) {
+  .ws2-nav, .ws2-nav-group { flex-direction: row; align-items: center; gap: 4px; }
+  .ws2-nav-group + .ws2-nav-group { margin: 0 0 0 4px; border: 0; padding: 0; }
+  .ws2-nav-label, .workspace-shell.ws2 .ws2-nav-toggle { display: none; }
+  .ws2-nav-children, .ws2-nav-children[hidden] { display: contents; }
+  .workspace-shell.ws2 .ws2-nav-link { width: auto; flex: none; min-height: 38px; gap: 8px; font-size: 13px; white-space: nowrap; }
+  .workspace-shell.ws2 .ws2-nav-child { flex: none; min-height: 38px; font-size: 13px; white-space: nowrap; }
+  .workspace-shell.ws2 .ws2-nav-account { margin: 0 0 0 4px; padding: 0 14px; }
+}

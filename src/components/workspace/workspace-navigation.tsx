@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, FileText, Globe, House, Layers, LayoutGrid, ListChecks, Plug, Search, Settings, Sparkle, type LucideIcon } from "lucide-react";
+import { BookOpen, ChevronDown, FileText, Globe, House, Layers, LayoutGrid, ListChecks, Plug, Search, Settings, Sparkle, type LucideIcon } from "lucide-react";
 import { NAV_ACCOUNT, NAV_GROUPS, activeNavHref, isSection, type NavIcon, type NavItem } from "@/lib/dashboard/nav";
 
 /** The WordPress mark: a W in a circle (lucide has no brand icons). */
@@ -12,10 +12,10 @@ function WordPressMark({ size = 19 }: { size?: number }) {
 }
 
 const ICONS: Record<NavIcon, LucideIcon | typeof WordPressMark> = {
-  workspace: House, websites: Globe, reports: FileText, seo: Search, technical: Layers, ai: Sparkle, plan: ListChecks, tools: LayoutGrid, wordpress: WordPressMark, integrations: Plug, account: Settings,
+  workspace: House, websites: Globe, reports: FileText, seo: Search, technical: Layers, ai: Sparkle, google: BookOpen, plan: ListChecks, tools: LayoutGrid, wordpress: WordPressMark, integrations: Plug, account: Settings,
 };
 /** Icons drawn in the accent colour; the rest use the text colour. */
-const ACCENT = new Set<NavIcon>(["workspace", "seo", "technical", "ai"]);
+const ACCENT = new Set<NavIcon>(["workspace", "seo", "technical", "ai", "google"]);
 
 function NavIconMark({ name }: { name: NavIcon }) {
   const Icon = ICONS[name];

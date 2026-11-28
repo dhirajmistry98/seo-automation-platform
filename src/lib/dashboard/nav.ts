@@ -1,5 +1,5 @@
 /** Single source of truth for dashboard navigation. Icons are looked up by name in the navigation component. */
-export type NavIcon = "workspace" | "websites" | "reports" | "seo" | "technical" | "ai" | "plan" | "tools" | "wordpress" | "integrations" | "account";
+export type NavIcon = "workspace" | "websites" | "reports" | "seo" | "technical" | "ai" | "google" | "plan" | "tools" | "wordpress" | "integrations" | "account";
 export type NavItem = { href: string; label: string; icon?: NavIcon; /** Extra path prefixes that keep this item highlighted. */ also?: string[] };
 /** A collapsible heading with its own pages underneath. */
 export type NavSection = { key: string; label: string; icon: NavIcon; children: NavItem[] };
@@ -31,6 +31,12 @@ export const NAV_GROUPS: NavGroup[] = [
     { key: "ai", label: "AI & GEO", icon: "ai", children: [
       { href: "/dashboard/ai", label: "AI Studio" },
       { href: "/dashboard/visibility", label: "AI visibility" },
+    ] },
+    { key: "google", label: "Google Search", icon: "google", children: [
+      { href: "/dashboard/google", label: "Console shortcuts" },
+      { href: "/dashboard/google/guides", label: "Google guidelines" },
+      { href: "/dashboard/google/settings", label: "Console settings" },
+      { href: "/dashboard/google/checklist", label: "Search checklist" },
     ] },
     { href: "/dashboard/tools/action-plan", label: "Action plan", icon: "plan" },
     { href: "/dashboard/tools", label: "All SEO tools", icon: "tools" },

@@ -30,3 +30,13 @@
 .ggl-source a { color: #c2410c; }
 .ggl-card[aria-disabled="true"] { opacity: .55; }
 .ggl-links.is-flush { margin: 18px 0 0; }
+.ggl-tips { display: grid; gap: 14px; }
+.ggl-topic { margin: 0; font-size: 16px; }
+.ggl-tip summary { cursor: pointer; }
+.ggl-tip summary strong { font-size: 16px; }
+.ggl-tip summary small { display: block; margin-top: 5px; color: #6f665e; font-size: 13px; line-height: 1.6; }
+.ggl-tip p, .ggl-tip li { font-size: 13.5px; line-height: 1.7; }
+.ggl-tip ol, .ggl-tip ul { margin: 0; padding-left: 20px; }
+.ggl-badge { display: inline-block; margin: 0 8px 6px 4px; border-radius: 999px; background: #fff1e6; padding: 2px 10px; color: #b94c00; font-weight: 600; }
+.ggl-tip .ggl-badge { font-size: 11.5px; }
+.ggl-prompt blockquote { margin: 12px 0 0; border-left: 3px solid #ff6a00; border-radius: 8px; background: #faf7f3; padding: 10px 14px; color: #1d1a17; font-size: 13px; line-height: 1.6; }

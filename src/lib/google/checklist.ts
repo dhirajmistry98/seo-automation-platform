@@ -1,8 +1,8 @@
-import { GUIDE_GROUPS } from "./guides";
+import { GUIDES } from "./guides";
 
 export type Check = { id: string; text: string; guide: string; tool?: { label: string; href: string } };
 const guide = (title: string) => {
-  const found = GUIDE_GROUPS.flatMap((group) => group.guides).find((item) => item.title === title);
+  const found = GUIDES.find((item) => item.title === title);
   if (!found) throw new Error(`Unknown guide: ${title}`);
   return found.url;
 };

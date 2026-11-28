@@ -36,7 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { key: "google", label: "Google Search", icon: "google", children: [
       { href: "/dashboard/google", label: "Console shortcuts" },
       { href: "/dashboard/google/search", label: "Search launcher" },
-      { href: "/dashboard/google/guides", label: "Google guidelines" },
+      { href: "/dashboard/google/tips", label: "SEO tips" },
       { href: "/dashboard/google/settings", label: "Console settings" },
       { href: "/dashboard/google/checklist", label: "Search checklist" },
     ] },

@@ -1,6 +1,6 @@
 /** Technical tools that read the website or the saved crawl. `get` is the SSRF-safe fetcher, passed in so it can be tested. */
 import type { Db } from "mongodb";
-import { buildSitemap, comparableUrl, compareCrawls, duplicatePairs, indexablePages, orphanPages, pageImages, pageMeta, pageText, parseRobots, parseSitemap, readability, sameSite, securityHeaders, sitemapProblems, validateStructuredData, type CrawlPage } from "./toolbox";
+import { buildSitemap, comparableUrl, compareCrawls, duplicatePairs, indexablePages, orphanPages, pageImages, pageMeta, pageText, parseRobots, parseSitemap, readability, renderingSignals, repeatedTitles, sameSite, securityHeaders, sitemapProblems, validateStructuredData, type CrawlPage } from "./toolbox";
 
 export type Get = (url: string) => Promise<{ response: Response; finalUrl: string; body: string }>;
 export type Context = { db: Db; get: Get; domain: string; origin: string; scope: { organizationId: unknown; websiteDomain: string }; sitemapUrl?: string; deadline: number };
@@ -111,6 +111,28 @@ export async function duplicateReport(context: Context) {
   const urls = indexablePages(await latestPages(context)).map((page) => page.url).filter((url) => sameSite(url, context.domain)).slice(0, 40);
   const { results } = await pooled(urls, context.deadline, async (url) => { const page = await context.get(url).catch(() => null); return page?.response.ok ? { url, text: pageText(page.body) } : null; });
   return { pages: urls.length, ...duplicatePairs(results.filter((item): item is { url: string; text: string } => item !== null)) };
+}
+
+/** Reads raw HTML, without running JavaScript, for the home page plus the given pages or a sample from the sitemap. */
+export async function renderingReport(context: Context, urls: string[]) {
+  let list = urls.filter((url) => sameSite(url, context.domain));
+  let source = "your list";
+  if (urls.length && !list.length) throw new ToolError(`Enter pages on ${context.domain}.`);
+  if (!list.length) {
+    list = await readSitemap(context).then((result) => result.entries.map((entry) => entry.loc)).catch(() => []);
+    source = "your sitemap";
+    if (!list.length) { list = await latestPages(context).then((pages) => pages.map((page) => page.url)).catch(() => []); source = "your last crawl"; }
+    if (!list.length) source = "the home page only";
+  }
+  const targets = [...new Map([`${context.origin}/`, ...list].filter((url) => sameSite(url, context.domain)).map((url) => [comparableUrl(url), url])).values()].slice(0, 25);
+  const { results } = await pooled(targets, context.deadline, async (url) => {
+    const page = await context.get(url).catch(() => null);
+    if (!page?.response.ok || !sameSite(page.finalUrl, context.domain)) return { url, readable: false as const, status: page?.response.status ?? null };
+    return { url, readable: true as const, ...renderingSignals(page.body, page.finalUrl) };
+  });
+  const read = results.flatMap((item) => (item.readable ? [item] : []));
+  if (!read.length) throw new ToolError("None of the pages could be read.");
+  return { source, checked: read.length, unreadable: results.flatMap((item) => (item.readable ? [] : [item])), missing: read.filter((item) => item.verdict === "missing").length, repeated: repeatedTitles(read), pages: read.sort((a, b) => a.words - b.words) };
 }
 
 export async function compareReport(context: Context) {

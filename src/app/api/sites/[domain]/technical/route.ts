@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { guardSitePost, failure, noStore } from "@/lib/security/site-request";
 import { safeGet } from "@/lib/seo/crawler";
 import { sameSite } from "@/lib/seo/toolbox";
-import { ToolError, bulkReport, compareReport, duplicateReport, externalLinkReport, generateSitemap, imageReport, orphanReport, pageReport, robotsFile, sitemapReport, type Context as ToolContext } from "@/lib/seo/toolbox-server";
+import { ToolError, bulkReport, compareReport, duplicateReport, externalLinkReport, generateSitemap, imageReport, orphanReport, pageReport, renderingReport, robotsFile, sitemapReport, type Context as ToolContext } from "@/lib/seo/toolbox-server";
 
 export const maxDuration = 60;
 type Context = { params: Promise<{ domain: string }> };
@@ -22,6 +22,7 @@ export async function POST(request: Request, context: Context) {
 
   try {
     switch (body.tool) {
+      case "rendering": return Response.json(await renderingReport(tools, urls), { headers: noStore });
       case "sitemap": return Response.json(await sitemapReport(tools), { headers: noStore });
       case "sitemap-generate": return Response.json(await generateSitemap(tools), { headers: noStore });
       case "orphans": return Response.json(await orphanReport(tools), { headers: noStore });

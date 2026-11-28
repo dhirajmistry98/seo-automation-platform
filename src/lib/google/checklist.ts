@@ -19,6 +19,7 @@ export const CHECK_GROUPS: Array<{ title: string; checks: Check[] }> = [
   { title: "Can Google find and index it?", checks: [
     check("robots", "robots.txt does not block important pages.", "robots.txt introduction", toolkit),
     check("noindex", "No important page carries noindex.", "Block indexing with noindex", { label: "Site audit", href: "/dashboard/tools/audit" }),
+    check("rendering", "Inner pages contain their text and links before JavaScript runs.", "JavaScript SEO", { label: "Server rendering check", href: "/dashboard/technical-tools" }),
     check("https", "Every page loads over HTTPS.", "Page experience"),
     check("canonical", "Canonical addresses point to your real domain.", "Set a canonical", toolkit),
     check("redirects", "Moved pages use permanent redirects.", "Redirects"),
@@ -41,6 +42,7 @@ export const CHECK_GROUPS: Array<{ title: string; checks: Check[] }> = [
   ] },
   { title: "Every month", checks: [
     check("performance", "Compare clicks and queries with the previous period.", "Performance report", { label: "Position tracking", href: "/dashboard/search-insights" }),
+    check("gaps", "Look for searches you appear for but have no page about.", "Performance report", { label: "Content gap finder", href: "/dashboard/content-gaps" }),
     check("users", "Remove users who no longer need access.", "About Search Console"),
     check("updates", "Read Google’s documentation updates.", "Documentation updates"),
   ] },

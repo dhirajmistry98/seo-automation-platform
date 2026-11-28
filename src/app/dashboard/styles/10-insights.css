@@ -39,3 +39,5 @@
 .gin-serp small { display: block; color: #4d5156; font-size: 12px; }
 .gin-serp strong { display: block; margin: 3px 0; color: #1a0dab; font-size: 18px; font-weight: 500; }
 .gin-serp p { margin: 0; color: #4d5156; font-size: 13.5px; line-height: 1.5; }
+.gin-steps { margin: 0 0 8px; padding-left: 20px; font-size: 13.5px; line-height: 1.8; }
+.gin-steps a { color: #c2410c; }

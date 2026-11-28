@@ -134,6 +134,24 @@ export function duplicatePairs(pages: Array<{ url: string; text: string }>, thre
   return { compared: sets.length, pairs: pairs.sort((a, b) => b.similarity - a.similarity).slice(0, 100) };
 }
 
+/* ── Server-side rendering: what a visitor without JavaScript receives ── */
+export function renderingSignals(html: string, base: string) {
+  const words = tokens(pageText(html)).length;
+  const emptyShell = /<(div|main)\b[^>]*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte)["'][^>]*>\s*(<!--[\s\S]*?-->\s*)*<\/\1>/i.test(html);
+  const scripts = (html.match(/<script\b[^>]*\bsrc\s*=/gi) ?? []).length + (html.match(/<script\b[^>]*type\s*=\s*["']module["']/gi) ?? []).length;
+  let origin = ""; try { origin = new URL(base).origin; } catch {}
+  const links = new Set([...html.matchAll(/<a\b[^>]*\shref\s*=\s*["']([^"'#]+)/gi)].flatMap(([, href]) => { try { const url = new URL(href, base); return url.origin === origin ? [url.href] : []; } catch { return []; } })).size;
+  const meta = pageMeta(html);
+  const verdict: "missing" | "check" | "ok" = (words < 50 && (emptyShell || scripts > 0)) || (emptyShell && words < 150) ? "missing" : words < 150 || (!meta.h1 && !links) ? "check" : "ok";
+  return { words, links, title: meta.title, h1: meta.h1, emptyShell, verdict };
+}
+/** Titles shared by several different pages, a common sign that every address serves the same empty page. */
+export function repeatedTitles(pages: Array<{ url: string; title: string }>) {
+  const byTitle = new Map<string, string[]>();
+  for (const page of pages) if (page.title) byTitle.set(page.title, [...(byTitle.get(page.title) ?? []), page.url]);
+  return [...byTitle].filter(([, urls]) => urls.length > 1).map(([title, urls]) => ({ title, count: urls.length }));
+}
+
 /* ── Structured data ── */
 const REQUIRED: Record<string, { required: string[]; recommended: string[] }> = {
   Article: { required: [], recommended: ["headline", "image", "datePublished", "author"] }, BlogPosting: { required: [], recommended: ["headline", "image", "datePublished", "author"] }, NewsArticle: { required: [], recommended: ["headline", "image", "datePublished", "author"] },

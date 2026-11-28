@@ -18,6 +18,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard/search-insights", label: "Position tracking" },
       { href: "/dashboard/research", label: "Keyword research" },
       { href: "/dashboard/strategy", label: "Keyword strategy" },
+      { href: "/dashboard/content-gaps", label: "Content gap finder" },
       { href: "/dashboard/rank-a-page", label: "Rank a page" },
       { href: "/dashboard/seo-checker", label: "SEO checker" },
       { href: "/dashboard/local-seo", label: "Local SEO" },
@@ -34,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ] },
     { key: "google", label: "Google Search", icon: "google", children: [
       { href: "/dashboard/google", label: "Console shortcuts" },
+      { href: "/dashboard/google/search", label: "Search launcher" },
       { href: "/dashboard/google/guides", label: "Google guidelines" },
       { href: "/dashboard/google/settings", label: "Console settings" },
       { href: "/dashboard/google/checklist", label: "Search checklist" },

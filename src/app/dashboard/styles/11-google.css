@@ -22,3 +22,11 @@
 .ggl-checks label { display: flex; flex: 1 1 320px; align-items: flex-start; gap: 10px; font-size: 13.5px; cursor: pointer; }
 .ggl-checks input { width: 17px; height: 17px; flex: none; accent-color: #ff6a00; }
 .ggl-checks .ggl-links { margin: 0; }
+.ggl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.ggl-stats article { border: 1px solid #efe5db; border-radius: 16px; background: #fff; padding: 18px; color: #1d1a17; }
+.ggl-stats strong { display: block; color: #c2410c; font-size: 28px; line-height: 1.15; }
+.ggl-stats small { color: #6f665e; font-size: 13px; }
+.ggl-source { margin: 10px 0 16px; color: #6f665e; font-size: 12.5px; line-height: 1.6; }
+.ggl-source a { color: #c2410c; }
+.ggl-card[aria-disabled="true"] { opacity: .55; }
+.ggl-links.is-flush { margin: 18px 0 0; }

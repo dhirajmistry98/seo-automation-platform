@@ -7,6 +7,7 @@ import type * as server from "@/lib/seo/toolbox-server";
 
 type Out<K extends keyof typeof server> = (typeof server)[K] extends (...args: never[]) => Promise<infer R> ? R : never;
 const TOOLS = [
+  ["rendering", "Server rendering", "Checks that your text and links are in the page before JavaScript runs. Leave the box empty to sample your sitemap, or list up to 24 pages."],
   ["sitemap", "Sitemap check", "Reads your sitemap, finds errors and compares it with your last crawl."],
   ["sitemap-generate", "Sitemap generator", "Builds an XML sitemap from the indexable pages in your last crawl."],
   ["robots", "robots.txt tester", "Load or edit robots.txt, test whether a crawler may open a page, or write a new file."],
@@ -36,7 +37,7 @@ function download(name: string, content: string) {
 const cut = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
 
 export function TechnicalToolkit({ domain, siteUrl }: { domain: string; siteUrl: string }) {
-  const [tool, setTool] = useState<ToolId>("sitemap");
+  const [tool, setTool] = useState<ToolId>("rendering");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ tool: ToolId; data: unknown } | null>(null);
@@ -88,7 +89,7 @@ export function TechnicalToolkit({ domain, siteUrl }: { domain: string; siteUrl:
       <label className="is-long">Page address<input value={url} onChange={(e) => setUrl(e.target.value)} type="url" /></label>
       {tool === "page" && <label>Target keyword (optional)<input value={keyword} onChange={(e) => setKeyword(e.target.value)} /></label>}
     </div>}
-    {(tool === "bulk" || tool === "indexnow") && <textarea className="gin-area" rows={6} value={list} onChange={(e) => setList(e.target.value)} placeholder={`${siteUrl}/page-one\n${siteUrl}/page-two`} aria-label="Addresses, one per line" />}
+    {(tool === "rendering" || tool === "bulk" || tool === "indexnow") && <textarea className="gin-area" rows={6} value={list} onChange={(e) => setList(e.target.value)} placeholder={`${siteUrl}/page-one\n${siteUrl}/page-two`} aria-label="Addresses, one per line" />}
     {!["robots", "logs", "indexnow"].includes(tool) && <div className="gin-filters">{button("Run", () => void run())}</div>}
     {error && <p role="alert" className="gin-error">{error}</p>}
 
@@ -121,6 +122,13 @@ export function TechnicalToolkit({ domain, siteUrl }: { domain: string; siteUrl:
 }
 
 function Result({ tool, data }: { tool: ToolId; data: unknown }) {
+  if (tool === "rendering") { const d = data as Out<"renderingReport">; const label = { missing: "Content missing", check: "Check by hand", ok: "Content present" }; return <div role="status">
+    <p><strong>{d.missing ? `${d.missing} of ${d.checked} pages arrive without their content.` : `No empty pages among the ${d.checked} checked.`}</strong> Pages came from {d.source}.{d.checked < 2 ? " Only one page was checked, so this says little about inner pages." : ""}</p>
+    {d.missing > 0 && <p className="gin-empty">Use server-side rendering or static generation so each address returns its own text, title and links. Google can run JavaScript, but it may take longer and can fail, and many other crawlers do not run it.</p>}
+    {d.repeated.length > 0 && <><h3>Pages sharing one title</h3><Table head={["Title", "Pages"]} rows={d.repeated.map((r) => [r.title, r.count])} /></>}
+    <Table head={["Page", "Result", "Words", "Internal links", "Title", "Main heading"]} rows={d.pages.map((p) => [p.url, <em key="v" className={p.verdict === "ok" ? "is-up" : "is-down"}>{label[p.verdict]}</em>, p.words, p.links, p.title || "—", p.h1 || "—"])} />
+    {d.unreadable.length > 0 && <><h3>Could not be read</h3><Table head={["Page", "Status"]} rows={d.unreadable.map((u) => [u.url, u.status ?? "No answer"])} /></>}
+  </div>; }
   if (tool === "sitemap") { const d = data as Out<"sitemapReport">; return <div role="status">
     <p><strong>{d.total}</strong> addresses in {d.files} file(s) at {d.sitemap}.{d.unreadable ? ` ${d.unreadable} file(s) could not be read.` : ""}</p>
     <Table head={["Check", "Found"]} rows={d.problems.map((p) => [p.title, p.count ? <em key="c" className="is-down">{p.count}</em> : mark(true, "None")])} />

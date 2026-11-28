@@ -7,3 +7,4 @@ exports.freeQuestionIdeas = async (...a) => (world().free.questions ?? (async ()
 exports.freeRankPositions = async (...a) => (world().free.rank ?? (async () => null))(...a);
 exports.freeQuickWins = async (...a) => (world().free.quick ?? (async () => null))(...a);
 exports.freeCannibalization = async (...a) => (world().free.cannibal ?? (async () => null))(...a);
+exports.searchConsoleLookup = async (...a) => (world().free.lookup ?? (async () => ({ status: "not_connected", message: "Search Console is not connected." })))(...a);

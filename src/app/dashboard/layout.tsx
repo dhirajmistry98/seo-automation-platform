@@ -25,6 +25,7 @@ import "./styles/07-ai-visibility.css";
 import "./styles/08-audit-overview.css";
 import "./styles/07-theme.css";
 import "./styles/09-sidebar.css";
+import "./styles/10-insights.css";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SiteAssistant } from "@/components/workspace/site-assistant";
 

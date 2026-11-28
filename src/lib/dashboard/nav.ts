@@ -15,10 +15,12 @@ export const NAV_GROUPS: NavGroup[] = [
   { key: "growth", label: "SEO & GROWTH", entries: [
     { key: "seo", label: "SEO", icon: "seo", children: [
       { href: "/dashboard/seo-overview", label: "SEO overview" },
+      { href: "/dashboard/search-insights", label: "Position tracking" },
       { href: "/dashboard/research", label: "Keyword research" },
       { href: "/dashboard/strategy", label: "Keyword strategy" },
       { href: "/dashboard/rank-a-page", label: "Rank a page" },
       { href: "/dashboard/seo-checker", label: "SEO checker" },
+      { href: "/dashboard/local-seo", label: "Local SEO" },
     ] },
     { key: "technical", label: "Technical SEO", icon: "technical", children: [
       { href: "/dashboard/tools/audit", label: "Site audit" },

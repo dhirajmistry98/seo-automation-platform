@@ -25,6 +25,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { key: "technical", label: "Technical SEO", icon: "technical", children: [
       { href: "/dashboard/tools/audit", label: "Site audit" },
       { href: "/dashboard/internal-links", label: "Internal links" },
+      { href: "/dashboard/technical-tools", label: "Technical toolkit" },
       { href: "/dashboard/tools/pagespeed", label: "PageSpeed" },
     ] },
     { key: "ai", label: "AI & GEO", icon: "ai", children: [
